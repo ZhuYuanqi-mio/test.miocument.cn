@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>后台管理 - 咯咯哒生态农场</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="header">
+  <span class="title">咯咯哒生态农场 · 管理</span>
+</div>
+
+<!-- 概览 -->
+<div class="panel">
+  <div class="stat-row" style="border-bottom:1px solid #f0f0f0;">
+    <div class="stat-item">
+      <div class="stat-num">12</div>
+      <div class="stat-label">客户总数</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num text-green">9</div>
+      <div class="stat-label">正常派送</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num text-orange">2</div>
+      <div class="stat-label">已暂停</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num text-3">1</div>
+      <div class="stat-label">已用完</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="admin-tabs">
+  <div class="admin-tab active" onclick="switchTab(this,'tab-users')">用户管理</div>
+  <div class="admin-tab" onclick="switchTab(this,'tab-delivery')">本周配送</div>
+</div>
+
+<!-- 用户管理 -->
+<div id="tab-users">
+  <div class="search-wrap">
+    <div class="search-box">
+      <span style="color:#bbb;font-size:14px;">S</span>
+      <input type="text" placeholder="搜索姓名或手机号" oninput="searchUser(this.value)">
+    </div>
+  </div>
+
+  <div class="user-item" data-name="王女士" data-phone="13866668888">
+    <div class="user-top">
+      <div class="user-avatar">王</div>
+      <div class="user-meta">
+        <div class="user-name">王女士 <span class="tag tag-green" style="margin-left:6px;">正常</span></div>
+        <div class="user-phone">138****6688</div>
+      </div>
+    </div>
+    <div class="user-nums">
+      <div class="user-num-item"><div class="user-num-val">24</div><div class="user-num-label">总次数</div></div>
+      <div class="user-num-item"><div class="user-num-val text-green">5</div><div class="user-num-label">已派送</div></div>
+      <div class="user-num-item"><div class="user-num-val">19</div><div class="user-num-label">剩余</div></div>
+    </div>
+    <div class="user-actions">
+      <button class="btn btn-sm btn-outline" onclick="openAdjust('王女士',24)">调整次数</button>
+      <button class="btn btn-sm btn-primary" onclick="openConfirm('王女士',6)">配送完成</button>
+    </div>
+  </div>
+
+  <div class="user-item" data-name="李先生" data-phone="13912345678">
+    <div class="user-top">
+      <div class="user-avatar">李</div>
+      <div class="user-meta">
+        <div class="user-name">李先生 <span class="tag tag-green" style="margin-left:6px;">正常</span></div>
+        <div class="user-phone">139****5678</div>
+      </div>
+    </div>
+    <div class="user-nums">
+      <div class="user-num-item"><div class="user-num-val">12</div><div class="user-num-label">总次数</div></div>
+      <div class="user-num-item"><div class="user-num-val text-green">8</div><div class="user-num-label">已派送</div></div>
+      <div class="user-num-item"><div class="user-num-val">4</div><div class="user-num-label">剩余</div></div>
+    </div>
+    <div class="user-actions">
+      <button class="btn btn-sm btn-outline" onclick="openAdjust('李先生',12)">调整次数</button>
+      <button class="btn btn-sm btn-primary" onclick="openConfirm('李先生',9)">配送完成</button>
+    </div>
+  </div>
+
+  <div class="user-item" data-name="张太太" data-phone="15088889999">
+    <div class="user-top">
+      <div class="user-avatar">张</div>
+      <div class="user-meta">
+        <div class="user-name">张太太 <span class="tag tag-orange" style="margin-left:6px;">已暂停</span></div>
+        <div class="user-phone">150****9999</div>
+      </div>
+    </div>
+    <div class="user-nums">
+      <div class="user-num-item"><div class="user-num-val">24</div><div class="user-num-label">总次数</div></div>
+      <div class="user-num-item"><div class="user-num-val text-green">10</div><div class="user-num-label">已派送</div></div>
+      <div class="user-num-item"><div class="user-num-val">14</div><div class="user-num-label">剩余</div></div>
+    </div>
+    <div class="user-actions">
+      <button class="btn btn-sm btn-outline" onclick="openAdjust('张太太',24)">调整次数</button>
+      <button class="btn btn-sm btn-outline-gray" disabled style="opacity:.5;">已暂停</button>
+    </div>
+  </div>
+
+  <div class="user-item" data-name="陈先生" data-phone="13700001111">
+    <div class="user-top">
+      <div class="user-avatar">陈</div>
+      <div class="user-meta">
+        <div class="user-name">陈先生 <span class="tag tag-gray" style="margin-left:6px;">已用完</span></div>
+        <div class="user-phone">137****1111</div>
+      </div>
+    </div>
+    <div class="user-nums">
+      <div class="user-num-item"><div class="user-num-val">12</div><div class="user-num-label">总次数</div></div>
+      <div class="user-num-item"><div class="user-num-val text-green">12</div><div class="user-num-label">已派送</div></div>
+      <div class="user-num-item"><div class="user-num-val text-3">0</div><div class="user-num-label">剩余</div></div>
+    </div>
+    <div class="user-actions">
+      <button class="btn btn-sm btn-outline" onclick="openAdjust('陈先生',12)">调整次数</button>
+      <button class="btn btn-sm btn-outline-gray" disabled style="opacity:.5;">已用完</button>
+    </div>
+  </div>
+
+  <div class="user-item" data-name="刘女士" data-phone="18611112222">
+    <div class="user-top">
+      <div class="user-avatar">刘</div>
+      <div class="user-meta">
+        <div class="user-name">刘女士 <span class="tag tag-green" style="margin-left:6px;">正常</span></div>
+        <div class="user-phone">186****2222</div>
+      </div>
+    </div>
+    <div class="user-nums">
+      <div class="user-num-item"><div class="user-num-val">24</div><div class="user-num-label">总次数</div></div>
+      <div class="user-num-item"><div class="user-num-val text-green">3</div><div class="user-num-label">已派送</div></div>
+      <div class="user-num-item"><div class="user-num-val">21</div><div class="user-num-label">剩余</div></div>
+    </div>
+    <div class="user-actions">
+      <button class="btn btn-sm btn-outline" onclick="openAdjust('刘女士',24)">调整次数</button>
+      <button class="btn btn-sm btn-primary" onclick="openConfirm('刘女士',4)">配送完成</button>
+    </div>
+  </div>
+</div>
+
+<!-- 本周配送 -->
+<div id="tab-delivery" style="display:none;">
+  <div class="notice-bar">本周待配送（4月11日 周五），确认后自动发送通知</div>
+
+  <div class="user-item">
+    <div class="user-top">
+      <div class="user-avatar">王</div>
+      <div class="user-meta">
+        <div class="user-name">王女士 · 第6期</div>
+        <div class="user-phone">138****6688</div>
+      </div>
+      <span class="tag tag-red">待配送</span>
+    </div>
+    <div style="font-size:13px;color:var(--text-3);margin-top:8px;padding-top:8px;border-top:1px solid #f5f5f5;">
+      <div>东莞市南城区鸿福路108号</div>
+      <div style="margin-top:2px;">咯咯哒生态鸡蛋 x 1份</div>
+    </div>
+    <button class="btn btn-primary btn-block mt-12" style="height:36px;font-size:13px;" onclick="markDone(this,'王女士')">确认配送完成</button>
+  </div>
+
+  <div class="user-item">
+    <div class="user-top">
+      <div class="user-avatar">李</div>
+      <div class="user-meta">
+        <div class="user-name">李先生 · 第9期</div>
+        <div class="user-phone">139****5678</div>
+      </div>
+      <span class="tag tag-red">待配送</span>
+    </div>
+    <div style="font-size:13px;color:var(--text-3);margin-top:8px;padding-top:8px;border-top:1px solid #f5f5f5;">
+      <div>东莞市莞城区旗峰路288号</div>
+      <div style="margin-top:2px;">咯咯哒生态鸡蛋 x 1份</div>
+    </div>
+    <button class="btn btn-primary btn-block mt-12" style="height:36px;font-size:13px;" onclick="markDone(this,'李先生')">确认配送完成</button>
+  </div>
+
+  <div class="user-item">
+    <div class="user-top">
+      <div class="user-avatar">刘</div>
+      <div class="user-meta">
+        <div class="user-name">刘女士 · 第4期</div>
+        <div class="user-phone">186****2222</div>
+      </div>
+      <span class="tag tag-red">待配送</span>
+    </div>
+    <div style="font-size:13px;color:var(--text-3);margin-top:8px;padding-top:8px;border-top:1px solid #f5f5f5;">
+      <div>东莞市东城区东城中路99号</div>
+      <div style="margin-top:2px;">咯咯哒生态鸡蛋 x 1份</div>
+    </div>
+    <button class="btn btn-primary btn-block mt-12" style="height:36px;font-size:13px;" onclick="markDone(this,'刘女士')">确认配送完成</button>
+  </div>
+</div>
+
+<!-- 调整次数弹窗 -->
+<div class="overlay" id="adjustModal">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="sheet-title">调整派送次数</span>
+      <button class="close" onclick="closeAdjust()">X</button>
+    </div>
+    <div class="sheet-body">
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;">
+        <span style="color:var(--text-3);font-size:14px;">客户</span>
+        <span style="font-size:14px;font-weight:600;" id="adjName">王女士</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;">
+        <span style="color:var(--text-3);font-size:14px;">当前总次数</span>
+        <span style="font-size:14px;font-weight:600;" id="adjTotal">24次</span>
+      </div>
+
+      <div style="margin-top:16px;">
+        <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">调整数量</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="stepper">
+            <button onclick="stepAdj(-1)">-</button>
+            <div class="stepper-val" id="adjVal">0</div>
+            <button onclick="stepAdj(1)">+</button>
+          </div>
+          <span style="font-size:13px;color:var(--text-3);" id="adjResult">调整后：24次</span>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">变更原因</div>
+        <select style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 10px;font-size:14px;color:var(--text-1);background:#fff;">
+          <option>客户续费</option>
+          <option>赠送补偿</option>
+          <option>订单退款</option>
+          <option>数据纠正</option>
+          <option>其他原因</option>
+        </select>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary btn-block" onclick="confirmAdj()">确认调整</button>
+    </div>
+  </div>
+</div>
+
+<!-- 配送确认弹窗 -->
+<div class="overlay" id="confirmModal">
+  <div class="sheet" style="border-radius:12px;max-width:320px;margin:auto;">
+    <div style="padding:30px 20px;text-align:center;">
+      <div style="font-size:16px;font-weight:600;margin-bottom:10px;">确认完成配送？</div>
+      <div style="font-size:14px;color:var(--text-3);line-height:1.8;">
+        将为 <span id="cfmUser" style="color:var(--green);font-weight:600;">王女士</span> 的第 <span id="cfmPeriod" style="color:var(--green);font-weight:600;">6</span> 期标记已完成，并自动发送配送完成通知
+      </div>
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button class="btn btn-outline" style="flex:1;" onclick="closeConfirm()">取消</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="doConfirm()">确认</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var adjTotal = 24, adjDelta = 0;
+
+function switchTab(tab, id){
+  document.querySelectorAll('.admin-tab').forEach(function(t){ t.classList.remove('active'); });
+  tab.classList.add('active');
+  document.getElementById('tab-users').style.display = id === 'tab-users' ? '' : 'none';
+  document.getElementById('tab-delivery').style.display = id === 'tab-delivery' ? '' : 'none';
+}
+
+function searchUser(kw){
+  kw = kw.toLowerCase();
+  document.querySelectorAll('#tab-users .user-item').forEach(function(u){
+    var n = (u.dataset.name || '').toLowerCase();
+    var p = u.dataset.phone || '';
+    u.style.display = (n.indexOf(kw) >= 0 || p.indexOf(kw) >= 0) ? '' : 'none';
+  });
+}
+
+function openAdjust(name, total){
+  adjTotal = total; adjDelta = 0;
+  document.getElementById('adjName').textContent = name;
+  document.getElementById('adjTotal').textContent = total + '次';
+  document.getElementById('adjVal').textContent = '0';
+  document.getElementById('adjResult').textContent = '调整后：' + total + '次';
+  document.getElementById('adjustModal').classList.add('show');
+}
+function closeAdjust(){ document.getElementById('adjustModal').classList.remove('show'); }
+
+function stepAdj(d){
+  adjDelta += d;
+  document.getElementById('adjVal').textContent = (adjDelta > 0 ? '+' : '') + adjDelta;
+  var r = Math.max(0, adjTotal + adjDelta);
+  document.getElementById('adjResult').textContent = '调整后：' + r + '次';
+  document.getElementById('adjResult').style.color = adjDelta > 0 ? 'var(--green)' : adjDelta < 0 ? 'var(--red)' : 'var(--text-3)';
+}
+
+function confirmAdj(){
+  closeAdjust();
+  showToast('派送次数调整成功');
+}
+
+function openConfirm(name, period){
+  document.getElementById('cfmUser').textContent = name;
+  document.getElementById('cfmPeriod').textContent = period;
+  document.getElementById('confirmModal').classList.add('show');
+}
+function closeConfirm(){ document.getElementById('confirmModal').classList.remove('show'); }
+function doConfirm(){
+  closeConfirm();
+  showToast('配送完成，通知已发送');
+}
+
+function markDone(btn, name){
+  var item = btn.closest('.user-item');
+  var tag = item.querySelector('.tag');
+  tag.className = 'tag tag-gray';
+  tag.textContent = '已完成';
+  btn.textContent = '已完成';
+  btn.disabled = true;
+  btn.style.background = '#f0f0f0';
+  btn.style.color = '#999';
+  showToast(name + ' 配送完成，通知已发送');
+}
+
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('show');
+  void t.offsetWidth;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+
+document.querySelectorAll('.overlay').forEach(function(m){
+  m.addEventListener('click', function(e){ if(e.target === this) this.classList.remove('show'); });
+});
+</script>
+</body>
+</html>

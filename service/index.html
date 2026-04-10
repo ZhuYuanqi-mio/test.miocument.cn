@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>派送服务 - 咯咯哒生态农场</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="header">
+  <span class="title">咯咯哒生态农场</span>
+</div>
+
+<!-- 服务状态 -->
+<div class="panel">
+  <div style="padding:16px;display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <div style="font-size:16px;font-weight:700;color:var(--text-1);">咯咯哒生态鸡蛋</div>
+      <div style="font-size:12px;color:var(--text-3);margin-top:4px;">散养土鸡蛋 30枚/份 · 每周配送</div>
+    </div>
+    <span class="tag tag-green" id="statusTag">正常派送中</span>
+  </div>
+  <div style="border-top:1px solid #f0f0f0;">
+    <div class="stat-row">
+      <div class="stat-item">
+        <div class="stat-num">24</div>
+        <div class="stat-label">总次数</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num text-green">5</div>
+        <div class="stat-label">已派送</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">19</div>
+        <div class="stat-label">剩余</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 下次派送 -->
+<div class="panel">
+  <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <div style="font-size:12px;color:var(--text-3);">下一次派送（第6期）</div>
+      <div style="font-size:18px;font-weight:700;color:var(--text-1);margin-top:4px;">4月11日 [周五]</div>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="openModifyModal()">修改时间</button>
+  </div>
+</div>
+
+<!-- 操作菜单 -->
+<div class="panel">
+  <a class="cell" onclick="openScheduleModal()">
+    <div class="cell-body"><span class="cell-label">配送计划</span></div>
+    <span class="cell-value">共24期</span>
+    <span class="cell-arrow"></span>
+  </a>
+  <a class="cell" href="/records/">
+    <div class="cell-body"><span class="cell-label">派送记录</span></div>
+    <span class="cell-value">已完成5次</span>
+    <span class="cell-arrow"></span>
+  </a>
+  <div class="cell" onclick="togglePause()">
+    <div class="cell-body">
+      <span class="cell-label" id="pauseLabel">暂停派送服务</span>
+      <div class="cell-desc" id="pauseDesc">暂停后不自动派送，不扣减次数</div>
+    </div>
+    <span class="cell-arrow"></span>
+  </div>
+</div>
+
+<!-- 近期安排 -->
+<div class="panel">
+  <div class="panel-title">近期配送安排</div>
+  <div class="panel-inner">
+    <div class="delivery-row">
+      <div class="delivery-top">
+        <span><span class="delivery-period">第6期</span><span class="delivery-count">1份</span></span>
+        <span class="delivery-time">预计4月11日[周五]送达</span>
+      </div>
+      <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+    </div>
+    <div class="delivery-row">
+      <div class="delivery-top">
+        <span><span class="delivery-period">第7期</span><span class="delivery-count">1份</span></span>
+        <span class="delivery-time">预计4月18日[周五]送达</span>
+      </div>
+      <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+    </div>
+    <div class="delivery-row">
+      <div class="delivery-top">
+        <span><span class="delivery-period">第8期</span><span class="delivery-count">1份</span></span>
+        <span class="delivery-time">预计4月25日[周五]送达</span>
+      </div>
+      <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+    </div>
+    <div class="delivery-row">
+      <div class="delivery-top">
+        <span><span class="delivery-period">第9期</span><span class="delivery-count">1份</span></span>
+        <span class="delivery-time">预计5月2日[周五]送达</span>
+      </div>
+      <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+    </div>
+  </div>
+</div>
+
+<div class="notice-bar">
+  <span>提示：每周派送前会通过公众号消息提醒，如需修改时间请提前操作。</span>
+</div>
+
+<div style="height:70px;"></div>
+
+<!-- 底部导航 -->
+<div class="tab-bar">
+  <a class="tab-item active" href="/service/">
+    <span class="tab-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </span>
+    <span>首页</span>
+  </a>
+  <a class="tab-item" href="/my/">
+    <span class="tab-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </span>
+    <span>我的</span>
+  </a>
+</div>
+
+<!-- 修改时间弹窗 -->
+<div class="overlay" id="modifyModal">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="sheet-title">修改派送时间</span>
+      <button class="close" onclick="closeModifyModal()">X</button>
+    </div>
+    <div class="sheet-body">
+      <div class="notice-bar" style="margin:-16px -16px 16px;border-bottom:none;border-radius:0;">
+        请选择第6期的派送日期，仅影响本期
+      </div>
+      <div style="font-size:13px;color:var(--text-3);margin-bottom:6px;">当前：4月11日 [周五]</div>
+      <div class="period-grid" style="grid-template-columns: repeat(4,1fr);">
+        <div class="period-cell" onclick="pickDate(this)"><div class="p-num">周一</div><div class="p-date">4/7</div></div>
+        <div class="period-cell" onclick="pickDate(this)"><div class="p-num">周二</div><div class="p-date">4/8</div></div>
+        <div class="period-cell" onclick="pickDate(this)"><div class="p-num">周三</div><div class="p-date">4/9</div></div>
+        <div class="period-cell" onclick="pickDate(this)"><div class="p-num">周四</div><div class="p-date">4/10</div></div>
+        <div class="period-cell selected" onclick="pickDate(this)"><div class="p-num">周五</div><div class="p-date">4/11</div></div>
+        <div class="period-cell" onclick="pickDate(this)"><div class="p-num">周六</div><div class="p-date">4/12</div></div>
+        <div class="period-cell" onclick="pickDate(this)"><div class="p-num">周日</div><div class="p-date">4/13</div></div>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary btn-block" onclick="confirmModify()">确认修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- 配送计划弹窗 -->
+<div class="overlay" id="scheduleModal">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="sheet-title">配送计划</span>
+      <button class="close" onclick="closeScheduleModal()">X</button>
+    </div>
+    <div class="sheet-body">
+      <div style="font-size:13px;color:var(--text-3);padding-bottom:10px;border-bottom:1px solid #f0f0f0;margin-bottom:4px;">
+        王女士 138****6688 &nbsp;&nbsp; 东莞市南城区鸿福路108号
+      </div>
+
+      <div class="delivery-row" style="opacity:.5;">
+        <div class="delivery-top">
+          <span><span class="delivery-period">第1期</span><span class="delivery-count">1份</span></span>
+          <span class="delivery-time">3月7日[周五] 已送达</span>
+        </div>
+      </div>
+      <div class="delivery-row" style="opacity:.5;">
+        <div class="delivery-top">
+          <span><span class="delivery-period">第2期</span><span class="delivery-count">1份</span></span>
+          <span class="delivery-time">3月14日[周五] 已送达</span>
+        </div>
+      </div>
+      <div class="delivery-row" style="opacity:.5;">
+        <div class="delivery-top">
+          <span><span class="delivery-period">第3期</span><span class="delivery-count">1份</span></span>
+          <span class="delivery-time">3月21日[周五] 已送达</span>
+        </div>
+      </div>
+      <div class="delivery-row" style="opacity:.5;">
+        <div class="delivery-top">
+          <span><span class="delivery-period">第4期</span><span class="delivery-count">1份</span></span>
+          <span class="delivery-time">3月28日[周五] 已送达</span>
+        </div>
+      </div>
+      <div class="delivery-row" style="opacity:.5;">
+        <div class="delivery-top">
+          <span><span class="delivery-period">第5期</span><span class="delivery-count">1份</span></span>
+          <span class="delivery-time">4月4日[周五] 已送达</span>
+        </div>
+      </div>
+      <div class="delivery-row" style="background:var(--green-light);margin:0 -16px;padding:14px 16px;">
+        <div class="delivery-top">
+          <span><span class="delivery-period text-green">第6期</span><span class="delivery-count">1份</span></span>
+          <span class="delivery-time text-green">预计4月11日[周五]送达</span>
+        </div>
+        <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+      </div>
+      <div class="delivery-row">
+        <div class="delivery-top">
+          <span><span class="delivery-period">第7期</span><span class="delivery-count">1份</span></span>
+          <span class="delivery-time">预计4月18日[周五]送达</span>
+        </div>
+        <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+      </div>
+      <div class="delivery-row">
+        <div class="delivery-top">
+          <span><span class="delivery-period">第8期</span><span class="delivery-count">1份</span></span>
+          <span class="delivery-time">预计4月25日[周五]送达</span>
+        </div>
+        <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+      </div>
+      <div class="delivery-row">
+        <div class="delivery-top">
+          <span><span class="delivery-period">第9期</span><span class="delivery-count">1份</span></span>
+          <span class="delivery-time">预计5月2日[周五]送达</span>
+        </div>
+        <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+      </div>
+      <div class="delivery-row">
+        <div class="delivery-top">
+          <span><span class="delivery-period">第10期</span><span class="delivery-count">1份</span></span>
+          <span class="delivery-time">预计5月9日[周五]送达</span>
+        </div>
+        <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-outline btn-block" onclick="openModifyModal();closeScheduleModal();">修改计划</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function openModifyModal(){ document.getElementById('modifyModal').classList.add('show'); }
+function closeModifyModal(){ document.getElementById('modifyModal').classList.remove('show'); }
+function openScheduleModal(){ document.getElementById('scheduleModal').classList.add('show'); }
+function closeScheduleModal(){ document.getElementById('scheduleModal').classList.remove('show'); }
+
+function pickDate(el){
+  document.querySelectorAll('#modifyModal .period-cell').forEach(function(c){ c.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+function confirmModify(){
+  closeModifyModal();
+  showToast('派送时间修改成功');
+}
+
+var paused = false;
+function togglePause(){
+  paused = !paused;
+  var label = document.getElementById('pauseLabel');
+  var desc = document.getElementById('pauseDesc');
+  var tag = document.getElementById('statusTag');
+  if(paused){
+    label.textContent = '恢复派送服务';
+    desc.textContent = '当前已暂停，点击恢复每周自动派送';
+    tag.className = 'tag tag-orange';
+    tag.textContent = '已暂停';
+    showToast('派送服务已暂停');
+  } else {
+    label.textContent = '暂停派送服务';
+    desc.textContent = '暂停后不自动派送，不扣减次数';
+    tag.className = 'tag tag-green';
+    tag.textContent = '正常派送中';
+    showToast('派送服务已恢复');
+  }
+}
+
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('show');
+  void t.offsetWidth;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+
+document.querySelectorAll('.overlay').forEach(function(m){
+  m.addEventListener('click', function(e){ if(e.target === this) this.classList.remove('show'); });
+});
+</script>
+</body>
+</html>
