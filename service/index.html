@@ -132,8 +132,7 @@
       <div class="notice-bar" style="margin:-16px -16px 16px;border-bottom:none;border-radius:0;">
         请选择第6期的配送日期，仅影响本期
       </div>
-      <div style="font-size:13px;color:var(--text-3);margin-bottom:4px;">当前：4月11日 [周五]</div>
-      <div style="font-size:11px;color:var(--text-3);margin-bottom:10px;">当前产品：咯咯哒生态鸡蛋（无日期限制）· 蔬菜仅限周一/周四 · 鸡仅限周五</div>
+      <div style="font-size:13px;color:var(--text-3);margin-bottom:10px;">当前：4月11日 [周五]</div>
       <div class="period-grid" id="modifyGrid" style="grid-template-columns: repeat(4,1fr);"></div>
     </div>
     <div class="sheet-foot">
@@ -237,8 +236,6 @@
       <div class="notice-bar" style="margin:-16px -16px 16px;border-bottom:none;border-radius:0;">
         请选择恢复配送的日期，系统将从该日期起继续每周配送
       </div>
-      <div style="font-size:13px;color:var(--text-3);margin-bottom:4px;">当前产品：咯咯哒生态鸡蛋（无日期限制）</div>
-      <div style="font-size:11px;color:var(--text-3);margin-bottom:10px;">蔬菜仅限周一/周四 · 鸡仅限周五</div>
       <div class="period-grid" id="restartGrid" style="grid-template-columns: repeat(4,1fr);"></div>
     </div>
     <div class="sheet-foot">
@@ -279,13 +276,13 @@ function buildDateGrid(containerId, allowedDays){
   var baseDate = new Date(2026, 3, 7);
   var container = document.getElementById(containerId);
   container.innerHTML = '';
-  for(var i = 0; i < 14; i++){
+  for(var i = 0; i < 28; i++){
     var d = new Date(baseDate);
     d.setDate(d.getDate() + i);
     var dow = d.getDay();
-    var allowed = allowedDays.indexOf(dow) >= 0;
+    if(allowedDays.indexOf(dow) < 0) continue;
     var cell = document.createElement('div');
-    cell.className = 'period-cell' + (allowed ? '' : ' past disabled');
+    cell.className = 'period-cell';
     cell.onclick = (function(c){ return function(){ pickDate(c); }; })(cell);
     cell.innerHTML = '<div class="p-num">' + days[dow] + '</div><div class="p-date">' + (d.getMonth()+1) + '/' + d.getDate() + '</div>';
     container.appendChild(cell);
