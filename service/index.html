@@ -244,9 +244,69 @@
   </div>
 </div>
 
+<!-- 切换用户按钮 -->
+<div id="switchBtn" onclick="openSwitchModal()" style="position:fixed;top:10px;right:12px;z-index:90;background:var(--green);color:#fff;font-size:12px;padding:6px 12px;border-radius:14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);">切换用户</div>
+
+<!-- 切换用户弹窗 -->
+<div class="overlay" id="switchModal">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="sheet-title">切换演示用户</span>
+      <button class="close" onclick="closeSwitchModal()">X</button>
+    </div>
+    <div class="sheet-body" style="padding:0;">
+      <div class="cell" onclick="switchUser('egg')" id="sw-egg" style="background:var(--green-light);">
+        <div class="cell-body">
+          <span class="cell-label">王女士 · 鸡蛋客户</span>
+          <div class="cell-desc">咯咯哒生态鸡蛋 30枚/份 · 配送时间无限制</div>
+        </div>
+        <span class="cell-arrow"></span>
+      </div>
+      <div class="cell" onclick="switchUser('vegetable')" id="sw-vegetable">
+        <div class="cell-body">
+          <span class="cell-label">李先生 · 蔬菜客户</span>
+          <div class="cell-desc">有机蔬菜 8种/份 · 仅周一、周四可配送</div>
+        </div>
+        <span class="cell-arrow"></span>
+      </div>
+      <div class="cell" onclick="switchUser('chicken')" id="sw-chicken">
+        <div class="cell-body">
+          <span class="cell-label">张太太 · 鸡客户</span>
+          <div class="cell-desc">药膳鸡 1只/份 · 仅周五可配送</div>
+        </div>
+        <span class="cell-arrow"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
+var users = {
+  egg: {
+    name: '王女士', phone: '138****6688',
+    product: '咯咯哒生态鸡蛋', spec: '散养土鸡蛋 30枚/份',
+    frequency: '每周配送', total: 24, done: 5, remain: 19,
+    nextPeriod: 6, nextDate: '4月11日 [周五]',
+    address: '东莞市南城区鸿福路108号'
+  },
+  vegetable: {
+    name: '李先生', phone: '139****5678',
+    product: '有机蔬菜', spec: '应季蔬菜 8种/份',
+    frequency: '每周配送（周一/周四）', total: 12, done: 8, remain: 4,
+    nextPeriod: 9, nextDate: '4月10日 [周四]',
+    address: '东莞市莞城区旗峰路288号'
+  },
+  chicken: {
+    name: '张太太', phone: '150****9999',
+    product: '药膳鸡', spec: '散养药膳鸡 1只/份',
+    frequency: '每周配送（周五）', total: 24, done: 10, remain: 14,
+    nextPeriod: 11, nextDate: '4月11日 [周五]',
+    address: '东莞市万江区万江路66号'
+  }
+};
+
 var productType = 'egg';
 
 var dateRules = {
@@ -342,6 +402,53 @@ function showToast(msg){
 document.querySelectorAll('.overlay').forEach(function(m){
   m.addEventListener('click', function(e){ if(e.target === this) this.classList.remove('show'); });
 });
+
+function openSwitchModal(){ document.getElementById('switchModal').classList.add('show'); }
+function closeSwitchModal(){ document.getElementById('switchModal').classList.remove('show'); }
+
+function switchUser(type){
+  productType = type;
+  var u = users[type];
+  closeSwitchModal();
+
+  document.querySelectorAll('#switchModal .cell').forEach(function(c){ c.style.background = ''; });
+  document.getElementById('sw-' + type).style.background = 'var(--green-light)';
+
+  var nums = document.querySelectorAll('.stat-num');
+  nums[0].textContent = u.total;
+  nums[1].textContent = u.done;
+  nums[2].textContent = u.remain;
+
+  var panel1 = document.querySelector('.panel');
+  panel1.querySelector('div[style*="font-size:16px"]').textContent = u.product;
+  panel1.querySelector('div[style*="font-size:12px"]').textContent = u.spec + ' · ' + u.frequency;
+
+  document.querySelector('div[style*="font-size:12px"][style*="color:var(--text-3)"][style*="margin-top:2px"]').textContent = u.product + ' · ' + u.spec;
+
+  var nextInfo = document.querySelector('.panel:nth-child(2)');
+  nextInfo.querySelector('div[style*="font-size:12px"]:first-child').innerHTML = '下一次配送（第' + u.nextPeriod + '期）';
+  nextInfo.querySelector('div[style*="font-size:18px"]').textContent = u.nextDate;
+
+  var rows = document.querySelectorAll('.panel-inner .delivery-detail');
+  rows.forEach(function(r){
+    r.innerHTML = u.product + ' ' + u.spec + ' x1<br>' + u.name + ' ' + u.phone + ' · ' + u.address;
+  });
+
+  document.querySelector('.cell-value').textContent = '已完成' + u.done + '次';
+
+  if(paused){
+    paused = false;
+    var btn = document.getElementById('pauseBtn');
+    btn.textContent = '暂停配送';
+    btn.style.border = '1px solid #ddd';
+    btn.style.color = 'var(--text-2)';
+    btn.onclick = function(){ togglePause(); };
+    document.getElementById('statusTag').className = 'tag tag-green';
+    document.getElementById('statusTag').textContent = '正常配送中';
+  }
+
+  showToast('已切换到 ' + u.name + '（' + u.product + '）');
+}
 </script>
 </body>
 </html>
