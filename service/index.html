@@ -276,7 +276,7 @@ function buildDateGrid(containerId, allowedDays){
   var baseDate = new Date(2026, 3, 7);
   var container = document.getElementById(containerId);
   container.innerHTML = '';
-  for(var i = 0; i < 28; i++){
+  for(var i = 0; i < 7; i++){
     var d = new Date(baseDate);
     d.setDate(d.getDate() + i);
     var dow = d.getDay();
