@@ -17,7 +17,7 @@
     </div>
     <div class="stat-item">
       <div class="stat-num text-green">9</div>
-      <div class="stat-label">正常派送</div>
+      <div class="stat-label">正常配送</div>
     </div>
     <div class="stat-item">
       <div class="stat-num text-orange">2</div>
@@ -50,12 +50,12 @@
       <div class="user-avatar">王</div>
       <div class="user-meta">
         <div class="user-name">王女士 <span class="tag tag-green" style="margin-left:6px;">正常</span></div>
-        <div class="user-phone">138****6688</div>
+        <div class="user-phone">138****6688 · 咯咯哒生态鸡蛋 30枚/份</div>
       </div>
     </div>
     <div class="user-nums">
       <div class="user-num-item"><div class="user-num-val">24</div><div class="user-num-label">总次数</div></div>
-      <div class="user-num-item"><div class="user-num-val text-green">5</div><div class="user-num-label">已派送</div></div>
+      <div class="user-num-item"><div class="user-num-val text-green">5</div><div class="user-num-label">已配送</div></div>
       <div class="user-num-item"><div class="user-num-val">19</div><div class="user-num-label">剩余</div></div>
     </div>
     <div class="user-actions">
@@ -69,12 +69,12 @@
       <div class="user-avatar">李</div>
       <div class="user-meta">
         <div class="user-name">李先生 <span class="tag tag-green" style="margin-left:6px;">正常</span></div>
-        <div class="user-phone">139****5678</div>
+        <div class="user-phone">139****5678 · 有机蔬菜 8种/份</div>
       </div>
     </div>
     <div class="user-nums">
       <div class="user-num-item"><div class="user-num-val">12</div><div class="user-num-label">总次数</div></div>
-      <div class="user-num-item"><div class="user-num-val text-green">8</div><div class="user-num-label">已派送</div></div>
+      <div class="user-num-item"><div class="user-num-val text-green">8</div><div class="user-num-label">已配送</div></div>
       <div class="user-num-item"><div class="user-num-val">4</div><div class="user-num-label">剩余</div></div>
     </div>
     <div class="user-actions">
@@ -88,12 +88,12 @@
       <div class="user-avatar">张</div>
       <div class="user-meta">
         <div class="user-name">张太太 <span class="tag tag-orange" style="margin-left:6px;">已暂停</span></div>
-        <div class="user-phone">150****9999</div>
+        <div class="user-phone">150****9999 · 药膳鸡 1只/份</div>
       </div>
     </div>
     <div class="user-nums">
       <div class="user-num-item"><div class="user-num-val">24</div><div class="user-num-label">总次数</div></div>
-      <div class="user-num-item"><div class="user-num-val text-green">10</div><div class="user-num-label">已派送</div></div>
+      <div class="user-num-item"><div class="user-num-val text-green">10</div><div class="user-num-label">已配送</div></div>
       <div class="user-num-item"><div class="user-num-val">14</div><div class="user-num-label">剩余</div></div>
     </div>
     <div class="user-actions">
@@ -107,12 +107,12 @@
       <div class="user-avatar">陈</div>
       <div class="user-meta">
         <div class="user-name">陈先生 <span class="tag tag-gray" style="margin-left:6px;">已用完</span></div>
-        <div class="user-phone">137****1111</div>
+        <div class="user-phone">137****1111 · 咯咯哒生态鸡蛋 30枚/份</div>
       </div>
     </div>
     <div class="user-nums">
       <div class="user-num-item"><div class="user-num-val">12</div><div class="user-num-label">总次数</div></div>
-      <div class="user-num-item"><div class="user-num-val text-green">12</div><div class="user-num-label">已派送</div></div>
+      <div class="user-num-item"><div class="user-num-val text-green">12</div><div class="user-num-label">已配送</div></div>
       <div class="user-num-item"><div class="user-num-val text-3">0</div><div class="user-num-label">剩余</div></div>
     </div>
     <div class="user-actions">
@@ -126,12 +126,12 @@
       <div class="user-avatar">刘</div>
       <div class="user-meta">
         <div class="user-name">刘女士 <span class="tag tag-green" style="margin-left:6px;">正常</span></div>
-        <div class="user-phone">186****2222</div>
+        <div class="user-phone">186****2222 · 有机蔬菜+鸡蛋包年套餐</div>
       </div>
     </div>
     <div class="user-nums">
       <div class="user-num-item"><div class="user-num-val">24</div><div class="user-num-label">总次数</div></div>
-      <div class="user-num-item"><div class="user-num-val text-green">3</div><div class="user-num-label">已派送</div></div>
+      <div class="user-num-item"><div class="user-num-val text-green">3</div><div class="user-num-label">已配送</div></div>
       <div class="user-num-item"><div class="user-num-val">21</div><div class="user-num-label">剩余</div></div>
     </div>
     <div class="user-actions">
@@ -198,7 +198,7 @@
 <div class="overlay" id="adjustModal">
   <div class="sheet">
     <div class="sheet-head">
-      <span class="sheet-title">调整派送次数</span>
+      <span class="sheet-title">调整配送次数</span>
       <button class="close" onclick="closeAdjust()">X</button>
     </div>
     <div class="sheet-body">
@@ -297,7 +297,7 @@ function stepAdj(d){
 
 function confirmAdj(){
   closeAdjust();
-  showToast('派送次数调整成功');
+  showToast('配送次数调整成功');
 }
 
 function openConfirm(name, period){

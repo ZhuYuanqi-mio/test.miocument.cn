@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>派送服务 - 咯咯哒生态农场</title>
+<title>配送服务 - 咯咯哒生态农场</title>
 <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -15,7 +15,7 @@
       <div style="font-size:16px;font-weight:700;color:var(--text-1);">咯咯哒生态鸡蛋</div>
       <div style="font-size:12px;color:var(--text-3);margin-top:4px;">散养土鸡蛋 30枚/份 · 每周配送</div>
     </div>
-    <span class="tag tag-green" id="statusTag">正常派送中</span>
+    <span class="tag tag-green" id="statusTag">正常配送中</span>
   </div>
   <div style="border-top:1px solid #f0f0f0;">
     <div class="stat-row">
@@ -25,7 +25,7 @@
       </div>
       <div class="stat-item">
         <div class="stat-num text-green">5</div>
-        <div class="stat-label">已派送</div>
+        <div class="stat-label">已配送</div>
       </div>
       <div class="stat-item">
         <div class="stat-num">19</div>
@@ -35,14 +35,18 @@
   </div>
 </div>
 
-<!-- 下次派送 -->
+<!-- 下次配送 -->
 <div class="panel">
   <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
     <div>
-      <div style="font-size:12px;color:var(--text-3);">下一次派送（第6期）</div>
+      <div style="font-size:12px;color:var(--text-3);">下一次配送（第6期）</div>
       <div style="font-size:18px;font-weight:700;color:var(--text-1);margin-top:4px;">4月11日 [周五]</div>
+      <div style="font-size:12px;color:var(--text-3);margin-top:2px;">咯咯哒生态鸡蛋 · 散养土鸡蛋 30枚/份</div>
     </div>
-    <button class="btn btn-outline btn-sm" onclick="openModifyModal()">修改时间</button>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-sm" id="pauseBtn" style="border:1px solid #ddd;color:var(--text-2);" onclick="togglePause()">暂停配送</button>
+      <button class="btn btn-outline btn-sm" onclick="openModifyModal()">修改时间</button>
+    </div>
   </div>
 </div>
 
@@ -54,17 +58,10 @@
     <span class="cell-arrow"></span>
   </a>
   <a class="cell" href="/records/">
-    <div class="cell-body"><span class="cell-label">派送记录</span></div>
+    <div class="cell-body"><span class="cell-label">配送记录</span></div>
     <span class="cell-value">已完成5次</span>
     <span class="cell-arrow"></span>
   </a>
-  <div class="cell" onclick="togglePause()">
-    <div class="cell-body">
-      <span class="cell-label" id="pauseLabel">暂停派送服务</span>
-      <div class="cell-desc" id="pauseDesc">暂停后不自动派送，不扣减次数</div>
-    </div>
-    <span class="cell-arrow"></span>
-  </div>
 </div>
 
 <!-- 近期安排 -->
@@ -76,34 +73,34 @@
         <span><span class="delivery-period">第6期</span><span class="delivery-count">1份</span></span>
         <span class="delivery-time">预计4月11日[周五]送达</span>
       </div>
-      <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+      <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 东莞市南城区鸿福路108号</div>
     </div>
     <div class="delivery-row">
       <div class="delivery-top">
         <span><span class="delivery-period">第7期</span><span class="delivery-count">1份</span></span>
         <span class="delivery-time">预计4月18日[周五]送达</span>
       </div>
-      <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+      <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 东莞市南城区鸿福路108号</div>
     </div>
     <div class="delivery-row">
       <div class="delivery-top">
         <span><span class="delivery-period">第8期</span><span class="delivery-count">1份</span></span>
         <span class="delivery-time">预计4月25日[周五]送达</span>
       </div>
-      <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+      <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 东莞市南城区鸿福路108号</div>
     </div>
     <div class="delivery-row">
       <div class="delivery-top">
         <span><span class="delivery-period">第9期</span><span class="delivery-count">1份</span></span>
         <span class="delivery-time">预计5月2日[周五]送达</span>
       </div>
-      <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+      <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 东莞市南城区鸿福路108号</div>
     </div>
   </div>
 </div>
 
 <div class="notice-bar">
-  <span>提示：每周派送前会通过公众号消息提醒，如需修改时间请提前操作。</span>
+  <span>提示：每周配送前会通过公众号消息提醒，如需修改时间请提前操作。</span>
 </div>
 
 <div style="height:70px;"></div>
@@ -128,23 +125,16 @@
 <div class="overlay" id="modifyModal">
   <div class="sheet">
     <div class="sheet-head">
-      <span class="sheet-title">修改派送时间</span>
+      <span class="sheet-title">修改配送时间</span>
       <button class="close" onclick="closeModifyModal()">X</button>
     </div>
     <div class="sheet-body">
       <div class="notice-bar" style="margin:-16px -16px 16px;border-bottom:none;border-radius:0;">
-        请选择第6期的派送日期，仅影响本期
+        请选择第6期的配送日期，仅影响本期
       </div>
-      <div style="font-size:13px;color:var(--text-3);margin-bottom:6px;">当前：4月11日 [周五]</div>
-      <div class="period-grid" style="grid-template-columns: repeat(4,1fr);">
-        <div class="period-cell" onclick="pickDate(this)"><div class="p-num">周一</div><div class="p-date">4/7</div></div>
-        <div class="period-cell" onclick="pickDate(this)"><div class="p-num">周二</div><div class="p-date">4/8</div></div>
-        <div class="period-cell" onclick="pickDate(this)"><div class="p-num">周三</div><div class="p-date">4/9</div></div>
-        <div class="period-cell" onclick="pickDate(this)"><div class="p-num">周四</div><div class="p-date">4/10</div></div>
-        <div class="period-cell selected" onclick="pickDate(this)"><div class="p-num">周五</div><div class="p-date">4/11</div></div>
-        <div class="period-cell" onclick="pickDate(this)"><div class="p-num">周六</div><div class="p-date">4/12</div></div>
-        <div class="period-cell" onclick="pickDate(this)"><div class="p-num">周日</div><div class="p-date">4/13</div></div>
-      </div>
+      <div style="font-size:13px;color:var(--text-3);margin-bottom:4px;">当前：4月11日 [周五]</div>
+      <div style="font-size:11px;color:var(--text-3);margin-bottom:10px;">当前产品：咯咯哒生态鸡蛋（无日期限制）· 蔬菜仅限周一/周四 · 鸡仅限周五</div>
+      <div class="period-grid" id="modifyGrid" style="grid-template-columns: repeat(4,1fr);"></div>
     </div>
     <div class="sheet-foot">
       <button class="btn btn-primary btn-block" onclick="confirmModify()">确认修改</button>
@@ -199,35 +189,35 @@
           <span><span class="delivery-period text-green">第6期</span><span class="delivery-count">1份</span></span>
           <span class="delivery-time text-green">预计4月11日[周五]送达</span>
         </div>
-        <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+        <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 东莞市南城区鸿福路108号</div>
       </div>
       <div class="delivery-row">
         <div class="delivery-top">
           <span><span class="delivery-period">第7期</span><span class="delivery-count">1份</span></span>
           <span class="delivery-time">预计4月18日[周五]送达</span>
         </div>
-        <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+        <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 东莞市南城区鸿福路108号</div>
       </div>
       <div class="delivery-row">
         <div class="delivery-top">
           <span><span class="delivery-period">第8期</span><span class="delivery-count">1份</span></span>
           <span class="delivery-time">预计4月25日[周五]送达</span>
         </div>
-        <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+        <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 东莞市南城区鸿福路108号</div>
       </div>
       <div class="delivery-row">
         <div class="delivery-top">
           <span><span class="delivery-period">第9期</span><span class="delivery-count">1份</span></span>
           <span class="delivery-time">预计5月2日[周五]送达</span>
         </div>
-        <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+        <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 东莞市南城区鸿福路108号</div>
       </div>
       <div class="delivery-row">
         <div class="delivery-top">
           <span><span class="delivery-period">第10期</span><span class="delivery-count">1份</span></span>
           <span class="delivery-time">预计5月9日[周五]送达</span>
         </div>
-        <div class="delivery-detail">王女士 138****6688<br>东莞市南城区鸿福路108号</div>
+        <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 东莞市南城区鸿福路108号</div>
       </div>
     </div>
     <div class="sheet-foot">
@@ -236,43 +226,111 @@
   </div>
 </div>
 
+<!-- 启动配送-选择日期弹窗 -->
+<div class="overlay" id="restartModal">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="sheet-title">选择恢复配送日期</span>
+      <button class="close" onclick="closeRestartModal()">X</button>
+    </div>
+    <div class="sheet-body">
+      <div class="notice-bar" style="margin:-16px -16px 16px;border-bottom:none;border-radius:0;">
+        请选择恢复配送的日期，系统将从该日期起继续每周配送
+      </div>
+      <div style="font-size:13px;color:var(--text-3);margin-bottom:4px;">当前产品：咯咯哒生态鸡蛋（无日期限制）</div>
+      <div style="font-size:11px;color:var(--text-3);margin-bottom:10px;">蔬菜仅限周一/周四 · 鸡仅限周五</div>
+      <div class="period-grid" id="restartGrid" style="grid-template-columns: repeat(4,1fr);"></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary btn-block" onclick="confirmRestart()">确认启动</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-function openModifyModal(){ document.getElementById('modifyModal').classList.add('show'); }
+var productType = 'egg';
+
+var dateRules = {
+  egg: [0,1,2,3,4,5,6],
+  vegetable: [1,4],
+  chicken: [5]
+};
+
+function openModifyModal(){
+  buildDateGrid('modifyGrid', dateRules[productType]);
+  var cells = document.querySelectorAll('#modifyGrid .period-cell');
+  cells.forEach(function(c){ if(c.querySelector('.p-date').textContent === '4/11') c.classList.add('selected'); });
+  document.getElementById('modifyModal').classList.add('show');
+}
 function closeModifyModal(){ document.getElementById('modifyModal').classList.remove('show'); }
 function openScheduleModal(){ document.getElementById('scheduleModal').classList.add('show'); }
 function closeScheduleModal(){ document.getElementById('scheduleModal').classList.remove('show'); }
 
 function pickDate(el){
-  document.querySelectorAll('#modifyModal .period-cell').forEach(function(c){ c.classList.remove('selected'); });
+  if(el.classList.contains('disabled')) return;
+  el.closest('.period-grid').querySelectorAll('.period-cell').forEach(function(c){ c.classList.remove('selected'); });
   el.classList.add('selected');
+}
+
+function buildDateGrid(containerId, allowedDays){
+  var days = ['周日','周一','周二','周三','周四','周五','周六'];
+  var baseDate = new Date(2026, 3, 7);
+  var container = document.getElementById(containerId);
+  container.innerHTML = '';
+  for(var i = 0; i < 14; i++){
+    var d = new Date(baseDate);
+    d.setDate(d.getDate() + i);
+    var dow = d.getDay();
+    var allowed = allowedDays.indexOf(dow) >= 0;
+    var cell = document.createElement('div');
+    cell.className = 'period-cell' + (allowed ? '' : ' past disabled');
+    cell.onclick = (function(c){ return function(){ pickDate(c); }; })(cell);
+    cell.innerHTML = '<div class="p-num">' + days[dow] + '</div><div class="p-date">' + (d.getMonth()+1) + '/' + d.getDate() + '</div>';
+    container.appendChild(cell);
+  }
 }
 
 function confirmModify(){
   closeModifyModal();
-  showToast('派送时间修改成功');
+  showToast('配送时间修改成功');
 }
 
 var paused = false;
 function togglePause(){
-  paused = !paused;
-  var label = document.getElementById('pauseLabel');
-  var desc = document.getElementById('pauseDesc');
-  var tag = document.getElementById('statusTag');
-  if(paused){
-    label.textContent = '恢复派送服务';
-    desc.textContent = '当前已暂停，点击恢复每周自动派送';
-    tag.className = 'tag tag-orange';
-    tag.textContent = '已暂停';
-    showToast('派送服务已暂停');
-  } else {
-    label.textContent = '暂停派送服务';
-    desc.textContent = '暂停后不自动派送，不扣减次数';
-    tag.className = 'tag tag-green';
-    tag.textContent = '正常派送中';
-    showToast('派送服务已恢复');
+  if(!paused){
+    paused = true;
+    var btn = document.getElementById('pauseBtn');
+    btn.textContent = '启动';
+    btn.style.border = '1px solid var(--green)';
+    btn.style.color = 'var(--green)';
+    btn.onclick = function(){ openRestartModal(); };
+    document.getElementById('statusTag').className = 'tag tag-orange';
+    document.getElementById('statusTag').textContent = '已暂停';
+    showToast('已暂停');
   }
+}
+
+function openRestartModal(){
+  buildDateGrid('restartGrid', dateRules[productType]);
+  document.getElementById('restartModal').classList.add('show');
+}
+function closeRestartModal(){ document.getElementById('restartModal').classList.remove('show'); }
+
+function confirmRestart(){
+  var sel = document.querySelector('#restartGrid .period-cell.selected');
+  if(!sel){ showToast('请选择恢复配送日期'); return; }
+  closeRestartModal();
+  paused = false;
+  var btn = document.getElementById('pauseBtn');
+  btn.textContent = '暂停配送';
+  btn.style.border = '1px solid #ddd';
+  btn.style.color = 'var(--text-2)';
+  btn.onclick = function(){ togglePause(); };
+  document.getElementById('statusTag').className = 'tag tag-green';
+  document.getElementById('statusTag').textContent = '正常配送中';
+  showToast('已启动，将于' + sel.querySelector('.p-date').textContent + '恢复配送');
 }
 
 function showToast(msg){
