@@ -129,11 +129,7 @@
       <button class="close" onclick="closeModifyModal()">X</button>
     </div>
     <div class="sheet-body">
-      <div class="notice-bar" style="margin:-16px -16px 16px;border-bottom:none;border-radius:0;">
-        请选择第6期的配送日期，仅影响本期
-      </div>
-      <div style="font-size:13px;color:var(--text-3);margin-bottom:10px;">当前：4月11日 [周五]</div>
-      <div class="period-grid" id="modifyGrid" style="grid-template-columns: repeat(4,1fr);"></div>
+      <div id="modifyCal"></div>
     </div>
     <div class="sheet-foot">
       <button class="btn btn-primary btn-block" onclick="confirmModify()">确认修改</button>
@@ -233,10 +229,7 @@
       <button class="close" onclick="closeRestartModal()">X</button>
     </div>
     <div class="sheet-body">
-      <div class="notice-bar" style="margin:-16px -16px 16px;border-bottom:none;border-radius:0;">
-        请选择恢复配送的日期，系统将从该日期起继续每周配送
-      </div>
-      <div class="period-grid" id="restartGrid" style="grid-template-columns: repeat(4,1fr);"></div>
+      <div id="restartCal"></div>
     </div>
     <div class="sheet-foot">
       <button class="btn btn-primary btn-block" onclick="confirmRestart()">确认启动</button>
@@ -308,50 +301,94 @@ var users = {
 };
 
 var productType = 'egg';
+var dateRules = { egg: [0,1,2,3,4,5,6], vegetable: [1,4], chicken: [5] };
+var ruleLabels = { egg: '鸡蛋类产品：每天均可配送', vegetable: '蔬菜类产品：仅 <span>周一</span>、<span>周四</span> 可配送', chicken: '鸡类产品：仅 <span>周五</span> 可配送' };
+var today = new Date(2026, 3, 9);
 
-var dateRules = {
-  egg: [0,1,2,3,4,5,6],
-  vegetable: [1,4],
-  chicken: [5]
-};
+var calInstances = {};
+
+function createCalendar(containerId, onSelect){
+  var state = { year: today.getFullYear(), month: today.getMonth(), selected: null };
+  calInstances[containerId] = state;
+
+  function render(){
+    var c = document.getElementById(containerId);
+    var allowed = dateRules[productType];
+    var first = new Date(state.year, state.month, 1);
+    var last = new Date(state.year, state.month + 1, 0);
+    var startDay = first.getDay();
+    var monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    var isPrevDisabled = (state.year === today.getFullYear() && state.month <= today.getMonth());
+
+    var h = '<div class="cal-header">';
+    h += '<button class="cal-nav' + (isPrevDisabled ? ' disabled' : '') + '" onclick="calNav(\'' + containerId + '\',-1)">&lt;</button>';
+    h += '<span class="cal-title">' + state.year + '年' + monthNames[state.month] + '</span>';
+    h += '<button class="cal-nav" onclick="calNav(\'' + containerId + '\',1)">&gt;</button>';
+    h += '</div>';
+    h += '<div class="cal-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>';
+    h += '<div class="cal-grid">';
+    for(var i = 0; i < startDay; i++) h += '<div class="cal-day empty"></div>';
+    for(var d = 1; d <= last.getDate(); d++){
+      var dt = new Date(state.year, state.month, d);
+      var dow = dt.getDay();
+      var isPast = dt < today;
+      var isToday = dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
+      var isAllowed = allowed.indexOf(dow) >= 0;
+      var isSel = state.selected && state.selected.getTime() === dt.getTime();
+      var cls = 'cal-day';
+      if(isPast) cls += ' past';
+      else if(!isAllowed) cls += ' unavailable';
+      if(isToday) cls += ' today';
+      if(isSel) cls += ' selected';
+      var clickable = !isPast && isAllowed;
+      h += '<div class="' + cls + '"' + (clickable ? ' onclick="calPick(\'' + containerId + '\',' + state.year + ',' + state.month + ',' + d + ')"' : '') + '>' + d + '</div>';
+    }
+    h += '</div>';
+    h += '<div class="cal-hint">' + ruleLabels[productType] + '</div>';
+    c.innerHTML = h;
+  }
+
+  state.render = render;
+  render();
+}
+
+function calNav(id, dir){
+  var s = calInstances[id];
+  s.month += dir;
+  if(s.month > 11){ s.month = 0; s.year++; }
+  if(s.month < 0){ s.month = 11; s.year--; }
+  s.render();
+}
+
+function calPick(id, y, m, d){
+  var s = calInstances[id];
+  s.selected = new Date(y, m, d);
+  s.render();
+}
+
+function getCalSelected(id){
+  var s = calInstances[id];
+  return s ? s.selected : null;
+}
+
+function formatDate(dt){
+  var days = ['日','一','二','三','四','五','六'];
+  return (dt.getMonth()+1) + '月' + dt.getDate() + '日 [周' + days[dt.getDay()] + ']';
+}
 
 function openModifyModal(){
-  buildDateGrid('modifyGrid', dateRules[productType]);
-  var cells = document.querySelectorAll('#modifyGrid .period-cell');
-  cells.forEach(function(c){ if(c.querySelector('.p-date').textContent === '4/11') c.classList.add('selected'); });
+  createCalendar('modifyCal');
   document.getElementById('modifyModal').classList.add('show');
 }
 function closeModifyModal(){ document.getElementById('modifyModal').classList.remove('show'); }
 function openScheduleModal(){ document.getElementById('scheduleModal').classList.add('show'); }
 function closeScheduleModal(){ document.getElementById('scheduleModal').classList.remove('show'); }
 
-function pickDate(el){
-  if(el.classList.contains('disabled')) return;
-  el.closest('.period-grid').querySelectorAll('.period-cell').forEach(function(c){ c.classList.remove('selected'); });
-  el.classList.add('selected');
-}
-
-function buildDateGrid(containerId, allowedDays){
-  var days = ['周日','周一','周二','周三','周四','周五','周六'];
-  var baseDate = new Date(2026, 3, 7);
-  var container = document.getElementById(containerId);
-  container.innerHTML = '';
-  for(var i = 0; i < 7; i++){
-    var d = new Date(baseDate);
-    d.setDate(d.getDate() + i);
-    var dow = d.getDay();
-    if(allowedDays.indexOf(dow) < 0) continue;
-    var cell = document.createElement('div');
-    cell.className = 'period-cell';
-    cell.onclick = (function(c){ return function(){ pickDate(c); }; })(cell);
-    cell.innerHTML = '<div class="p-num">' + days[dow] + '</div><div class="p-date">' + (d.getMonth()+1) + '/' + d.getDate() + '</div>';
-    container.appendChild(cell);
-  }
-}
-
 function confirmModify(){
+  var sel = getCalSelected('modifyCal');
+  if(!sel){ showToast('请选择配送日期'); return; }
   closeModifyModal();
-  showToast('配送时间修改成功');
+  showToast('配送时间已修改为 ' + formatDate(sel));
 }
 
 var paused = false;
@@ -370,13 +407,13 @@ function togglePause(){
 }
 
 function openRestartModal(){
-  buildDateGrid('restartGrid', dateRules[productType]);
+  createCalendar('restartCal');
   document.getElementById('restartModal').classList.add('show');
 }
 function closeRestartModal(){ document.getElementById('restartModal').classList.remove('show'); }
 
 function confirmRestart(){
-  var sel = document.querySelector('#restartGrid .period-cell.selected');
+  var sel = getCalSelected('restartCal');
   if(!sel){ showToast('请选择恢复配送日期'); return; }
   closeRestartModal();
   paused = false;
@@ -387,7 +424,7 @@ function confirmRestart(){
   btn.onclick = function(){ togglePause(); };
   document.getElementById('statusTag').className = 'tag tag-green';
   document.getElementById('statusTag').textContent = '正常配送中';
-  showToast('已启动，将于' + sel.querySelector('.p-date').textContent + '恢复配送');
+  showToast('已启动，将于 ' + formatDate(sel) + ' 恢复配送');
 }
 
 function showToast(msg){
