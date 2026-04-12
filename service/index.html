@@ -302,7 +302,6 @@ var users = {
 
 var productType = 'egg';
 var dateRules = { egg: [0,1,2,3,4,5,6], vegetable: [1,4], chicken: [5] };
-var ruleLabels = { egg: '鸡蛋类产品：每天均可配送', vegetable: '蔬菜类产品：仅 <span>周一</span>、<span>周四</span> 可配送', chicken: '鸡类产品：仅 <span>周五</span> 可配送' };
 var today = new Date(2026, 3, 9);
 
 var calInstances = {};
@@ -344,7 +343,6 @@ function createCalendar(containerId, onSelect){
       h += '<div class="' + cls + '"' + (clickable ? ' onclick="calPick(\'' + containerId + '\',' + state.year + ',' + state.month + ',' + d + ')"' : '') + '>' + d + '</div>';
     }
     h += '</div>';
-    h += '<div class="cal-hint">' + ruleLabels[productType] + '</div>';
     c.innerHTML = h;
   }
 
