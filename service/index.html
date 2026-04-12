@@ -123,12 +123,20 @@
 
 <!-- 修改时间弹窗 -->
 <div class="overlay" id="modifyModal">
-  <div class="sheet">
+  <div class="sheet" style="max-height:60vh;">
     <div class="sheet-head">
       <span class="sheet-title">修改配送时间</span>
       <button class="close" onclick="closeModifyModal()">X</button>
     </div>
     <div class="sheet-body">
+      <div class="addr-picker" onclick="openAddrSelect('modify')">
+        <svg class="addr-picker-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <div class="addr-picker-text">
+          <div class="addr-picker-name" id="modifyAddrName">王女士 138****6688</div>
+          <div class="addr-picker-addr" id="modifyAddrDetail">东莞市南城区鸿福路108号</div>
+        </div>
+        <span class="addr-picker-arrow">&gt;</span>
+      </div>
       <div id="modifyCal"></div>
     </div>
     <div class="sheet-foot">
@@ -223,16 +231,69 @@
 
 <!-- 启动配送-选择日期弹窗 -->
 <div class="overlay" id="restartModal">
-  <div class="sheet">
+  <div class="sheet" style="max-height:60vh;">
     <div class="sheet-head">
       <span class="sheet-title">选择恢复配送日期</span>
       <button class="close" onclick="closeRestartModal()">X</button>
     </div>
     <div class="sheet-body">
+      <div class="addr-picker" onclick="openAddrSelect('restart')">
+        <svg class="addr-picker-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <div class="addr-picker-text">
+          <div class="addr-picker-name" id="restartAddrName">王女士 138****6688</div>
+          <div class="addr-picker-addr" id="restartAddrDetail">东莞市南城区鸿福路108号</div>
+        </div>
+        <span class="addr-picker-arrow">&gt;</span>
+      </div>
       <div id="restartCal"></div>
     </div>
     <div class="sheet-foot">
       <button class="btn btn-primary btn-block" onclick="confirmRestart()">确认启动</button>
+    </div>
+  </div>
+</div>
+
+<!-- 选择地址弹窗 -->
+<div class="overlay" id="addrSelectModal">
+  <div class="sheet" style="max-height:60vh;">
+    <div class="sheet-head">
+      <span class="sheet-title">选择配送地址</span>
+      <button class="close" onclick="closeAddrSelect()">X</button>
+    </div>
+    <div class="sheet-body" style="padding:0;" id="addrSelectList"></div>
+    <div class="sheet-foot">
+      <button class="btn btn-outline btn-block" onclick="openNewAddrForm()">新增收货地址</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增地址弹窗(service) -->
+<div class="overlay" id="newAddrModal">
+  <div class="sheet" style="max-height:70vh;">
+    <div class="sheet-head">
+      <span class="sheet-title">新增收货地址</span>
+      <button class="close" onclick="closeNewAddrForm()">X</button>
+    </div>
+    <div class="sheet-body">
+      <div class="addr-form-group">
+        <label>收货人</label>
+        <input type="text" id="saf-name" placeholder="请输入收货人姓名">
+      </div>
+      <div class="addr-form-group">
+        <label>手机号码</label>
+        <input type="tel" id="saf-phone" placeholder="请输入手机号码">
+      </div>
+      <div class="addr-form-group">
+        <label>所在地区</label>
+        <input type="text" id="saf-region" placeholder="如：广东省东莞市南城区">
+      </div>
+      <div class="addr-form-group">
+        <label>详细地址</label>
+        <textarea id="saf-detail" placeholder="街道、楼牌号等"></textarea>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary btn-block" onclick="saveNewAddr()">保存并使用</button>
     </div>
   </div>
 </div>
@@ -303,6 +364,80 @@ var users = {
 var productType = 'egg';
 var dateRules = { egg: [0,1,2,3,4,5,6], vegetable: [1,4], chicken: [5] };
 var today = new Date(2026, 3, 9);
+
+var addrList = [
+  { id: 1, name: '王女士', phone: '138****6688', region: '广东省东莞市南城区', detail: '鸿福路108号', isDefault: true },
+  { id: 2, name: '王女士', phone: '138****6688', region: '广东省东莞市莞城区', detail: '旗峰路288号鸿福花园3栋', isDefault: false }
+];
+var addrNextId = 3;
+var selectedAddrId = 1;
+var addrSelectSource = 'modify';
+
+function getAddrById(id){ for(var i=0;i<addrList.length;i++) if(addrList[i].id===id) return addrList[i]; return addrList[0]; }
+
+function updateAddrDisplay(){
+  var a = getAddrById(selectedAddrId);
+  if(!a) return;
+  var label = a.name + ' ' + a.phone;
+  var addr = a.region + a.detail;
+  document.getElementById('modifyAddrName').textContent = label;
+  document.getElementById('modifyAddrDetail').textContent = addr;
+  document.getElementById('restartAddrName').textContent = label;
+  document.getElementById('restartAddrDetail').textContent = addr;
+}
+
+function openAddrSelect(source){
+  addrSelectSource = source;
+  var c = document.getElementById('addrSelectList');
+  var h = '';
+  for(var i = 0; i < addrList.length; i++){
+    var a = addrList[i];
+    var active = a.id === selectedAddrId ? ' active' : '';
+    h += '<div class="addr-select-item' + active + '" onclick="pickAddr(' + a.id + ')">';
+    h += '<div class="addr-select-info">';
+    h += '<div class="addr-select-name">' + a.name + ' ' + a.phone;
+    if(a.isDefault) h += ' <span style="font-size:11px;color:var(--green);">[默认]</span>';
+    h += '</div>';
+    h += '<div class="addr-select-addr">' + a.region + a.detail + '</div>';
+    h += '</div>';
+    if(a.id === selectedAddrId) h += '<span class="addr-select-check">&#10003;</span>';
+    h += '</div>';
+  }
+  c.innerHTML = h;
+  document.getElementById('addrSelectModal').classList.add('show');
+}
+
+function closeAddrSelect(){ document.getElementById('addrSelectModal').classList.remove('show'); }
+
+function pickAddr(id){
+  selectedAddrId = id;
+  updateAddrDisplay();
+  closeAddrSelect();
+}
+
+function openNewAddrForm(){
+  closeAddrSelect();
+  document.getElementById('saf-name').value = '';
+  document.getElementById('saf-phone').value = '';
+  document.getElementById('saf-region').value = '';
+  document.getElementById('saf-detail').value = '';
+  document.getElementById('newAddrModal').classList.add('show');
+}
+function closeNewAddrForm(){ document.getElementById('newAddrModal').classList.remove('show'); }
+
+function saveNewAddr(){
+  var name = document.getElementById('saf-name').value.trim();
+  var phone = document.getElementById('saf-phone').value.trim();
+  var region = document.getElementById('saf-region').value.trim();
+  var detail = document.getElementById('saf-detail').value.trim();
+  if(!name || !phone || !region || !detail){ showToast('请填写完整信息'); return; }
+  var newAddr = { id: addrNextId++, name: name, phone: phone, region: region, detail: detail, isDefault: false };
+  addrList.push(newAddr);
+  selectedAddrId = newAddr.id;
+  updateAddrDisplay();
+  closeNewAddrForm();
+  showToast('地址添加成功');
+}
 
 var calInstances = {};
 

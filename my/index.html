@@ -63,9 +63,9 @@
 </div>
 
 <div class="panel" style="margin-top:10px;">
-  <div class="cell">
+  <div class="cell" onclick="openAddrPage()" style="cursor:pointer;">
     <div class="cell-body"><span class="cell-label">收货地址</span></div>
-    <span class="cell-value">东莞市南城区鸿福路108号</span>
+    <span class="cell-value" id="addrSummary">2个地址</span>
     <span class="cell-arrow"></span>
   </div>
   <div class="cell">
@@ -78,6 +78,55 @@
   </div>
 </div>
 
+<!-- 地址管理页 -->
+<div class="addr-page" id="addrPage">
+  <div class="header">
+    <button class="back" onclick="closeAddrPage()">&lt;</button>
+    <span class="title">我的地址</span>
+    <button class="add-btn" onclick="openAddrForm(-1)">+</button>
+  </div>
+  <div class="addr-list" id="addrList"></div>
+  <div style="padding:12px 16px;background:var(--bg);flex-shrink:0;">
+    <button class="btn btn-primary btn-block" onclick="openAddrForm(-1)">新增收货地址</button>
+  </div>
+</div>
+
+<!-- 添加/编辑地址弹窗 -->
+<div class="overlay" id="addrFormModal">
+  <div class="sheet" style="max-height:70vh;">
+    <div class="sheet-head">
+      <span class="sheet-title" id="addrFormTitle">新增地址</span>
+      <button class="close" onclick="closeAddrForm()">X</button>
+    </div>
+    <div class="sheet-body">
+      <div class="addr-form-group">
+        <label>收货人</label>
+        <input type="text" id="af-name" placeholder="请输入收货人姓名">
+      </div>
+      <div class="addr-form-group">
+        <label>手机号码</label>
+        <input type="tel" id="af-phone" placeholder="请输入手机号码">
+      </div>
+      <div class="addr-form-group">
+        <label>所在地区</label>
+        <input type="text" id="af-region" placeholder="如：广东省东莞市南城区">
+      </div>
+      <div class="addr-form-group">
+        <label>详细地址</label>
+        <textarea id="af-detail" placeholder="街道、楼牌号等"></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+        <input type="checkbox" id="af-default" style="width:18px;height:18px;accent-color:var(--green);">
+        <label for="af-default" style="font-size:14px;color:var(--text-1);margin:0;">设为默认地址</label>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary btn-block" onclick="saveAddr()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 <div style="height:70px;"></div>
 
 <!-- 底部导航 -->
@@ -96,5 +145,116 @@
   </a>
 </div>
 
+<script>
+var addresses = [
+  { id: 1, name: '王女士', phone: '138****6688', region: '广东省东莞市南城区', detail: '鸿福路108号', isDefault: true },
+  { id: 2, name: '王女士', phone: '138****6688', region: '广东省东莞市莞城区', detail: '旗峰路288号鸿福花园3栋', isDefault: false }
+];
+var nextId = 3;
+var editingIdx = -1;
+
+function openAddrPage(){
+  renderAddrList();
+  document.getElementById('addrPage').classList.add('show');
+}
+function closeAddrPage(){ document.getElementById('addrPage').classList.remove('show'); updateSummary(); }
+
+function updateSummary(){
+  document.getElementById('addrSummary').textContent = addresses.length + '个地址';
+}
+
+function renderAddrList(){
+  var c = document.getElementById('addrList');
+  if(!addresses.length){ c.innerHTML = '<div class="addr-empty">暂无收货地址</div>'; return; }
+  var h = '';
+  for(var i = 0; i < addresses.length; i++){
+    var a = addresses[i];
+    h += '<div class="addr-card">';
+    h += '<div class="addr-region">' + a.region + '</div>';
+    h += '<div class="addr-detail">' + a.detail + '</div>';
+    h += '<div class="addr-contact"><span>' + a.name + '</span><span>' + a.phone + '</span>';
+    if(a.isDefault) h += '<span class="addr-tag-default">默认</span>';
+    h += '</div>';
+    h += '<div class="addr-ops">';
+    if(!a.isDefault) h += '<span class="addr-op addr-op-default" onclick="setDefault(' + i + ')">设为默认</span>';
+    else h += '<span class="addr-op addr-op-default" style="color:var(--green);font-weight:500;">当前默认</span>';
+    h += '<span class="addr-op" onclick="openAddrForm(' + i + ')">编辑</span>';
+    h += '<span class="addr-op addr-op-del" onclick="delAddr(' + i + ')">删除</span>';
+    h += '</div></div>';
+  }
+  c.innerHTML = h;
+}
+
+function setDefault(idx){
+  for(var i = 0; i < addresses.length; i++) addresses[i].isDefault = false;
+  addresses[idx].isDefault = true;
+  renderAddrList();
+  showToast('已设为默认地址');
+}
+
+function delAddr(idx){
+  if(!confirm('确定删除该地址？')) return;
+  addresses.splice(idx, 1);
+  renderAddrList();
+  showToast('已删除');
+}
+
+function openAddrForm(idx){
+  editingIdx = idx;
+  var title = idx < 0 ? '新增地址' : '编辑地址';
+  document.getElementById('addrFormTitle').textContent = title;
+  if(idx >= 0){
+    var a = addresses[idx];
+    document.getElementById('af-name').value = a.name;
+    document.getElementById('af-phone').value = a.phone;
+    document.getElementById('af-region').value = a.region;
+    document.getElementById('af-detail').value = a.detail;
+    document.getElementById('af-default').checked = a.isDefault;
+  } else {
+    document.getElementById('af-name').value = '';
+    document.getElementById('af-phone').value = '';
+    document.getElementById('af-region').value = '';
+    document.getElementById('af-detail').value = '';
+    document.getElementById('af-default').checked = false;
+  }
+  document.getElementById('addrFormModal').classList.add('show');
+}
+function closeAddrForm(){ document.getElementById('addrFormModal').classList.remove('show'); }
+
+function saveAddr(){
+  var name = document.getElementById('af-name').value.trim();
+  var phone = document.getElementById('af-phone').value.trim();
+  var region = document.getElementById('af-region').value.trim();
+  var detail = document.getElementById('af-detail').value.trim();
+  var isDef = document.getElementById('af-default').checked;
+  if(!name || !phone || !region || !detail){ showToast('请填写完整信息'); return; }
+  if(isDef) for(var i = 0; i < addresses.length; i++) addresses[i].isDefault = false;
+  if(editingIdx >= 0){
+    addresses[editingIdx].name = name;
+    addresses[editingIdx].phone = phone;
+    addresses[editingIdx].region = region;
+    addresses[editingIdx].detail = detail;
+    addresses[editingIdx].isDefault = isDef;
+  } else {
+    addresses.push({ id: nextId++, name: name, phone: phone, region: region, detail: detail, isDefault: isDef });
+  }
+  closeAddrForm();
+  renderAddrList();
+  showToast(editingIdx >= 0 ? '已保存' : '添加成功');
+}
+
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('show');
+  void t.offsetWidth;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+
+document.querySelectorAll('.overlay').forEach(function(m){
+  m.addEventListener('click', function(e){ if(e.target === this) this.classList.remove('show'); });
+});
+</script>
 </body>
 </html>

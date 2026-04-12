@@ -413,6 +413,94 @@ input, select, textarea { font-family: inherit; font-size: inherit; outline: non
 }
 .cal-hint span { color: var(--green); font-weight: 500; }
 
+/* ---- Address ---- */
+.addr-page {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg); z-index: 200;
+  max-width: 450px; margin: 0 auto;
+  flex-direction: column;
+}
+.addr-page.show { display: flex; }
+.addr-page .header { flex-shrink: 0; }
+.addr-page .header .add-btn {
+  position: absolute; right: 12px;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: var(--text-1);
+}
+.addr-list { flex: 1; overflow-y: auto; padding-bottom: 20px; }
+.addr-empty {
+  text-align: center; padding: 60px 0;
+  font-size: 14px; color: var(--text-3);
+}
+.addr-card {
+  background: var(--white); margin-bottom: 10px;
+  padding: 16px;
+}
+.addr-card .addr-region { font-size: 12px; color: var(--text-3); margin-bottom: 4px; }
+.addr-card .addr-detail { font-size: 16px; font-weight: 600; color: var(--text-1); line-height: 1.4; }
+.addr-card .addr-contact {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-2); margin-top: 8px;
+}
+.addr-card .addr-tag-default {
+  font-size: 11px; color: var(--green); background: var(--green-light);
+  padding: 1px 6px; border-radius: 2px;
+}
+.addr-card .addr-ops {
+  display: flex; align-items: center; gap: 16px;
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0;
+}
+.addr-card .addr-op {
+  font-size: 13px; color: var(--text-3); cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
+}
+.addr-card .addr-op:active { color: var(--text-1); }
+.addr-card .addr-op-default { margin-right: auto; }
+.addr-card .addr-op-del { color: var(--red); }
+
+.addr-form-group { margin-bottom: 16px; }
+.addr-form-group label {
+  display: block; font-size: 13px; color: var(--text-3); margin-bottom: 6px;
+}
+.addr-form-group input,
+.addr-form-group textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; color: var(--text-1);
+  background: var(--white);
+}
+.addr-form-group input:focus,
+.addr-form-group textarea:focus { border-color: var(--green); }
+.addr-form-group textarea { resize: none; min-height: 60px; }
+
+.addr-picker {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; background: var(--bg); border-radius: 8px;
+  margin-bottom: 12px; cursor: pointer;
+}
+.addr-picker .addr-picker-icon {
+  flex-shrink: 0; width: 20px; height: 20px; color: var(--green);
+}
+.addr-picker .addr-picker-text { flex: 1; min-width: 0; }
+.addr-picker .addr-picker-name { font-size: 13px; font-weight: 500; color: var(--text-1); }
+.addr-picker .addr-picker-addr {
+  font-size: 12px; color: var(--text-3); margin-top: 1px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.addr-picker .addr-picker-arrow { flex-shrink: 0; color: #ccc; font-size: 12px; }
+.addr-picker:active { background: #eee; }
+
+.addr-select-item {
+  display: flex; align-items: center; padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0; cursor: pointer;
+}
+.addr-select-item:active { background: #f9f9f9; }
+.addr-select-item.active { background: var(--green-light); }
+.addr-select-item .addr-select-info { flex: 1; }
+.addr-select-item .addr-select-name { font-size: 14px; color: var(--text-1); }
+.addr-select-item .addr-select-addr { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.addr-select-item .addr-select-check { color: var(--green); font-size: 16px; font-weight: 700; }
+
 /* ---- Helpers ---- */
 .text-green { color: var(--green) !important; }
 .text-red { color: var(--red) !important; }
