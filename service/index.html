@@ -35,8 +35,8 @@
   </div>
 </div>
 
-<!-- 下次配送 -->
-<div class="panel">
+<!-- 下次配送（次数型会员） -->
+<div class="panel" id="nextPanel">
   <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
     <div>
       <div style="font-size:12px;color:var(--text-3);">下一次配送（第6期）</div>
@@ -50,8 +50,8 @@
   </div>
 </div>
 
-<!-- 操作菜单 -->
-<div class="panel">
+<!-- 操作菜单（次数型会员） -->
+<div class="panel" id="menuPanel">
   <a class="cell" onclick="openScheduleModal()">
     <div class="cell-body"><span class="cell-label">配送计划</span></div>
     <span class="cell-value">共24期</span>
@@ -64,8 +64,8 @@
   </a>
 </div>
 
-<!-- 近期安排 -->
-<div class="panel">
+<!-- 近期安排（次数型会员） -->
+<div class="panel" id="schedulePanel">
   <div class="panel-title">近期配送安排</div>
   <div class="panel-inner">
     <div class="delivery-row">
@@ -99,8 +99,43 @@
   </div>
 </div>
 
-<div class="notice-bar">
+<div class="notice-bar" id="noticeBar">
   <span>提示：每周配送前会通过公众号消息提醒，如需修改时间请提前操作。</span>
+</div>
+
+<!-- 有效期型会员：会员信息 + 消耗记录（默认隐藏） -->
+<div id="periodSection" style="display:none;">
+  <div class="panel">
+    <div style="padding:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span style="font-size:15px;font-weight:600;color:var(--text-1);">会员信息</span>
+        <span class="tag tag-green" id="periodStatusTag">有效期内</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;line-height:2.2;">
+        <div style="color:var(--text-3);">
+          <div>会员类型</div>
+          <div>有效期</div>
+          <div id="periodTotalLabel">总量</div>
+          <div id="periodUsedLabel">已消耗</div>
+          <div id="periodRemainLabel">剩余</div>
+        </div>
+        <div style="text-align:right;color:var(--text-1);font-weight:500;">
+          <div id="periodType">草莓会员</div>
+          <div id="periodValidity">2025.11 - 2026.11</div>
+          <div id="periodTotal">30斤</div>
+          <div id="periodUsed">9斤</div>
+          <div id="periodRemain">21斤</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title" id="periodRecordTitle">消耗记录</div>
+    <div class="panel-inner" id="periodRecords"></div>
+  </div>
+  <div class="notice-bar">
+    <span id="periodNotice">消耗由管理员操作，如有疑问请联系客服。</span>
+  </div>
 </div>
 
 <div style="height:70px;"></div>
@@ -330,6 +365,21 @@
         </div>
         <span class="cell-arrow"></span>
       </div>
+      <div style="padding:8px 16px 4px;font-size:11px;color:var(--text-3);background:#fafafa;">有效期型会员（只读）</div>
+      <div class="cell" onclick="switchUser('strawberry')" id="sw-strawberry">
+        <div class="cell-body">
+          <span class="cell-label">龚女士 · 草莓会员</span>
+          <div class="cell-desc">草莓采摘自由 30斤 · 只可查看消耗记录</div>
+        </div>
+        <span class="cell-arrow"></span>
+      </div>
+      <div class="cell" onclick="switchUser('garden')" id="sw-garden">
+        <div class="cell-body">
+          <span class="cell-label">晓媛 · 共享菜地</span>
+          <div class="cell-desc">家庭耕种认领计划 · 只可查看使用记录</div>
+        </div>
+        <span class="cell-arrow"></span>
+      </div>
     </div>
   </div>
 </div>
@@ -343,21 +393,50 @@ var users = {
     product: '咯咯哒生态鸡蛋', spec: '散养土鸡蛋 30枚/份',
     frequency: '每周配送', total: 24, done: 5, remain: 19,
     nextPeriod: 6, nextDate: '4月11日 [周五]',
-    address: '北京市东城区幸福大街88号阳光花园6号楼301'
+    address: '北京市东城区幸福大街88号阳光花园6号楼301',
+    mode: 'count'
   },
   vegetable: {
     name: '李先生', phone: '139****5678',
     product: '有机蔬菜', spec: '应季蔬菜 8种/份',
     frequency: '每周配送（周一/周四）', total: 12, done: 8, remain: 4,
     nextPeriod: 9, nextDate: '4月10日 [周四]',
-    address: '北京市丰台区绿洲路12号翠微园3栋1602'
+    address: '北京市丰台区绿洲路12号翠微园3栋1602',
+    mode: 'count'
   },
   chicken: {
     name: '张太太', phone: '150****9999',
     product: '药膳鸡', spec: '散养药膳鸡 1只/份',
     frequency: '每周配送（周五）', total: 24, done: 10, remain: 14,
     nextPeriod: 11, nextDate: '4月11日 [周五]',
-    address: '北京市通州区新华路36号悦景苑5号楼801'
+    address: '北京市通州区新华路36号悦景苑5号楼801',
+    mode: 'count'
+  },
+  strawberry: {
+    name: '龚女士', phone: '136****3300',
+    product: '草莓采摘自由', spec: '北京会员快递版',
+    mode: 'period', memberType: '草莓会员',
+    validity: '2025.11 - 2026.11',
+    unit: '斤', total: 30, used: 9, remain: 21,
+    records: [
+      { date: '2026年1月20日', amount: '5斤', note: '快递发货' },
+      { date: '2026年1月1日', amount: '4斤', note: '快递发货' }
+    ],
+    notice: '草莓消耗由管理员操作，如有疑问请联系客服。'
+  },
+  garden: {
+    name: '晓媛', phone: '133****8800',
+    product: '共享菜地', spec: '家庭耕种认领计划',
+    mode: 'period', memberType: '共享菜地会员',
+    validity: '2025年4月 - 2026年4月',
+    unit: '', total: '', used: '', remain: '',
+    rights: ['有机蔬菜自种区域 1块（约15㎡）', '每周可到农场采摘 1次', '节假日亲子农耕体验', '应季蔬菜优先配送'],
+    records: [
+      { date: '2026年4月5日', amount: '采摘', note: '到店自提·白菜、萝卜、菠菜' },
+      { date: '2026年3月22日', amount: '采摘', note: '到店自提·生菜、香菜、小葱' },
+      { date: '2026年3月8日', amount: '配送', note: '快递发货·应季蔬菜5种' }
+    ],
+    notice: '共享菜地使用记录由管理员更新，如有疑问请联系客服。'
   }
 };
 
@@ -584,27 +663,116 @@ function switchUser(type){
   document.querySelectorAll('#switchModal .cell').forEach(function(c){ c.style.background = ''; });
   document.getElementById('sw-' + type).style.background = 'var(--green-light)';
 
-  var nums = document.querySelectorAll('.stat-num');
-  nums[0].textContent = u.total;
-  nums[1].textContent = u.done;
-  nums[2].textContent = u.remain;
+  var isPeriod = u.mode === 'period';
+  var countSections = ['nextPanel','menuPanel','schedulePanel','noticeBar'];
+  countSections.forEach(function(id){ document.getElementById(id).style.display = isPeriod ? 'none' : ''; });
+  document.getElementById('periodSection').style.display = isPeriod ? '' : 'none';
 
   var panel1 = document.querySelector('.panel');
   panel1.querySelector('div[style*="font-size:16px"]').textContent = u.product;
-  panel1.querySelector('div[style*="font-size:12px"]').textContent = u.spec + ' · ' + u.frequency;
 
-  document.querySelector('div[style*="font-size:12px"][style*="color:var(--text-3)"][style*="margin-top:2px"]').textContent = u.product + ' · ' + u.spec;
+  if(isPeriod){
+    panel1.querySelector('div[style*="font-size:12px"]').textContent = u.spec;
+    document.getElementById('statusTag').className = 'tag tag-green';
+    document.getElementById('statusTag').textContent = '有效期内';
 
-  var nextInfo = document.querySelector('.panel:nth-child(2)');
-  nextInfo.querySelector('div[style*="font-size:12px"]:first-child').innerHTML = '下一次配送（第' + u.nextPeriod + '期）';
-  nextInfo.querySelector('div[style*="font-size:18px"]').textContent = u.nextDate;
+    var nums = document.querySelectorAll('#statusPanel .stat-num');
 
-  var rows = document.querySelectorAll('.panel-inner .delivery-detail');
-  rows.forEach(function(r){
-    r.innerHTML = u.product + ' ' + u.spec + ' x1<br>' + u.name + ' ' + u.phone + ' · ' + u.address;
-  });
+    document.getElementById('periodType').textContent = u.memberType;
+    document.getElementById('periodValidity').textContent = u.validity;
+    document.getElementById('periodStatusTag').textContent = '有效期内';
 
-  document.querySelector('.cell-value').textContent = '已完成' + u.done + '次';
+    if(u.unit){
+      document.getElementById('periodTotalLabel').style.display = '';
+      document.getElementById('periodUsedLabel').style.display = '';
+      document.getElementById('periodRemainLabel').style.display = '';
+      document.getElementById('periodTotal').style.display = '';
+      document.getElementById('periodUsed').style.display = '';
+      document.getElementById('periodRemain').style.display = '';
+      document.getElementById('periodTotalLabel').textContent = '总量';
+      document.getElementById('periodUsedLabel').textContent = '已消耗';
+      document.getElementById('periodRemainLabel').textContent = '剩余';
+      document.getElementById('periodTotal').textContent = u.total + u.unit;
+      document.getElementById('periodUsed').textContent = u.used + u.unit;
+      document.getElementById('periodRemain').textContent = u.remain + u.unit;
+
+      var sNums = document.querySelectorAll('.stat-num');
+      sNums[0].textContent = u.total + u.unit;
+      sNums[1].textContent = u.used + u.unit;
+      sNums[2].textContent = u.remain + u.unit;
+      document.querySelectorAll('.stat-label')[0].textContent = '总量';
+      document.querySelectorAll('.stat-label')[1].textContent = '已消耗';
+      document.querySelectorAll('.stat-label')[2].textContent = '剩余';
+    } else {
+      document.getElementById('periodTotalLabel').style.display = 'none';
+      document.getElementById('periodUsedLabel').style.display = 'none';
+      document.getElementById('periodRemainLabel').style.display = 'none';
+      document.getElementById('periodTotal').style.display = 'none';
+      document.getElementById('periodUsed').style.display = 'none';
+      document.getElementById('periodRemain').style.display = 'none';
+
+      var sNums = document.querySelectorAll('.stat-num');
+      sNums[0].textContent = '-';
+      sNums[1].textContent = '-';
+      sNums[2].textContent = '-';
+      document.querySelectorAll('.stat-label')[0].textContent = '总量';
+      document.querySelectorAll('.stat-label')[1].textContent = '已使用';
+      document.querySelectorAll('.stat-label')[2].textContent = '剩余';
+    }
+
+    var recHtml = '';
+    if(u.rights){
+      recHtml += '<div style="margin-bottom:12px;">';
+      for(var i=0;i<u.rights.length;i++){
+        recHtml += '<div style="font-size:13px;color:var(--text-1);line-height:2.2;padding-left:12px;position:relative;">';
+        recHtml += '<span style="position:absolute;left:0;color:var(--green);">·</span>' + u.rights[i] + '</div>';
+      }
+      recHtml += '</div>';
+      document.getElementById('periodRecordTitle').textContent = '会员权益';
+    } else {
+      document.getElementById('periodRecordTitle').textContent = '消耗记录';
+    }
+    if(u.records && u.records.length){
+      for(var j=0;j<u.records.length;j++){
+        var r = u.records[j];
+        recHtml += '<div class="delivery-row">';
+        recHtml += '<div class="delivery-top"><span class="delivery-period" style="font-size:14px;">' + r.date + '</span>';
+        recHtml += '<span class="tag tag-gray">' + r.amount + '</span></div>';
+        recHtml += '<div class="delivery-detail">' + r.note + '</div>';
+        recHtml += '</div>';
+      }
+    }
+    if(!u.records || !u.records.length) recHtml += '<div style="text-align:center;color:var(--text-3);padding:20px 0;font-size:13px;">暂无记录</div>';
+    document.getElementById('periodRecords').innerHTML = recHtml;
+    document.getElementById('periodNotice').textContent = u.notice;
+
+  } else {
+    panel1.querySelector('div[style*="font-size:12px"]').textContent = u.spec + ' · ' + u.frequency;
+
+    var sNums = document.querySelectorAll('.stat-num');
+    sNums[0].textContent = u.total;
+    sNums[1].textContent = u.done;
+    sNums[2].textContent = u.remain;
+    document.querySelectorAll('.stat-label')[0].textContent = '总次数';
+    document.querySelectorAll('.stat-label')[1].textContent = '已配送';
+    document.querySelectorAll('.stat-label')[2].textContent = '剩余';
+
+    document.querySelector('div[style*="font-size:12px"][style*="color:var(--text-3)"][style*="margin-top:2px"]').textContent = u.product + ' · ' + u.spec;
+
+    var nextInfo = document.getElementById('nextPanel');
+    nextInfo.querySelector('div[style*="font-size:12px"]:first-child').innerHTML = '下一次配送（第' + u.nextPeriod + '期）';
+    nextInfo.querySelector('div[style*="font-size:18px"]').textContent = u.nextDate;
+
+    var rows = document.querySelectorAll('.panel-inner .delivery-detail');
+    rows.forEach(function(r){
+      r.innerHTML = u.product + ' ' + u.spec + ' x1<br>' + u.name + ' ' + u.phone + ' · ' + u.address;
+    });
+
+    document.querySelector('.cell-value').textContent = '已完成' + u.done + '次';
+
+    document.getElementById('statusTag').className = 'tag tag-green';
+    document.getElementById('statusTag').textContent = '正常配送中';
+  }
 
   if(paused){
     paused = false;
@@ -613,8 +781,6 @@ function switchUser(type){
     btn.style.border = '1px solid #ddd';
     btn.style.color = 'var(--text-2)';
     btn.onclick = function(){ togglePause(); };
-    document.getElementById('statusTag').className = 'tag tag-green';
-    document.getElementById('statusTag').textContent = '正常配送中';
   }
 
   showToast('已切换到 ' + u.name + '（' + u.product + '）');

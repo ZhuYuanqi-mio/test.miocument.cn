@@ -12,7 +12,7 @@
 <div class="panel">
   <div class="stat-row" style="border-bottom:1px solid #f0f0f0;">
     <div class="stat-item">
-      <div class="stat-num">12</div>
+      <div class="stat-num">14</div>
       <div class="stat-label">客户总数</div>
     </div>
     <div class="stat-item">
@@ -139,6 +139,46 @@
       <button class="btn btn-sm btn-primary" onclick="openConfirm('刘女士',4)">配送完成</button>
     </div>
   </div>
+
+  <div style="padding:10px 16px 6px;font-size:12px;color:var(--text-3);background:#fafafa;border-bottom:1px solid #f0f0f0;">有效期型会员</div>
+
+  <div class="user-item" data-name="龚女士" data-phone="13600003300">
+    <div class="user-top">
+      <div class="user-avatar">龚</div>
+      <div class="user-meta">
+        <div class="user-name">龚女士 <span class="tag tag-green" style="margin-left:6px;">有效</span></div>
+        <div class="user-phone">136****3300 · 草莓采摘自由</div>
+      </div>
+    </div>
+    <div class="user-nums">
+      <div class="user-num-item"><div class="user-num-val">30<span style="font-size:12px;font-weight:400;">斤</span></div><div class="user-num-label">总量</div></div>
+      <div class="user-num-item"><div class="user-num-val text-green">9<span style="font-size:12px;font-weight:400;">斤</span></div><div class="user-num-label">已消耗</div></div>
+      <div class="user-num-item"><div class="user-num-val">21<span style="font-size:12px;font-weight:400;">斤</span></div><div class="user-num-label">剩余</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--text-3);padding:6px 0 2px;border-top:1px solid #f5f5f5;">有效期：2025.11 - 2026.11</div>
+    <div class="user-actions">
+      <button class="btn btn-sm btn-outline" onclick="openConsume('龚女士','草莓',30,9)">消耗记录</button>
+      <button class="btn btn-sm btn-primary" onclick="openDeduct('龚女士','草莓','斤',21)">扣除消耗</button>
+    </div>
+  </div>
+
+  <div class="user-item" data-name="晓媛" data-phone="13300008800">
+    <div class="user-top">
+      <div class="user-avatar">晓</div>
+      <div class="user-meta">
+        <div class="user-name">晓媛 <span class="tag tag-green" style="margin-left:6px;">有效</span></div>
+        <div class="user-phone">133****8800 · 共享菜地</div>
+      </div>
+    </div>
+    <div style="padding:10px 0;border-top:1px solid #f5f5f5;margin-top:8px;">
+      <div style="font-size:12px;color:var(--text-3);">有效期：2025年4月 - 2026年4月</div>
+      <div style="font-size:12px;color:var(--text-3);margin-top:2px;">产品：家庭耕种认领计划</div>
+    </div>
+    <div class="user-actions">
+      <button class="btn btn-sm btn-outline" onclick="openGardenLog('晓媛')">使用记录</button>
+      <button class="btn btn-sm btn-primary" onclick="openGardenAdd('晓媛')">添加记录</button>
+    </div>
+  </div>
 </div>
 
 <!-- 本周配送 -->
@@ -256,6 +296,95 @@
   </div>
 </div>
 
+<!-- 消耗记录弹窗 -->
+<div class="overlay" id="consumeModal">
+  <div class="sheet" style="max-height:60vh;">
+    <div class="sheet-head">
+      <span class="sheet-title" id="consumeTitle">消耗记录</span>
+      <button class="close" onclick="closeConsume()">X</button>
+    </div>
+    <div class="sheet-body" id="consumeBody"></div>
+  </div>
+</div>
+
+<!-- 扣除消耗弹窗 -->
+<div class="overlay" id="deductModal">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="sheet-title">扣除消耗</span>
+      <button class="close" onclick="closeDeduct()">X</button>
+    </div>
+    <div class="sheet-body">
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;">
+        <span style="color:var(--text-3);font-size:14px;">客户</span>
+        <span style="font-size:14px;font-weight:600;" id="deductName">龚女士</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;">
+        <span style="color:var(--text-3);font-size:14px;">当前剩余</span>
+        <span style="font-size:14px;font-weight:600;" id="deductRemain">21斤</span>
+      </div>
+      <div style="margin-top:16px;">
+        <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">本次消耗数量（<span id="deductUnit">斤</span>）</div>
+        <div class="stepper">
+          <button onclick="stepDeduct(-1)">-</button>
+          <div class="stepper-val" id="deductVal">1</div>
+          <button onclick="stepDeduct(1)">+</button>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">备注</div>
+        <input type="text" id="deductNote" placeholder="如：快递发货" style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:14px;">
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary btn-block" onclick="confirmDeduct()">确认扣除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 共享菜地使用记录弹窗 -->
+<div class="overlay" id="gardenLogModal">
+  <div class="sheet" style="max-height:60vh;">
+    <div class="sheet-head">
+      <span class="sheet-title">使用记录</span>
+      <button class="close" onclick="closeGardenLog()">X</button>
+    </div>
+    <div class="sheet-body" id="gardenLogBody"></div>
+  </div>
+</div>
+
+<!-- 共享菜地添加记录弹窗 -->
+<div class="overlay" id="gardenAddModal">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="sheet-title">添加使用记录</span>
+      <button class="close" onclick="closeGardenAdd()">X</button>
+    </div>
+    <div class="sheet-body">
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;">
+        <span style="color:var(--text-3);font-size:14px;">客户</span>
+        <span style="font-size:14px;font-weight:600;" id="gardenAddName">晓媛</span>
+      </div>
+      <div style="margin-top:16px;">
+        <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">使用类型</div>
+        <select id="gardenType" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 10px;font-size:14px;color:var(--text-1);background:#fff;">
+          <option>到店采摘</option>
+          <option>蔬菜配送</option>
+          <option>亲子活动</option>
+          <option>其他</option>
+        </select>
+      </div>
+      <div style="margin-top:16px;">
+        <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">详细内容</div>
+        <input type="text" id="gardenContent" placeholder="如：白菜、萝卜、菠菜" style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:14px;">
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary btn-block" onclick="confirmGardenAdd()">确认添加</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -330,6 +459,78 @@ function showToast(msg){
   void t.offsetWidth;
   t.classList.add('show');
   setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+
+var strawberryRecords = [
+  { date: '2026年1月20日', amount: '5斤', note: '快递发货' },
+  { date: '2026年1月1日', amount: '4斤', note: '快递发货' }
+];
+var gardenRecords = [
+  { date: '2026年4月5日', type: '到店采摘', note: '白菜、萝卜、菠菜' },
+  { date: '2026年3月22日', type: '到店采摘', note: '生菜、香菜、小葱' },
+  { date: '2026年3月8日', type: '蔬菜配送', note: '应季蔬菜5种' }
+];
+var deductData = {};
+
+function openConsume(name, product, total, used){
+  document.getElementById('consumeTitle').textContent = name + ' · 消耗记录';
+  var h = '<div style="display:flex;justify-content:space-between;padding:8px 0 12px;border-bottom:1px solid #f0f0f0;margin-bottom:8px;font-size:13px;color:var(--text-3);">';
+  h += '<span>总量 ' + total + '斤</span><span>已消耗 <b style="color:var(--green);">' + used + '</b>斤</span><span>剩余 <b>' + (total - used) + '</b>斤</span></div>';
+  for(var i = 0; i < strawberryRecords.length; i++){
+    var r = strawberryRecords[i];
+    h += '<div class="delivery-row"><div class="delivery-top"><span class="delivery-period" style="font-size:14px;">' + r.date + '</span>';
+    h += '<span class="tag tag-gray">' + r.amount + '</span></div>';
+    h += '<div class="delivery-detail">' + r.note + '</div></div>';
+  }
+  document.getElementById('consumeBody').innerHTML = h;
+  document.getElementById('consumeModal').classList.add('show');
+}
+function closeConsume(){ document.getElementById('consumeModal').classList.remove('show'); }
+
+function openDeduct(name, product, unit, remain){
+  deductData = { name: name, unit: unit, remain: remain, val: 1 };
+  document.getElementById('deductName').textContent = name;
+  document.getElementById('deductRemain').textContent = remain + unit;
+  document.getElementById('deductUnit').textContent = unit;
+  document.getElementById('deductVal').textContent = '1';
+  document.getElementById('deductNote').value = '';
+  document.getElementById('deductModal').classList.add('show');
+}
+function closeDeduct(){ document.getElementById('deductModal').classList.remove('show'); }
+function stepDeduct(d){
+  deductData.val = Math.max(1, Math.min(deductData.remain, deductData.val + d));
+  document.getElementById('deductVal').textContent = deductData.val;
+}
+function confirmDeduct(){
+  closeDeduct();
+  showToast('已扣除 ' + deductData.val + deductData.unit + '，通知已发送');
+}
+
+function openGardenLog(name){
+  var h = '';
+  for(var i = 0; i < gardenRecords.length; i++){
+    var r = gardenRecords[i];
+    h += '<div class="delivery-row"><div class="delivery-top"><span class="delivery-period" style="font-size:14px;">' + r.date + '</span>';
+    h += '<span class="tag tag-gray">' + r.type + '</span></div>';
+    h += '<div class="delivery-detail">' + r.note + '</div></div>';
+  }
+  document.getElementById('gardenLogBody').innerHTML = h;
+  document.getElementById('gardenLogModal').classList.add('show');
+}
+function closeGardenLog(){ document.getElementById('gardenLogModal').classList.remove('show'); }
+
+function openGardenAdd(name){
+  document.getElementById('gardenAddName').textContent = name;
+  document.getElementById('gardenContent').value = '';
+  document.getElementById('gardenAddModal').classList.add('show');
+}
+function closeGardenAdd(){ document.getElementById('gardenAddModal').classList.remove('show'); }
+function confirmGardenAdd(){
+  var type = document.getElementById('gardenType').value;
+  var content = document.getElementById('gardenContent').value.trim();
+  if(!content){ showToast('请填写详细内容'); return; }
+  closeGardenAdd();
+  showToast('使用记录已添加');
 }
 
 document.querySelectorAll('.overlay').forEach(function(m){
