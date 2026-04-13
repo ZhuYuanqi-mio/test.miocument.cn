@@ -17,7 +17,7 @@
     </div>
     <span class="tag tag-green" id="statusTag">正常配送中</span>
   </div>
-  <div style="border-top:1px solid #f0f0f0;">
+  <div style="border-top:1px solid #f0f0f0;" id="statRow">
     <div class="stat-row">
       <div class="stat-item">
         <div class="stat-num">24</div>
@@ -683,6 +683,7 @@ function switchUser(type){
     document.getElementById('periodStatusTag').textContent = '有效期内';
 
     if(u.unit){
+      document.getElementById('statRow').style.display = '';
       document.getElementById('periodTotalLabel').style.display = '';
       document.getElementById('periodUsedLabel').style.display = '';
       document.getElementById('periodRemainLabel').style.display = '';
@@ -704,20 +705,13 @@ function switchUser(type){
       document.querySelectorAll('.stat-label')[1].textContent = '已消耗';
       document.querySelectorAll('.stat-label')[2].textContent = '剩余';
     } else {
+      document.getElementById('statRow').style.display = 'none';
       document.getElementById('periodTotalLabel').style.display = 'none';
       document.getElementById('periodUsedLabel').style.display = 'none';
       document.getElementById('periodRemainLabel').style.display = 'none';
       document.getElementById('periodTotal').style.display = 'none';
       document.getElementById('periodUsed').style.display = 'none';
       document.getElementById('periodRemain').style.display = 'none';
-
-      var sNums = document.querySelectorAll('.stat-num');
-      sNums[0].textContent = '-';
-      sNums[1].textContent = '-';
-      sNums[2].textContent = '-';
-      document.querySelectorAll('.stat-label')[0].textContent = '总量';
-      document.querySelectorAll('.stat-label')[1].textContent = '已使用';
-      document.querySelectorAll('.stat-label')[2].textContent = '剩余';
     }
 
     var recHtml = '';
@@ -747,6 +741,7 @@ function switchUser(type){
     document.getElementById('periodNotice').textContent = u.notice;
 
   } else {
+    document.getElementById('statRow').style.display = '';
     panel1.querySelector('div[style*="font-size:12px"]').textContent = u.spec + ' · ' + u.frequency;
 
     var sNums = document.querySelectorAll('.stat-num');
