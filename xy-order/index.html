@@ -7,77 +7,82 @@
 <script src="https://gosspublic.alicdn.com/aliyun-oss-sdk-6.18.0.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue',sans-serif;background:#eef1f6;color:#2c3e50;min-height:100vh;-webkit-font-smoothing:antialiased}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue',sans-serif;background:#f7f7f7;color:#222;min-height:100vh;-webkit-font-smoothing:antialiased}
 .container{max-width:500px;margin:0 auto;padding:0 16px 96px}
 
-.top{background:linear-gradient(135deg,#3a7bd5,#5b9def);padding:32px 20px 28px;color:#fff;margin-bottom:-12px;position:relative}
-.top h1{font-size:19px;font-weight:600;letter-spacing:.5px}
-.top p{font-size:13px;opacity:.8;margin-top:5px;font-weight:400}
+.top{background:#222;padding:28px 20px 24px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+.top-left h1{font-size:18px;font-weight:600;letter-spacing:.3px}
+.top-left p{font-size:12px;opacity:.6;margin-top:4px;font-weight:400}
+.top-logo{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.15);flex-shrink:0;margin-left:16px}
 
-.section{background:#fff;border-radius:10px;margin:16px 0 0;overflow:hidden;border:1px solid #e2e8f0}
+.section{background:#fff;border-radius:8px;margin:14px 0 0;border:1px solid #e8e8e8}
 .section-body{padding:14px 16px 16px}
 .form-group{margin-bottom:16px}
 .form-group:last-child{margin-bottom:0}
-label{font-size:14px;font-weight:500;color:#334155;margin-bottom:6px;display:block}
-label .req{color:#e25555;margin-left:2px}
-label .hint{color:#94a3b8;font-weight:400;font-size:12px;margin-left:4px}
-input[type=text],input[type=datetime-local],textarea{width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;color:#1e293b;background:#fafbfc;outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit}
-input:focus,textarea:focus{border-color:#3a7bd5;box-shadow:0 0 0 3px rgba(58,123,213,.12)}
-::placeholder{color:#94a3b8}
+label{font-size:14px;font-weight:500;color:#333;margin-bottom:6px;display:block}
+label .req{color:#c00;margin-left:2px}
+label .hint{color:#999;font-weight:400;font-size:12px;margin-left:4px}
+input[type=text],input[type=datetime-local],textarea{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;color:#222;background:#fafafa;outline:none;transition:border-color .2s;font-family:inherit}
+input:focus,textarea:focus{border-color:#555}
+::placeholder{color:#aaa}
 textarea{min-height:90px;resize:vertical;line-height:1.6}
 
 .tags{display:flex;flex-wrap:wrap;gap:8px}
-.tags span{padding:7px 15px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#475569;cursor:pointer;transition:all .15s;user-select:none;background:#f8fafc}
-.tags span.on{border-color:#3a7bd5;background:#eef4fd;color:#2563eb;font-weight:500}
+.tags span{padding:7px 15px;border:1px solid #ccc;border-radius:6px;font-size:13px;color:#555;cursor:pointer;transition:all .15s;user-select:none;background:#fafafa}
+.tags span.on{border-color:#222;background:#222;color:#fff;font-weight:500}
 .tags span.custom{border-style:dashed}
+.tags span.custom.on{border-style:solid}
 .add-row{display:flex;gap:6px;margin-top:8px}
-.add-row input{flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;background:#fafbfc}
-.add-row input:focus{border-color:#3a7bd5}
-.add-row button{padding:7px 14px;border:1px solid #3a7bd5;border-radius:6px;background:#eef4fd;color:#2563eb;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
+.add-row input{flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;outline:none;background:#fafafa}
+.add-row input:focus{border-color:#555}
+.add-row button{padding:7px 14px;border:1px solid #222;border-radius:6px;background:#222;color:#fff;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
 
-.upload-area{border:1.5px dashed #c7d2e0;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:#f8fafc}
-.upload-area:active{background:#eef4fd;border-color:#3a7bd5}
-.upload-area .ico{font-size:24px;margin-bottom:4px}
-.upload-area .txt{font-size:13px;color:#64748b}
-.upload-area .sub{font-size:11px;color:#94a3b8;margin-top:2px}
+.upload-area{border:1.5px dashed #ccc;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:#fafafa}
+.upload-area:active{background:#f0f0f0;border-color:#999}
+.upload-area .ico{font-size:14px;color:#999;margin-bottom:4px}
+.upload-area .txt{font-size:13px;color:#666}
+.upload-area .sub{font-size:11px;color:#aaa;margin-top:2px}
 
 .img-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.img-item{width:68px;height:68px;border-radius:6px;overflow:hidden;position:relative;border:1px solid #e2e8f0}
+.img-item{width:68px;height:68px;border-radius:6px;overflow:hidden;position:relative;border:1px solid #e0e0e0}
 .img-item img{width:100%;height:100%;object-fit:cover}
-.img-item .x{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;font-size:11px;line-height:18px;text-align:center;cursor:pointer}
+.img-item .x{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:11px;line-height:18px;text-align:center;cursor:pointer}
 .img-item.uploading{opacity:.5}
-.img-item.uploading::after{content:'...';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.6);font-size:12px;color:#3a7bd5}
+.img-item.uploading::after{content:'...';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.6);font-size:12px;color:#555}
 
 .file-list{margin-top:10px}
-.file-row{display:flex;align-items:center;padding:9px 12px;background:#f1f5f9;border-radius:6px;margin-bottom:5px;font-size:13px}
-.file-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#334155}
-.file-row .sz{color:#94a3b8;margin:0 8px;flex-shrink:0;font-size:12px}
-.file-row .st{color:#3a7bd5;margin:0 6px;flex-shrink:0;font-size:11px}
-.file-row .rm{color:#e25555;cursor:pointer;flex-shrink:0;font-size:12px;font-weight:500}
+.file-row{display:flex;align-items:center;padding:9px 12px;background:#f5f5f5;border-radius:6px;margin-bottom:5px;font-size:13px}
+.file-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#333}
+.file-row .sz{color:#999;margin:0 8px;flex-shrink:0;font-size:12px}
+.file-row .st{margin:0 6px;flex-shrink:0;font-size:11px;color:#555}
+.file-row .rm{color:#c00;cursor:pointer;flex-shrink:0;font-size:12px;font-weight:500}
 
-.bar{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:12px 16px;border-top:1px solid #e2e8f0;z-index:100}
+.bar{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:12px 16px;border-top:1px solid #e0e0e0;z-index:100}
 .bar .inner{max-width:500px;margin:0 auto}
-.bar button{width:100%;padding:13px;border:none;border-radius:8px;background:linear-gradient(135deg,#3a7bd5,#5b9def);color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s;letter-spacing:.5px}
-.bar button:active{opacity:.85}
-.bar button:disabled{opacity:.45;cursor:not-allowed}
+.bar button{width:100%;padding:13px;border:none;border-radius:8px;background:#222;color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s;letter-spacing:.5px}
+.bar button:active{opacity:.75}
+.bar button:disabled{opacity:.35;cursor:not-allowed}
 
-.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(30,41,59,.85);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(34,34,34,.9);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.show{opacity:1}
 
 .done-screen{display:none;position:fixed;inset:0;background:#fff;z-index:200;justify-content:center;align-items:center;flex-direction:column}
 .done-screen.show{display:flex}
-.done-screen .check{width:56px;height:56px;border-radius:50%;background:#3a7bd5;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
-.done-screen .check svg{stroke:#fff;width:28px;height:28px}
-.done-screen h2{font-size:18px;font-weight:600;color:#1e293b;margin-bottom:4px}
-.done-screen p{font-size:13px;color:#64748b;margin-bottom:24px}
-.done-screen .again{padding:10px 36px;border:1.5px solid #3a7bd5;border-radius:8px;background:none;color:#3a7bd5;font-size:14px;font-weight:500;cursor:pointer}
+.done-screen .check{width:52px;height:52px;border-radius:50%;background:#222;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.done-screen .check svg{stroke:#fff;width:26px;height:26px}
+.done-screen h2{font-size:18px;font-weight:600;color:#222;margin-bottom:4px}
+.done-screen p{font-size:13px;color:#888;margin-bottom:24px}
+.done-screen .again{padding:10px 36px;border:1.5px solid #222;border-radius:8px;background:none;color:#222;font-size:14px;font-weight:500;cursor:pointer}
 </style>
 </head>
 <body>
 
 <div class="top">
-  <h1>咸鱼接单 · 提交任务</h1>
-  <p>填好信息提交，我尽快给你搞定</p>
+  <div class="top-left">
+    <h1>咸鱼接单 · 提交任务</h1>
+    <p>填好信息提交，我尽快给你搞定</p>
+  </div>
+  <img class="top-logo" src="https://my-video-storage-shihuang.oss-cn-wuhan-lr.aliyuncs.com/xianyu/logo.jpg" alt="">
 </div>
 
 <div class="container">
@@ -122,7 +127,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
       <div class="form-group">
         <label>上传图片</label>
         <div class="upload-area" onclick="document.getElementById('imgInput').click()">
-          <div class="ico">🖼</div>
+          <div class="ico">[ 图片 ]</div>
           <div class="txt">点击选择图片</div>
           <div class="sub">JPG / PNG，可多选</div>
         </div>
@@ -137,7 +142,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
       <div class="form-group">
         <label>上传文件</label>
         <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-          <div class="ico">📎</div>
+          <div class="ico">[ 文件 ]</div>
           <div class="txt">点击选择文件</div>
           <div class="sub">Word / Excel / PDF 等，可多选</div>
         </div>
@@ -174,10 +179,8 @@ var ossClient = new OSS({
 });
 var OSS_BASE = 'https://my-video-storage-shihuang.oss-cn-wuhan-lr.aliyuncs.com/';
 
-var images = []; // {name, url, localPreview, uploading}
-var files = [];  // {name, size, url, uploading}
+var images = [], files = [];
 
-// --- 任务类型 ---
 document.getElementById('taskTags').onclick = function(e){
   var s = e.target.closest('span[data-v]');
   if(s) s.classList.toggle('on');
@@ -204,15 +207,13 @@ function getTasks(){
   return a;
 }
 
-// --- OSS 上传 ---
 async function uploadToOSS(file, folder){
   var ext = file.name.split('.').pop();
   var key = 'xianyu/' + folder + '/' + Date.now() + '_' + Math.random().toString(36).slice(2,6) + '.' + ext;
-  var result = await ossClient.put(key, file);
+  await ossClient.put(key, file);
   return OSS_BASE + key;
 }
 
-// --- 图片处理 ---
 function handleImages(inp){
   Array.from(inp.files).forEach(function(f){
     if(!f.type.startsWith('image/')) return;
@@ -238,17 +239,15 @@ function renderImgs(){
   var h='';
   images.forEach(function(m,i){
     var cls = m.uploading ? 'img-item uploading' : 'img-item';
-    h+='<div class="'+cls+'"><img src="'+m.localPreview+'"><div class="x" onclick="removeImg('+i+')">×</div></div>';
+    h+='<div class="'+cls+'"><img src="'+m.localPreview+'"><div class="x" onclick="removeImg('+i+')">x</div></div>';
   });
   document.getElementById('imgList').innerHTML=h;
 }
 function removeImg(i){
   if(images[i].localPreview) URL.revokeObjectURL(images[i].localPreview);
-  images.splice(i,1);
-  renderImgs();
+  images.splice(i,1); renderImgs();
 }
 
-// --- 文件处理 ---
 function fmtSize(b){return b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';}
 function handleFiles(inp){
   Array.from(inp.files).forEach(function(f){
@@ -272,7 +271,7 @@ function handleFiles(inp){
 function renderFiles(){
   var h='';
   files.forEach(function(f,i){
-    var status = f.uploading ? '<span class="st">上传中...</span>' : (f.url==='FAILED' ? '<span class="st" style="color:#e25555">失败</span>' : '<span class="st" style="color:#16a34a">✓</span>');
+    var status = f.uploading ? '<span class="st">上传中...</span>' : (f.url==='FAILED' ? '<span class="st" style="color:#c00">失败</span>' : '<span class="st" style="color:#444">OK</span>');
     h+='<div class="file-row"><span class="nm">'+f.name+'</span><span class="sz">'+fmtSize(f.size)+'</span>'+status+'<span class="rm" onclick="files.splice('+i+',1);renderFiles()">删除</span></div>';
   });
   document.getElementById('fileList').innerHTML=h;
@@ -295,23 +294,16 @@ function submitOrder(){
   if(!dl){showToast('请选择最迟完成时间');return;}
   if(!tasks.length){showToast('请选择任务类型');return;}
   if(!isAllUploaded()){showToast('文件还在上传中，请稍候');return;}
-
   var validImgs = images.filter(function(m){return m.url && m.url!=='FAILED';});
   var validFiles = files.filter(function(f){return f.url && f.url!=='FAILED';});
-
   var btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='提交中...';
-
   var payload={order_json:JSON.stringify({
-    xianyu_name:name,
-    deadline:dl+':00+08:00',
-    task_types:tasks.join(','),
-    description:desc,
+    xianyu_name:name, deadline:dl+':00+08:00', task_types:tasks.join(','), description:desc,
     image_data:JSON.stringify(validImgs.map(function(m){return{name:m.name,url:m.url};})),
     file_data:JSON.stringify(validFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};})),
     status:'pending'
   })};
-
   if(ZION.create_xy_order){
     fetch(ZION.create_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
@@ -321,7 +313,6 @@ function submitOrder(){
     setTimeout(function(){btn.disabled=false;btn.textContent='提 交';document.getElementById('doneScreen').classList.add('show');},400);
   }
 }
-
 function resetForm(){
   document.getElementById('doneScreen').classList.remove('show');
   document.getElementById('xyName').value='';document.getElementById('deadline').value='';document.getElementById('desc').value='';
