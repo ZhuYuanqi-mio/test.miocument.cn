@@ -2,482 +2,986 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>后台管理 - 咯咯哒生态农场</title>
-<link rel="stylesheet" href="/css/style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>咯咯哒生态农场 · 后台管理</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--green:#4B9E3F;--green-light:#EDF7EB;--green-dark:#3D8535;--red:#E4393C;--orange:#F0A03C;--text-1:#333;--text-2:#666;--text-3:#999;--border:#e8e8e8;--bg:#f5f5f5;--white:#fff;--radius:10px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text-1);line-height:1.5}
+a{color:inherit;text-decoration:none}
+button{border:none;background:none;cursor:pointer;font-family:inherit;font-size:inherit}
+input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
+
+.app-header{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.app-header h1{font-size:18px;color:var(--text-1);display:flex;align-items:center;gap:8px}
+.app-header h1 span{color:var(--green);font-weight:400;font-size:13px;background:var(--green-light);padding:2px 8px;border-radius:4px}
+.header-actions{display:flex;gap:10px;align-items:center}
+
+.container{max-width:1200px;margin:0 auto;padding:20px 24px}
+
+.stats-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border)}
+.stat-card .sc-val{font-size:28px;font-weight:700;color:var(--text-1)}
+.stat-card .sc-label{font-size:13px;color:var(--text-3);margin-top:2px}
+.stat-card.green .sc-val{color:var(--green)}
+.stat-card.orange .sc-val{color:var(--orange)}
+.stat-card.red .sc-val{color:var(--red)}
+
+.toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.search-input{height:38px;border:1px solid var(--border);border-radius:8px;padding:0 14px;font-size:14px;width:260px;background:var(--white)}
+.search-input:focus{border-color:var(--green)}
+.filter-select{height:38px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-size:13px;background:var(--white);color:var(--text-1);min-width:120px}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:38px;border-radius:8px;font-size:13px;font-weight:500;padding:0 18px;cursor:pointer;transition:opacity .15s}
+.btn:active{opacity:.7}
+.btn-primary{background:var(--green);color:#fff}
+.btn-outline{border:1px solid var(--green);color:var(--green);background:var(--white)}
+.btn-outline-gray{border:1px solid #ddd;color:var(--text-2);background:var(--white)}
+.btn-danger{border:1px solid var(--red);color:var(--red);background:var(--white)}
+.btn-sm{height:30px;font-size:12px;padding:0 12px;border-radius:6px}
+.tag{display:inline-block;font-size:11px;line-height:20px;padding:0 8px;border-radius:3px;font-weight:500}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-orange{background:#FFF3E0;color:#E68A00}
+.tag-gray{background:#f0f0f0;color:var(--text-3)}
+.tag-red{background:#FFEBEE;color:var(--red)}
+.tag-blue{background:#E3F2FD;color:#1976D2}
+
+.upload-zone{border:2px dashed #ccc;border-radius:var(--radius);padding:40px;text-align:center;background:var(--white);cursor:pointer;transition:border-color .2s,background .2s}
+.upload-zone:hover{border-color:var(--green);background:var(--green-light)}
+.upload-zone.dragover{border-color:var(--green);background:var(--green-light)}
+.upload-zone h3{font-size:16px;color:var(--text-1);margin-bottom:6px}
+.upload-zone p{font-size:13px;color:var(--text-3)}
+
+.order-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px}
+.order-card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;transition:box-shadow .2s}
+.order-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.oc-head{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f0f0f0}
+.oc-avatar{width:40px;height:40px;border-radius:50%;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.oc-info{flex:1;min-width:0}
+.oc-name{font-size:15px;font-weight:600;display:flex;align-items:center;gap:6px}
+.oc-sub{font-size:12px;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oc-body{padding:14px 16px}
+.oc-row{display:flex;justify-content:space-between;font-size:13px;line-height:2}
+.oc-row .rl{color:var(--text-3)}
+.oc-row .rv{color:var(--text-1);font-weight:500;text-align:right;max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oc-delivery{margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0}
+.oc-delivery-title{font-size:12px;color:var(--text-3);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.oc-delivery-grid{display:flex;flex-wrap:wrap;gap:4px}
+.oc-d-item{font-size:11px;padding:3px 8px;border-radius:4px;background:#f5f5f5;color:var(--text-2)}
+.oc-d-item.done{background:var(--green-light);color:var(--green)}
+.oc-d-item.current{background:var(--green);color:#fff}
+.oc-d-item.strawberry{background:#FFF3E0;color:#E68A00}
+.oc-foot{padding:10px 16px;border-top:1px solid #f0f0f0;display:flex;gap:8px;flex-wrap:wrap}
+
+.overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:var(--white);border-radius:12px;width:90%;max-width:480px;max-height:80vh;display:flex;flex-direction:column;animation:modalIn .2s ease}
+@keyframes modalIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.modal-head h3{font-size:16px;font-weight:600}
+.modal-head .close{font-size:20px;color:var(--text-3);width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;color:var(--text-3);margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--green)}
+.form-group textarea{resize:none;min-height:60px}
+
+.toast{display:none;position:fixed;top:20px;right:20px;background:var(--green);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast.show{display:block;animation:toastSlide 2.5s ease forwards}
+@keyframes toastSlide{0%{opacity:0;transform:translateX(30px)}10%{opacity:1;transform:translateX(0)}85%{opacity:1}100%{opacity:0}}
+.empty-state{text-align:center;padding:80px 0}
+.empty-state h3{font-size:18px;color:var(--text-2);margin-bottom:8px}
+.empty-state p{font-size:14px;color:var(--text-3)}
+.stepper{display:inline-flex;align-items:center}
+.stepper button{width:32px;height:32px;border:1px solid #ddd;background:var(--white);font-size:16px;color:var(--text-2);display:flex;align-items:center;justify-content:center}
+.stepper button:first-child{border-radius:6px 0 0 6px}
+.stepper button:last-child{border-radius:0 6px 6px 0}
+.stepper-val{width:56px;height:32px;border-top:1px solid #ddd;border-bottom:1px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+.img-upload{margin-top:4px}
+.img-upload-zone{border:1px dashed #ccc;border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:border-color .2s;background:#fafafa}
+.img-upload-zone:hover{border-color:var(--green);background:var(--green-light)}
+.img-upload-zone svg{display:block;margin:0 auto 6px}
+.img-upload-zone span{font-size:13px;color:var(--text-3)}
+.img-preview-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.img-preview-item{position:relative;width:72px;height:72px;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.img-preview-item img{width:100%;height:100%;object-fit:cover}
+.img-preview-item .img-del{position:absolute;top:2px;right:2px;width:20px;height:20px;background:rgba(0,0,0,.55);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;line-height:1}
+.dup-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#FFF8E1;border-radius:6px;margin-bottom:6px;font-size:13px}
+.dup-item .dup-idx{width:24px;height:24px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.dup-item .dup-info{flex:1;min-width:0}
+.dup-item .dup-name{font-weight:600;color:var(--text-1)}
+.dup-item .dup-detail{font-size:12px;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+@media(max-width:768px){
+  .app-header{padding:0 14px;height:48px}
+  .app-header h1{font-size:15px;gap:6px}
+  .app-header h1 span{font-size:11px;padding:1px 6px}
+  .container{padding:12px 12px}
+  .stats-bar{grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .stat-card{padding:10px 12px}
+  .stat-card .sc-val{font-size:20px}
+  .stat-card .sc-label{font-size:11px}
+  .toolbar{gap:8px;margin-bottom:12px}
+  .search-input{width:100%;font-size:14px}
+  .filter-select{flex:1;min-width:0;font-size:13px}
+  .order-grid{grid-template-columns:1fr;gap:12px}
+  .oc-head{padding:12px 14px;gap:8px}
+  .oc-avatar{width:36px;height:36px;font-size:14px}
+  .oc-name{font-size:14px;flex-wrap:wrap;gap:4px}
+  .oc-sub{font-size:11px}
+  .oc-body{padding:10px 14px}
+  .oc-row{font-size:12px;line-height:1.8}
+  .oc-foot{padding:10px 14px;gap:6px}
+  .btn-sm{height:28px;font-size:11px;padding:0 10px}
+  .btn{height:34px;font-size:12px;padding:0 14px}
+  .upload-zone{padding:28px 16px}
+  .upload-zone h3{font-size:14px}
+  .upload-zone p{font-size:12px}
+  .modal{width:94%;max-width:none;border-radius:10px;max-height:85vh}
+  .modal-head{padding:12px 16px}
+  .modal-head h3{font-size:15px}
+  .modal-body{padding:14px 16px}
+  .modal-foot{padding:10px 16px}
+  .toast{top:12px;right:12px;left:12px;text-align:center;font-size:13px;padding:10px 16px}
+  .empty-state{padding:50px 0}
+  .empty-state h3{font-size:16px}
+}
+
+@media(max-width:374px){
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .stat-card .sc-val{font-size:18px}
+  .oc-name{font-size:13px}
+  .oc-row{font-size:11px}
+}
+</style>
 </head>
 <body>
 
-<!-- 概览 -->
-<div class="panel">
-  <div class="stat-row" style="border-bottom:1px solid #f0f0f0;">
-    <div class="stat-item">
-      <div class="stat-num">14</div>
-      <div class="stat-label">客户总数</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num text-green">9</div>
-      <div class="stat-label">正常配送</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num text-orange">2</div>
-      <div class="stat-label">已暂停</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num text-3">1</div>
-      <div class="stat-label">已用完</div>
-    </div>
+<div class="app-header">
+  <h1>咯咯哒生态农场 <span>后台管理</span></h1>
+  <div class="header-actions">
+    <button class="btn btn-outline" onclick="triggerImport()">导入表格</button>
+    <button class="btn btn-primary" onclick="exportExcel()">导出表格</button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFile(this)">
   </div>
 </div>
 
-<!-- Tabs -->
-<div class="admin-tabs">
-  <div class="admin-tab active" onclick="switchTab(this,'tab-users')">用户管理</div>
-  <div class="admin-tab" onclick="switchTab(this,'tab-delivery')">本周配送</div>
-</div>
+<div class="container">
+  <div class="stats-bar" id="statsBar" style="display:none">
+    <div class="stat-card"><div class="sc-val" id="s-total">0</div><div class="sc-label">订单总数</div></div>
+    <div class="stat-card green"><div class="sc-val" id="s-egg">0</div><div class="sc-label">鸡蛋会员</div></div>
+    <div class="stat-card green"><div class="sc-val" id="s-veg">0</div><div class="sc-label">蔬菜会员</div></div>
+    <div class="stat-card orange"><div class="sc-val" id="s-other">0</div><div class="sc-label">鸡/草莓/菜地</div></div>
+    <div class="stat-card"><div class="sc-val" id="s-amount">0</div><div class="sc-label">总收入(元)</div></div>
+  </div>
 
-<!-- 用户管理 -->
-<div id="tab-users">
-  <div class="search-wrap">
-    <div class="search-box">
-      <span style="color:#bbb;font-size:14px;">S</span>
-      <input type="text" placeholder="搜索姓名或手机号" oninput="searchUser(this.value)">
+  <div class="toolbar" id="toolbar" style="display:none">
+    <input type="text" class="search-input" placeholder="搜索微信名、商品、会员类型..." oninput="filterCards()" id="searchInput">
+    <select class="filter-select" id="filterType" onchange="filterCards()">
+      <option value="">全部类型</option>
+      <option value="鸡蛋会员">鸡蛋会员</option>
+      <option value="蔬菜会员">蔬菜会员</option>
+      <option value="鸡会员">鸡会员</option>
+      <option value="草莓会员">草莓会员</option>
+      <option value="共享菜地">共享菜地</option>
+    </select>
+    <select class="filter-select" id="filterStatus" onchange="filterCards()">
+      <option value="">全部状态</option>
+      <option value="active">进行中</option>
+      <option value="done">已完成</option>
+    </select>
+  </div>
+
+  <div id="uploadArea">
+    <div class="upload-zone" id="dropZone" onclick="triggerImport()">
+      <h3>点击或拖拽导入 Excel 表格</h3>
+      <p>支持 .xlsx / .xls 格式，将自动解析会员信息</p>
     </div>
   </div>
 
-  <div class="user-item" data-name="王女士" data-phone="13866668888">
-    <div class="user-top">
-      <div class="user-avatar">王</div>
-      <div class="user-meta">
-        <div class="user-name">王女士 <span class="tag tag-green" style="margin-left:6px;" id="wangTag">正常</span></div>
-        <div class="user-phone">138****6688 · 咯咯哒生态鸡蛋 30枚/份</div>
-      </div>
-    </div>
-    <div class="user-nums">
-      <div class="user-num-item"><div class="user-num-val">24</div><div class="user-num-label">总次数</div></div>
-      <div class="user-num-item"><div class="user-num-val text-green">5</div><div class="user-num-label">已配送</div></div>
-      <div class="user-num-item"><div class="user-num-val">19</div><div class="user-num-label">剩余</div></div>
-    </div>
-    <div class="user-actions">
-      <button class="btn btn-sm btn-outline" onclick="openAdjust('王女士',24)">调整次数</button>
-      <button class="btn btn-sm btn-outline-gray" id="wangPauseBtn" onclick="toggleAdminPause('王女士')">暂停</button>
-    </div>
-  </div>
-
-  <div class="user-item" data-name="李先生" data-phone="13912345678">
-    <div class="user-top">
-      <div class="user-avatar">李</div>
-      <div class="user-meta">
-        <div class="user-name">李先生 <span class="tag tag-green" style="margin-left:6px;" id="liTag">正常</span></div>
-        <div class="user-phone">139****5678 · 有机蔬菜 8种/份</div>
-      </div>
-    </div>
-    <div class="user-nums">
-      <div class="user-num-item"><div class="user-num-val">12</div><div class="user-num-label">总次数</div></div>
-      <div class="user-num-item"><div class="user-num-val text-green">8</div><div class="user-num-label">已配送</div></div>
-      <div class="user-num-item"><div class="user-num-val">4</div><div class="user-num-label">剩余</div></div>
-    </div>
-    <div class="user-actions">
-      <button class="btn btn-sm btn-outline" onclick="openAdjust('李先生',12)">调整次数</button>
-      <button class="btn btn-sm btn-outline-gray" id="liPauseBtn" onclick="toggleAdminPause('李先生')">暂停</button>
-    </div>
-  </div>
-
-  <div class="user-item" data-name="张太太" data-phone="15088889999">
-    <div class="user-top">
-      <div class="user-avatar">张</div>
-      <div class="user-meta">
-        <div class="user-name">张太太 <span class="tag tag-orange" style="margin-left:6px;" id="zhangTag">已暂停</span></div>
-        <div class="user-phone">150****9999 · 药膳鸡 1只/份</div>
-      </div>
-    </div>
-    <div class="user-nums">
-      <div class="user-num-item"><div class="user-num-val">24</div><div class="user-num-label">总次数</div></div>
-      <div class="user-num-item"><div class="user-num-val text-green">10</div><div class="user-num-label">已配送</div></div>
-      <div class="user-num-item"><div class="user-num-val">14</div><div class="user-num-label">剩余</div></div>
-    </div>
-    <div class="user-actions">
-      <button class="btn btn-sm btn-outline" onclick="openAdjust('张太太',24)">调整次数</button>
-      <button class="btn btn-sm btn-outline" id="zhangPauseBtn" style="border-color:var(--green);color:var(--green);" onclick="toggleAdminPause('张太太')">恢复配送</button>
-    </div>
-  </div>
-
-  <div class="user-item" data-name="陈先生" data-phone="13700001111">
-    <div class="user-top">
-      <div class="user-avatar">陈</div>
-      <div class="user-meta">
-        <div class="user-name">陈先生 <span class="tag tag-gray" style="margin-left:6px;">已用完</span></div>
-        <div class="user-phone">137****1111 · 咯咯哒生态鸡蛋 30枚/份</div>
-      </div>
-    </div>
-    <div class="user-nums">
-      <div class="user-num-item"><div class="user-num-val">12</div><div class="user-num-label">总次数</div></div>
-      <div class="user-num-item"><div class="user-num-val text-green">12</div><div class="user-num-label">已配送</div></div>
-      <div class="user-num-item"><div class="user-num-val text-3">0</div><div class="user-num-label">剩余</div></div>
-    </div>
-    <div class="user-actions">
-      <button class="btn btn-sm btn-outline" onclick="openAdjust('陈先生',12)">调整次数</button>
-      <button class="btn btn-sm btn-outline-gray" disabled style="opacity:.5;">已用完</button>
-    </div>
-  </div>
-
-  <div class="user-item" data-name="刘女士" data-phone="18611112222">
-    <div class="user-top">
-      <div class="user-avatar">刘</div>
-      <div class="user-meta">
-        <div class="user-name">刘女士 <span class="tag tag-green" style="margin-left:6px;" id="liuTag">正常</span></div>
-        <div class="user-phone">186****2222 · 有机蔬菜+鸡蛋包年套餐</div>
-      </div>
-    </div>
-    <div class="user-nums">
-      <div class="user-num-item"><div class="user-num-val">24</div><div class="user-num-label">总次数</div></div>
-      <div class="user-num-item"><div class="user-num-val text-green">3</div><div class="user-num-label">已配送</div></div>
-      <div class="user-num-item"><div class="user-num-val">21</div><div class="user-num-label">剩余</div></div>
-    </div>
-    <div class="user-actions">
-      <button class="btn btn-sm btn-outline" onclick="openAdjust('刘女士',24)">调整次数</button>
-      <button class="btn btn-sm btn-outline-gray" id="liuPauseBtn" onclick="toggleAdminPause('刘女士')">暂停</button>
-    </div>
-  </div>
-
-  <div style="padding:10px 16px 6px;font-size:12px;color:var(--text-3);background:#fafafa;border-bottom:1px solid #f0f0f0;">有效期型会员</div>
-
-  <div class="user-item" data-name="龚女士" data-phone="13600003300">
-    <div class="user-top">
-      <div class="user-avatar">龚</div>
-      <div class="user-meta">
-        <div class="user-name">龚女士 <span class="tag tag-green" style="margin-left:6px;">有效</span></div>
-        <div class="user-phone">136****3300 · 草莓采摘自由</div>
-      </div>
-    </div>
-    <div class="user-nums">
-      <div class="user-num-item"><div class="user-num-val">30.00<span style="font-size:12px;font-weight:400;">斤</span></div><div class="user-num-label">总量</div></div>
-      <div class="user-num-item"><div class="user-num-val text-green">9.00<span style="font-size:12px;font-weight:400;">斤</span></div><div class="user-num-label">已消耗</div></div>
-      <div class="user-num-item"><div class="user-num-val">21.00<span style="font-size:12px;font-weight:400;">斤</span></div><div class="user-num-label">剩余</div></div>
-    </div>
-    <div style="font-size:12px;color:var(--text-3);padding:6px 0 2px;border-top:1px solid #f5f5f5;">有效期：2025.11 - 2026.11</div>
-    <div class="user-actions">
-      <button class="btn btn-sm btn-outline" onclick="openConsume('龚女士','草莓',30.00,9.00)">消耗记录</button>
-      <button class="btn btn-sm btn-primary" onclick="openDeduct('龚女士','草莓','斤',21.00)">扣除消耗</button>
-    </div>
-  </div>
-
-  <div class="user-item" data-name="晓媛" data-phone="13300008800">
-    <div class="user-top">
-      <div class="user-avatar">晓</div>
-      <div class="user-meta">
-        <div class="user-name">晓媛 <span class="tag tag-green" style="margin-left:6px;">有效</span></div>
-        <div class="user-phone">133****8800 · 共享菜地</div>
-      </div>
-    </div>
-    <div style="padding:10px 0;border-top:1px solid #f5f5f5;margin-top:8px;">
-      <div style="font-size:12px;color:var(--text-3);">有效期：2025年4月 - 2026年4月</div>
-      <div style="font-size:12px;color:var(--text-3);margin-top:2px;">产品：家庭耕种认领计划</div>
-    </div>
-    <div class="user-actions">
-      <button class="btn btn-sm btn-outline" onclick="openGardenLog('晓媛')">使用记录</button>
-      <button class="btn btn-sm btn-primary" onclick="openGardenAdd('晓媛')">添加记录</button>
-    </div>
-  </div>
-</div>
-
-<!-- 本周配送 -->
-<div id="tab-delivery" style="display:none;">
-  <div class="notice-bar">本周待配送（4月11日 周五），确认后自动发送通知</div>
-
-  <div class="user-item">
-    <div class="user-top">
-      <div class="user-avatar">王</div>
-      <div class="user-meta">
-        <div class="user-name">王女士 · 第6期</div>
-        <div class="user-phone">138****6688</div>
-      </div>
-      <span class="tag tag-red">待配送</span>
-    </div>
-    <div style="font-size:13px;color:var(--text-3);margin-top:8px;padding-top:8px;border-top:1px solid #f5f5f5;">
-      <div>北京市东城区幸福大街88号阳光花园6号楼301</div>
-      <div style="margin-top:2px;">咯咯哒生态鸡蛋 x 1份</div>
-    </div>
-    </div>
-
-  <div class="user-item">
-    <div class="user-top">
-      <div class="user-avatar">李</div>
-      <div class="user-meta">
-        <div class="user-name">李先生 · 第9期</div>
-        <div class="user-phone">139****5678</div>
-      </div>
-      <span class="tag tag-red">待配送</span>
-    </div>
-    <div style="font-size:13px;color:var(--text-3);margin-top:8px;padding-top:8px;border-top:1px solid #f5f5f5;">
-      <div>北京市丰台区绿洲路12号翠微园3栋1602</div>
-      <div style="margin-top:2px;">咯咯哒生态鸡蛋 x 1份</div>
-    </div>
-  </div>
-
-  <div class="user-item">
-    <div class="user-top">
-      <div class="user-avatar">刘</div>
-      <div class="user-meta">
-        <div class="user-name">刘女士 · 第4期</div>
-        <div class="user-phone">186****2222</div>
-      </div>
-      <span class="tag tag-red">待配送</span>
-    </div>
-    <div style="font-size:13px;color:var(--text-3);margin-top:8px;padding-top:8px;border-top:1px solid #f5f5f5;">
-      <div>北京市通州区新华路36号悦景苑5号楼801</div>
-      <div style="margin-top:2px;">咯咯哒生态鸡蛋 x 1份</div>
-    </div>
+  <div class="order-grid" id="orderGrid"></div>
+  <div class="empty-state" id="emptyState" style="display:none">
+    <h3>没有匹配的结果</h3>
+    <p>试试调整搜索条件或筛选项</p>
   </div>
 </div>
 
 <!-- 调整次数弹窗 -->
 <div class="overlay" id="adjustModal">
-  <div class="sheet">
-    <div class="sheet-head">
-      <span class="sheet-title">调整配送次数</span>
-      <button class="close" onclick="closeAdjust()">X</button>
-    </div>
-    <div class="sheet-body">
-      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;">
-        <span style="color:var(--text-3);font-size:14px;">客户</span>
-        <span style="font-size:14px;font-weight:600;" id="adjName">王女士</span>
+  <div class="modal">
+    <div class="modal-head"><h3>调整配送次数</h3><button class="close" onclick="closeModal('adjustModal')">X</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>客户</label>
+        <input type="text" id="adj-name" readonly style="background:#f9f9f9">
       </div>
-      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;">
-        <span style="color:var(--text-3);font-size:14px;">当前总次数</span>
-        <span style="font-size:14px;font-weight:600;" id="adjTotal">24次</span>
+      <div class="form-group">
+        <label>当前次数/数量</label>
+        <input type="text" id="adj-current" readonly style="background:#f9f9f9">
       </div>
-
-      <div style="margin-top:16px;">
-        <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">调整数量</div>
-        <div style="display:flex;align-items:center;gap:12px;">
+      <div class="form-group">
+        <label>调整数量</label>
+        <div style="display:flex;align-items:center;gap:12px">
           <div class="stepper">
             <button onclick="stepAdj(-1)">-</button>
-            <div class="stepper-val" id="adjVal">0</div>
+            <div class="stepper-val" id="adj-val">0</div>
             <button onclick="stepAdj(1)">+</button>
           </div>
-          <span style="font-size:13px;color:var(--text-3);" id="adjResult">调整后：24次</span>
+          <span style="font-size:13px;color:var(--text-3)" id="adj-result"></span>
         </div>
       </div>
-
-      <div style="margin-top:16px;">
-        <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">变更原因</div>
-        <select style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 10px;font-size:14px;color:var(--text-1);background:#fff;">
-          <option>客户续费</option>
-          <option>赠送补偿</option>
-          <option>订单退款</option>
-          <option>数据纠正</option>
-          <option>其他原因</option>
-        </select>
+      <div class="form-group">
+        <label>变更原因</label>
+        <select id="adj-reason"><option>客户续费</option><option>赠送补偿</option><option>订单退款</option><option>数据纠正</option><option>其他原因</option></select>
       </div>
-      <div class="upload-area">
-        <label>图片备注（可选）</label>
-        <div class="upload-zone" id="adjUploadZone">
-          <div class="upload-btn" onclick="triggerUpload('adjUpload')"><span class="upload-icon">+</span>上传图片</div>
+      <div class="form-group">
+        <label>备注</label>
+        <textarea id="adj-note" placeholder="可选"></textarea>
+      </div>
+      <div class="form-group">
+        <label>备注图片</label>
+        <div class="img-upload">
+          <div class="img-upload-zone" onclick="document.getElementById('adj-img-input').click()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            <span>点击上传图片</span>
+          </div>
+          <input type="file" id="adj-img-input" accept="image/*" multiple style="display:none" onchange="handleImgUpload(this,'adj-imgs')">
+          <div class="img-preview-list" id="adj-imgs"></div>
         </div>
-        <input type="file" id="adjUpload" accept="image/*" multiple style="display:none;" onchange="handleUpload(this,'adjUploadZone')">
       </div>
     </div>
-    <div class="sheet-foot">
-      <button class="btn btn-primary btn-block" onclick="confirmAdj()">确认调整</button>
+    <div class="modal-foot">
+      <button class="btn btn-outline-gray" onclick="closeModal('adjustModal')">取消</button>
+      <button class="btn btn-primary" onclick="confirmAdj()">确认调整</button>
     </div>
   </div>
 </div>
 
-<!-- 配送确认弹窗 -->
-<div class="overlay" id="confirmModal">
-  <div class="sheet">
-    <div class="sheet-head">
-      <span class="sheet-title">确认完成配送</span>
-      <button class="close" onclick="closeConfirm()">X</button>
-    </div>
-    <div class="sheet-body">
-      <div style="font-size:14px;color:var(--text-3);line-height:1.8;margin-bottom:12px;">
-        将为 <span id="cfmUser" style="color:var(--green);font-weight:600;">王女士</span> 的第 <span id="cfmPeriod" style="color:var(--green);font-weight:600;">6</span> 期标记已完成，并自动发送配送完成通知
-      </div>
-      <div class="upload-area" style="margin-top:0;">
-        <label>配送凭证（可选）</label>
-        <div class="upload-zone" id="cfmUploadZone">
-          <div class="upload-btn" onclick="triggerUpload('cfmUpload')"><span class="upload-icon">+</span>上传图片</div>
-        </div>
-        <input type="file" id="cfmUpload" accept="image/*" multiple style="display:none;" onchange="handleUpload(this,'cfmUploadZone')">
-      </div>
-    </div>
-    <div class="sheet-foot" style="display:flex;gap:12px;">
-      <button class="btn btn-outline" style="flex:1;" onclick="closeConfirm()">取消</button>
-      <button class="btn btn-primary" style="flex:1;" onclick="doConfirm()">确认</button>
-    </div>
-  </div>
-</div>
-
-<!-- 消耗记录弹窗 -->
-<div class="overlay" id="consumeModal">
-  <div class="sheet" style="max-height:60vh;">
-    <div class="sheet-head">
-      <span class="sheet-title" id="consumeTitle">消耗记录</span>
-      <button class="close" onclick="closeConsume()">X</button>
-    </div>
-    <div class="sheet-body" id="consumeBody"></div>
-  </div>
-</div>
-
-<!-- 扣除消耗弹窗 -->
+<!-- 消耗扣除弹窗(草莓) -->
 <div class="overlay" id="deductModal">
-  <div class="sheet">
-    <div class="sheet-head">
-      <span class="sheet-title">扣除消耗</span>
-      <button class="close" onclick="closeDeduct()">X</button>
-    </div>
-    <div class="sheet-body">
-      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;">
-        <span style="color:var(--text-3);font-size:14px;">客户</span>
-        <span style="font-size:14px;font-weight:600;" id="deductName">龚女士</span>
+  <div class="modal">
+    <div class="modal-head"><h3>扣除消耗</h3><button class="close" onclick="closeModal('deductModal')">X</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>客户</label>
+        <input type="text" id="ded-name" readonly style="background:#f9f9f9">
       </div>
-      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;">
-        <span style="color:var(--text-3);font-size:14px;">当前剩余</span>
-        <span style="font-size:14px;font-weight:600;" id="deductRemain">21斤</span>
+      <div class="form-group">
+        <label>当前剩余</label>
+        <input type="text" id="ded-remain" readonly style="background:#f9f9f9">
       </div>
-      <div style="margin-top:16px;">
-        <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">本次消耗数量（<span id="deductUnit">斤</span>）</div>
-        <div class="stepper">
-          <button onclick="stepDeduct(-1)">-</button>
-          <div class="stepper-val" id="deductVal">1</div>
-          <button onclick="stepDeduct(1)">+</button>
+      <div class="form-group">
+        <label>本次消耗数量（斤）</label>
+        <input type="text" id="ded-val" inputmode="decimal" placeholder="请输入重量，如 3.2" style="width:160px">
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <input type="text" id="ded-note" placeholder="如：快递发货">
+      </div>
+      <div class="form-group">
+        <label>备注图片</label>
+        <div class="img-upload">
+          <div class="img-upload-zone" onclick="document.getElementById('ded-img-input').click()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            <span>点击上传图片</span>
+          </div>
+          <input type="file" id="ded-img-input" accept="image/*" multiple style="display:none" onchange="handleImgUpload(this,'ded-imgs')">
+          <div class="img-preview-list" id="ded-imgs"></div>
         </div>
       </div>
-      <div style="margin-top:16px;">
-        <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">备注</div>
-        <input type="text" id="deductNote" placeholder="如：快递发货" style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:14px;">
-      </div>
-      <div class="upload-area">
-        <label>图片凭证（可选）</label>
-        <div class="upload-zone" id="deductUploadZone">
-          <div class="upload-btn" onclick="triggerUpload('deductUpload')"><span class="upload-icon">+</span>上传图片</div>
-        </div>
-        <input type="file" id="deductUpload" accept="image/*" multiple style="display:none;" onchange="handleUpload(this,'deductUploadZone')">
-      </div>
     </div>
-    <div class="sheet-foot">
-      <button class="btn btn-primary btn-block" onclick="confirmDeduct()">确认扣除</button>
+    <div class="modal-foot">
+      <button class="btn btn-outline-gray" onclick="closeModal('deductModal')">取消</button>
+      <button class="btn btn-primary" onclick="confirmDeduct()">确认扣除</button>
     </div>
   </div>
 </div>
 
-<!-- 共享菜地使用记录弹窗 -->
-<div class="overlay" id="gardenLogModal">
-  <div class="sheet" style="max-height:60vh;">
-    <div class="sheet-head">
-      <span class="sheet-title">使用记录</span>
-      <button class="close" onclick="closeGardenLog()">X</button>
-    </div>
-    <div class="sheet-body" id="gardenLogBody"></div>
+<!-- 配送记录详情弹窗 -->
+<div class="overlay" id="detailModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head"><h3 id="detail-title">配送记录</h3><button class="close" onclick="closeModal('detailModal')">X</button></div>
+    <div class="modal-body" id="detail-body"></div>
   </div>
 </div>
 
-<!-- 共享菜地添加记录弹窗 -->
-<div class="overlay" id="gardenAddModal">
-  <div class="sheet">
-    <div class="sheet-head">
-      <span class="sheet-title">添加使用记录</span>
-      <button class="close" onclick="closeGardenAdd()">X</button>
-    </div>
-    <div class="sheet-body">
-      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;">
-        <span style="color:var(--text-3);font-size:14px;">客户</span>
-        <span style="font-size:14px;font-weight:600;" id="gardenAddName">晓媛</span>
-      </div>
-      <div style="margin-top:16px;">
-        <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">使用类型</div>
-        <select id="gardenType" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 10px;font-size:14px;color:var(--text-1);background:#fff;">
-          <option>到店采摘</option>
-          <option>蔬菜配送</option>
-          <option>亲子活动</option>
-          <option>其他</option>
-        </select>
-      </div>
-      <div style="margin-top:16px;">
-        <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">详细内容</div>
-        <input type="text" id="gardenContent" placeholder="如：白菜、萝卜、菠菜" style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:14px;">
-      </div>
-      <div class="upload-area">
-        <label>图片记录（可选）</label>
-        <div class="upload-zone" id="gardenUploadZone">
-          <div class="upload-btn" onclick="triggerUpload('gardenUpload')"><span class="upload-icon">+</span>上传图片</div>
+<!-- 备注图片弹窗 -->
+<div class="overlay" id="remarkImgModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><h3 id="remark-img-title">备注图片</h3><button class="close" onclick="closeModal('remarkImgModal')">X</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <div class="img-upload">
+          <div class="img-upload-zone" onclick="document.getElementById('remark-img-input').click()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            <span>点击上传图片（可多选）</span>
+          </div>
+          <input type="file" id="remark-img-input" accept="image/*" multiple style="display:none" onchange="handleRemarkImgUpload(this)">
+          <div class="img-preview-list" id="remark-imgs"></div>
         </div>
-        <input type="file" id="gardenUpload" accept="image/*" multiple style="display:none;" onchange="handleUpload(this,'gardenUploadZone')">
       </div>
     </div>
-    <div class="sheet-foot">
-      <button class="btn btn-primary btn-block" onclick="confirmGardenAdd()">确认添加</button>
+    <div class="modal-foot">
+      <button class="btn btn-outline-gray" onclick="closeModal('remarkImgModal')">关闭</button>
+      <button class="btn btn-primary" onclick="saveRemarkImgs()">保存</button>
     </div>
+  </div>
+</div>
+
+<!-- 重复数据弹窗 -->
+<div class="overlay" id="dupModal">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-head"><h3>发现重复数据</h3><button class="close" onclick="closeModal('dupModal')">X</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:12px">以下 <strong id="dup-count">0</strong> 条数据与已有订单重复（微信名+商品名+支付时间相同），已自动跳过。</p>
+      <div id="dup-list" style="max-height:300px;overflow-y:auto"></div>
+      <p style="font-size:13px;color:var(--text-3);margin-top:12px">不重复的数据已成功导入。如需覆盖重复数据，请点击「覆盖导入」。</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline-gray" onclick="closeModal('dupModal')">跳过重复</button>
+      <button class="btn btn-primary" onclick="forceImportDups()">覆盖导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- 图片预览弹窗 -->
+<div class="overlay" id="imgPreviewModal" style="background:rgba(0,0,0,.8)">
+  <div style="position:relative;max-width:90vw;max-height:90vh">
+    <img id="preview-img" style="max-width:90vw;max-height:85vh;border-radius:8px;display:block">
+    <button style="position:absolute;top:-12px;right:-12px;width:32px;height:32px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#333;box-shadow:0 2px 8px rgba(0,0,0,.2)" onclick="closeModal('imgPreviewModal')">X</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-var adjTotal = 24, adjDelta = 0;
+var orders = [];
+var adjData = {};
+var orderImages = {};
+var currentRemarkIdx = null;
+var currentDeductIdx = null;
+var pendingDups = [];
+var nextIdx = 1;
 
-function switchTab(tab, id){
-  document.querySelectorAll('.admin-tab').forEach(function(t){ t.classList.remove('active'); });
-  tab.classList.add('active');
-  document.getElementById('tab-users').style.display = id === 'tab-users' ? '' : 'none';
-  document.getElementById('tab-delivery').style.display = id === 'tab-delivery' ? '' : 'none';
+var ZION = {
+  create_member: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/247542fb-3078-4ca8-b622-7b2183caab4b',
+  create_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/c222ca8b-693f-4bd7-a038-fbb7cbf5a6b2',
+  create_delivery_record: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/0fb85988-f446-409e-b7cf-9c44e165c52c',
+  create_adjust_log: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/7907638c-110e-41b0-899a-7815af0f10bc',
+  get_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/2df7e8d5-8990-469d-b589-f0080d5e0068',
+  update_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/d1ac7a26-b198-4727-aa77-19e2e7da3619',
+  list_orders: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/20ac40dd-0181-43c8-beaf-6e4c9636b3ed',
+  delete_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/9402a4bf-db53-4d38-9a61-dfcda0eda2f4'
+};
+
+async function callZion(url, data){
+  var res = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  return await res.json();
 }
 
-function searchUser(kw){
-  kw = kw.toLowerCase();
-  document.querySelectorAll('#tab-users .user-item').forEach(function(u){
-    var n = (u.dataset.name || '').toLowerCase();
-    var p = u.dataset.phone || '';
-    u.style.display = (n.indexOf(kw) >= 0 || p.indexOf(kw) >= 0) ? '' : 'none';
+function toISO(d){ return d?(d.indexOf('T')>=0?d:d+'T00:00:00+08:00'):null; }
+function unitByType(t){ return t==='鸡会员'?'只':t==='草莓会员'?'斤':t==='共享菜地'?'月':'次'; }
+
+async function syncToBackend(list){
+  var ok=0,fail=0;
+  showToast('正在同步到后端（'+list.length+'条）...');
+  for(var i=0;i<list.length;i++){
+    var o=list[i];
+    try{
+      var payload={phone:'',wechat_name:o.wechat,source:o.source,repurchase:o.repurchase,
+        member_type:o.memberType,category:o.category,product_name:o.productName,
+        total_count:o.totalNum,total_unit:unitByType(o.memberType),
+        price:parseNum(o.price),discount:parseNum(o.discount),amount_paid:o.amount,
+        platform:o.platform,pay_time:toISO(o.payTime),
+        delivery_method:o.deliveryMethod,status:'active'};
+      var r=await callZion(ZION.create_order,{order_json:JSON.stringify(payload)});
+      if(r&&r.order_id){o.backendId=r.order_id;ok++;}
+      else{fail++;console.error('create_order fail:',o.wechat,r);}
+    }catch(e){fail++;console.error('sync error:',e);}
+  }
+  if(fail>0)showToast('后端同步：成功 '+ok+' / 失败 '+fail);
+  else showToast('后端同步完成：'+ok+' 条订单已入库');
+}
+
+async function loadFromBackend(){
+  if(ZION.list_orders==='PLACEHOLDER') return;
+  try{
+    document.getElementById('dropZone').innerHTML='<h3>正在加载数据...</h3><p>从后端获取订单中</p>';
+    var res=await callZion(ZION.list_orders,{});
+    if(!res||!res.orders_data) return;
+    var list=JSON.parse(res.orders_data);
+    if(!list||!list.length){
+      document.getElementById('dropZone').innerHTML='<h3>点击或拖拽导入 Excel 表格</h3><p>支持 .xlsx / .xls 格式，将自动解析会员信息</p>';
+      return;
+    }
+    orders=list.map(function(bo){
+      var isStrawberry=bo.member_type==='草莓会员';
+      var deliveries=[];
+      if(bo.delivery_records){
+        bo.delivery_records.forEach(function(dr){
+          if(isStrawberry) deliveries.push((dr.delivery_date||'')+' '+(dr.quantity||0)+'斤');
+          else deliveries.push(dr.delivery_date||dr.note||'');
+        });
+      }
+      if(bo.status==='completed'&&!isStrawberry&&bo.member_type!=='共享菜地') deliveries.push('已完成');
+      var totalNum=bo.total_count||0;
+      var unit=bo.total_unit||unitByType(bo.member_type);
+      return {
+        idx:nextIdx++, backendId:bo.id,
+        yearMonth:'', platform:bo.platform||'',
+        payTime:bo.pay_time?bo.pay_time.split('T')[0]:'',
+        deliveryMethod:bo.delivery_method||'',
+        category:bo.category||'', productName:bo.ud_product_name_d340d0||'',
+        totalStr:String(totalNum)+unit, totalNum:totalNum,
+        price:String(bo.price||''), discount:String(bo.discount||''),
+        amount:bo.amount_paid||0, wechat:bo.wechat_name||'',
+        source:bo.source||'', repurchase:bo.repurchase||'',
+        memberType:bo.member_type||'', deliveries:deliveries,
+        doneCount:bo.delivery_records?bo.delivery_records.length:0,
+        paused:bo.status==='paused'
+      };
+    });
+    renderAll();
+    showToast('已加载 '+orders.length+' 条订单');
+  }catch(e){
+    console.error('loadFromBackend:',e);
+    document.getElementById('dropZone').innerHTML='<h3>点击或拖拽导入 Excel 表格</h3><p>支持 .xlsx / .xls 格式，将自动解析会员信息</p>';
+  }
+}
+
+loadFromBackend();
+
+function triggerImport(){ document.getElementById('fileInput').click(); }
+
+var dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', function(){ dz.classList.remove('dragover'); });
+dz.addEventListener('drop', function(e){
+  e.preventDefault(); dz.classList.remove('dragover');
+  var f = e.dataTransfer.files[0];
+  if(f) parseExcel(f);
+});
+
+function handleFile(input){
+  if(input.files[0]) parseExcel(input.files[0]);
+  input.value = '';
+}
+
+function parseExcel(file){
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+    var ws = wb.Sheets[wb.SheetNames[0]];
+    var data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    if(data.length < 2){ showToast('表格为空'); return; }
+    processData(data);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseNum(v){
+  if(typeof v === 'number') return v;
+  var s = String(v).replace(/[^0-9.\-]/g,'');
+  var n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function fmtDate(v){
+  if(!v) return '';
+  if(v instanceof Date) return v.getFullYear()+'-'+(v.getMonth()+1<10?'0':'')+(v.getMonth()+1)+'-'+(v.getDate()<10?'0':'')+v.getDate();
+  var n = parseFloat(v);
+  if(!isNaN(n) && n > 40000 && n < 60000){
+    var d = new Date((n - 25569)*86400000);
+    return d.getFullYear()+'-'+(d.getMonth()+1<10?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
+  }
+  return String(v);
+}
+
+function buildOrderKey(o){
+  return (o.wechat + '||' + o.productName + '||' + o.payTime).toLowerCase();
+}
+
+function parseRow(r){
+  var deliveries = [];
+  for(var j = 14; j < r.length; j++){
+    if(r[j] !== '' && r[j] !== null && r[j] !== undefined){
+      deliveries.push(String(r[j]) === '完' ? '已完成' : fmtDate(r[j]) || String(r[j]));
+    }
+  }
+  var totalStr = String(r[6] || '');
+  var totalNum = parseNum(totalStr);
+  var memberType = String(r[13] || '');
+  var category = String(r[4] || '');
+  var doneCount = 0;
+  var isStrawberry = memberType === '草莓会员';
+  var isGarden = memberType === '共享菜地';
+  if(!isStrawberry && !isGarden){
+    doneCount = deliveries.filter(function(d){ return d !== '已完成'; }).length;
+    if(deliveries.indexOf('已完成') >= 0) doneCount = deliveries.indexOf('已完成');
+    else doneCount = deliveries.length;
+  }
+  var amount = parseNum(r[9]);
+  return {
+    idx: nextIdx++,
+    yearMonth: String(r[0] || ''),
+    platform: String(r[1] || ''),
+    payTime: fmtDate(r[2]),
+    deliveryMethod: String(r[3] || ''),
+    category: category,
+    productName: String(r[5] || ''),
+    totalStr: totalStr,
+    totalNum: totalNum || 0,
+    price: String(r[7] || ''),
+    discount: String(r[8] || ''),
+    amount: amount,
+    wechat: String(r[10] || ''),
+    source: String(r[11] || ''),
+    repurchase: String(r[12] || ''),
+    memberType: memberType,
+    deliveries: deliveries,
+    doneCount: doneCount,
+    paused: false
+  };
+}
+
+function processData(data){
+  var existingKeys = {};
+  orders.forEach(function(o){ existingKeys[buildOrderKey(o)] = true; });
+
+  var newOrders = [];
+  var dups = [];
+  for(var i = 1; i < data.length; i++){
+    var r = data[i];
+    if(!r[10]) continue;
+    var o = parseRow(r);
+    var key = buildOrderKey(o);
+    if(existingKeys[key]){
+      dups.push(o);
+    } else {
+      newOrders.push(o);
+      existingKeys[key] = true;
+    }
+  }
+
+  orders = orders.concat(newOrders);
+
+  if(dups.length > 0){
+    pendingDups = dups;
+    document.getElementById('dup-count').textContent = dups.length;
+    var h = '';
+    dups.forEach(function(d, i){
+      h += '<div class="dup-item"><span class="dup-idx">'+(i+1)+'</span>';
+      h += '<div class="dup-info"><div class="dup-name">'+d.wechat+'</div>';
+      h += '<div class="dup-detail">'+d.productName+' · '+d.payTime+' · ¥'+d.amount.toFixed(2)+'</div></div></div>';
+    });
+    document.getElementById('dup-list').innerHTML = h;
+    document.getElementById('dupModal').classList.add('show');
+    renderAll();
+    showToast('新增 ' + newOrders.length + ' 条，' + dups.length + ' 条重复');
+    if(newOrders.length) syncToBackend(newOrders);
+  } else {
+    renderAll();
+    showToast('导入成功，新增 ' + newOrders.length + ' 条订单（共 ' + orders.length + ' 条）');
+    syncToBackend(newOrders);
+  }
+}
+
+function forceImportDups(){
+  var toSync = [];
+  pendingDups.forEach(function(dup){
+    var key = buildOrderKey(dup);
+    for(var i = orders.length - 1; i >= 0; i--){
+      if(buildOrderKey(orders[i]) === key){
+        orders.splice(i, 1);
+        break;
+      }
+    }
+    orders.push(dup);
+    toSync.push(dup);
   });
+  closeModal('dupModal');
+  renderAll();
+  showToast('已覆盖 ' + pendingDups.length + ' 条重复数据');
+  pendingDups = [];
+  syncToBackend(toSync);
 }
 
-function openAdjust(name, total){
-  adjTotal = total; adjDelta = 0;
-  document.getElementById('adjName').textContent = name;
-  document.getElementById('adjTotal').textContent = total + '次';
-  document.getElementById('adjVal').textContent = '0';
-  document.getElementById('adjResult').textContent = '调整后：' + total + '次';
+function renderAll(){
+  document.getElementById('uploadArea').style.display = 'none';
+  document.getElementById('statsBar').style.display = '';
+  document.getElementById('toolbar').style.display = '';
+  updateStats();
+  renderCards(orders);
+}
+
+function updateStats(){
+  var egg=0,veg=0,other=0,totalAmt=0;
+  orders.forEach(function(o){
+    if(o.memberType==='鸡蛋会员') egg++;
+    else if(o.memberType==='蔬菜会员') veg++;
+    else other++;
+    totalAmt += o.amount;
+  });
+  document.getElementById('s-total').textContent = orders.length;
+  document.getElementById('s-egg').textContent = egg;
+  document.getElementById('s-veg').textContent = veg;
+  document.getElementById('s-other').textContent = other;
+  document.getElementById('s-amount').textContent = totalAmt.toFixed(0);
+}
+
+function getStatusTag(o){
+  if(o.memberType === '草莓会员') return '<span class="tag tag-orange">草莓会员</span>';
+  if(o.memberType === '共享菜地') return '<span class="tag tag-blue">共享菜地</span>';
+  if(o.paused) return '<span class="tag tag-orange">已暂停</span>';
+  var hasComplete = o.deliveries.indexOf('已完成') >= 0;
+  if(hasComplete && o.deliveries[o.deliveries.length-1] === '已完成') return '<span class="tag tag-gray">已完成</span>';
+  return '<span class="tag tag-green">进行中</span>';
+}
+
+function getStatusKey(o){
+  if(o.memberType === '草莓会员' || o.memberType === '共享菜地') return 'active';
+  var hasComplete = o.deliveries.indexOf('已完成') >= 0;
+  if(hasComplete && o.deliveries[o.deliveries.length-1] === '已完成') return 'done';
+  return 'active';
+}
+
+function renderCards(list){
+  var grid = document.getElementById('orderGrid');
+  var empty = document.getElementById('emptyState');
+  if(!list.length){ grid.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  var h = '';
+  list.forEach(function(o, i){
+    var isStrawberry = o.memberType === '草莓会员';
+    var isGarden = o.memberType === '共享菜地';
+    var initial = o.wechat.charAt(0).toUpperCase();
+    h += '<div class="order-card" data-idx="'+o.idx+'">';
+    h += '<div class="oc-head">';
+    h += '<div class="oc-avatar">'+initial+'</div>';
+    h += '<div class="oc-info"><div class="oc-name">'+o.wechat+' '+getStatusTag(o);
+    if(o.repurchase) h += ' <span class="tag tag-blue" style="font-size:10px;">复购</span>';
+    h += '</div>';
+    h += '<div class="oc-sub">'+o.memberType+' · '+o.productName.substring(0,30)+'</div></div></div>';
+    h += '<div class="oc-body">';
+    h += '<div class="oc-row"><span class="rl">商品分类</span><span class="rv">'+o.category+'</span></div>';
+    h += '<div class="oc-row"><span class="rl">次数/有效期</span><span class="rv">'+o.totalStr+'</span></div>';
+    h += '<div class="oc-row"><span class="rl">实付金额</span><span class="rv">¥'+o.amount.toFixed(2)+'</span></div>';
+    h += '<div class="oc-row"><span class="rl">付款平台</span><span class="rv">'+o.platform+'</span></div>';
+    h += '<div class="oc-row"><span class="rl">支付时间</span><span class="rv">'+o.payTime+'</span></div>';
+    h += '<div class="oc-row"><span class="rl">配送方式</span><span class="rv">'+o.deliveryMethod+'</span></div>';
+
+    if(o.deliveries.length){
+      h += '<div class="oc-delivery">';
+      h += '<div class="oc-delivery-title"><span>配送/消耗记录 ('+o.deliveries.length+')</span>';
+      h += '<button class="btn btn-sm btn-outline-gray" onclick="openDetail('+o.idx+')">查看全部</button></div>';
+      h += '<div class="oc-delivery-grid">';
+      var shown = o.deliveries.slice(0, 8);
+      shown.forEach(function(d, di){
+        var cls = 'oc-d-item';
+        if(d === '已完成') cls += ' done';
+        else if(isStrawberry) cls += ' strawberry';
+        else cls += ' done';
+        h += '<span class="'+cls+'">'+d+'</span>';
+      });
+      if(o.deliveries.length > 8) h += '<span class="oc-d-item">+' + (o.deliveries.length - 8) + '条</span>';
+      h += '</div></div>';
+    }
+    h += '</div>';
+
+    // 备注图片展示
+    var imgs = orderImages[o.idx] || [];
+    if(imgs.length){
+      h += '<div style="padding:0 16px 8px"><div style="font-size:12px;color:var(--text-3);margin-bottom:6px">备注图片</div>';
+      h += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+      imgs.forEach(function(src,ii){
+        h += '<img src="'+src+'" style="width:56px;height:56px;border-radius:6px;object-fit:cover;border:1px solid var(--border);cursor:pointer" onclick="previewImg('+o.idx+','+ii+')">';
+      });
+      h += '</div></div>';
+    }
+
+    h += '<div class="oc-foot">';
+    if(isStrawberry){
+      h += '<button class="btn btn-sm btn-primary" onclick="openDeduct('+o.idx+')">扣除消耗</button>';
+    } else if(isGarden){
+      h += '<button class="btn btn-sm btn-outline" onclick="openDetail('+o.idx+')">查看详情</button>';
+    } else {
+      h += '<button class="btn btn-sm btn-outline" onclick="openAdjust('+o.idx+')">调整次数</button>';
+      if(o.paused){
+        h += '<button class="btn btn-sm btn-outline" style="border-color:var(--green);color:var(--green)" onclick="togglePause('+o.idx+')">恢复配送</button>';
+      } else {
+        h += '<button class="btn btn-sm btn-outline-gray" onclick="togglePause('+o.idx+')">暂停</button>';
+      }
+    }
+    h += '<button class="btn btn-sm btn-outline-gray" onclick="openRemarkImg('+o.idx+')">备注图片</button>';
+    h += '<button class="btn btn-sm btn-danger" onclick="deleteOrder('+o.idx+')">删除</button>';
+    h += '</div></div>';
+  });
+  grid.innerHTML = h;
+}
+
+function filterCards(){
+  var kw = document.getElementById('searchInput').value.toLowerCase();
+  var type = document.getElementById('filterType').value;
+  var status = document.getElementById('filterStatus').value;
+  var filtered = orders.filter(function(o){
+    if(type && o.memberType !== type) return false;
+    if(status && getStatusKey(o) !== status) return false;
+    if(kw){
+      var haystack = (o.wechat + o.productName + o.memberType + o.category + o.totalStr).toLowerCase();
+      if(haystack.indexOf(kw) < 0) return false;
+    }
+    return true;
+  });
+  renderCards(filtered);
+}
+
+function getOrderByIdx(idx){
+  for(var i=0;i<orders.length;i++) if(orders[i].idx===idx) return orders[i];
+  return null;
+}
+
+function openAdjust(idx){
+  var o = getOrderByIdx(idx);
+  adjData = {idx:idx, total:o.totalNum, delta:0};
+  document.getElementById('adj-name').value = o.wechat + ' · ' + o.memberType;
+  document.getElementById('adj-current').value = o.totalStr;
+  document.getElementById('adj-val').textContent = '0';
+  document.getElementById('adj-result').textContent = '调整后：' + o.totalStr;
+  document.getElementById('adj-note').value = '';
+  document.getElementById('adj-imgs').innerHTML = '';
   document.getElementById('adjustModal').classList.add('show');
 }
-function closeAdjust(){ document.getElementById('adjustModal').classList.remove('show'); }
-
 function stepAdj(d){
-  adjDelta += d;
-  document.getElementById('adjVal').textContent = (adjDelta > 0 ? '+' : '') + adjDelta;
-  var r = Math.max(0, adjTotal + adjDelta);
-  document.getElementById('adjResult').textContent = '调整后：' + r + '次';
-  document.getElementById('adjResult').style.color = adjDelta > 0 ? 'var(--green)' : adjDelta < 0 ? 'var(--red)' : 'var(--text-3)';
+  adjData.delta += d;
+  document.getElementById('adj-val').textContent = (adjData.delta>0?'+':'')+adjData.delta;
+  var r = Math.max(0, adjData.total + adjData.delta);
+  document.getElementById('adj-result').textContent = '调整后：' + r;
+  document.getElementById('adj-result').style.color = adjData.delta>0?'var(--green)':adjData.delta<0?'var(--red)':'var(--text-3)';
 }
-
 function confirmAdj(){
-  closeAdjust();
+  var o = getOrderByIdx(adjData.idx);
+  var oldTotal = o.totalNum;
+  var newTotal = Math.max(0, oldTotal + adjData.delta);
+  o.totalNum = newTotal;
+  o.totalStr = String(newTotal) + unitByType(o.memberType);
+  var reason = document.getElementById('adj-reason').value;
+  var note = document.getElementById('adj-note').value;
+  var imgEls = document.getElementById('adj-imgs').querySelectorAll('.img-preview-item img');
+  if(imgEls.length){
+    var existing = orderImages[adjData.idx] || [];
+    imgEls.forEach(function(img){ existing.push(img.src); });
+    orderImages[adjData.idx] = existing;
+  }
+  closeModal('adjustModal');
+  filterCards();
   showToast('配送次数调整成功');
+  if(o.backendId){
+    callZion(ZION.update_order,{order_id:o.backendId,update_json:JSON.stringify({total_count:newTotal})});
+    callZion(ZION.create_adjust_log,{log_json:JSON.stringify({
+      order_id:o.backendId,action:'adjust_count',old_value:String(oldTotal),
+      new_value:String(newTotal),reason:reason,note:note,image_url:'',operator:'管理员'
+    })});
+  }
 }
 
-function openConfirm(name, period){
-  document.getElementById('cfmUser').textContent = name;
-  document.getElementById('cfmPeriod').textContent = period;
-  document.getElementById('confirmModal').classList.add('show');
+function openDeduct(idx){
+  currentDeductIdx = idx;
+  var o = getOrderByIdx(idx);
+  var used = 0;
+  o.deliveries.forEach(function(d){
+    var m = d.match(/([\d.]+)斤/);
+    if(m) used += parseFloat(m[1]);
+  });
+  var remain = o.totalNum - used;
+  document.getElementById('ded-name').value = o.wechat + ' · 草莓会员';
+  document.getElementById('ded-remain').value = remain.toFixed(2) + '斤';
+  document.getElementById('ded-val').value = '';
+  document.getElementById('ded-note').value = '';
+  document.getElementById('ded-imgs').innerHTML = '';
+  document.getElementById('deductModal').classList.add('show');
 }
-function closeConfirm(){ document.getElementById('confirmModal').classList.remove('show'); }
-function doConfirm(){
-  closeConfirm();
-  showToast('配送完成，通知已发送');
+function confirmDeduct(){
+  var o = getOrderByIdx(currentDeductIdx);
+  var raw = document.getElementById('ded-val').value.trim();
+  var qty = parseFloat(raw);
+  if(!raw || isNaN(qty) || qty <= 0){ alert('请输入有效的消耗数量'); return; }
+  var note = document.getElementById('ded-note').value;
+  var today = new Date();
+  var ds = today.getFullYear()+'-'+('0'+(today.getMonth()+1)).slice(-2)+'-'+('0'+today.getDate()).slice(-2);
+  o.deliveries.push(ds+' '+qty+'斤');
+  var imgEls = document.getElementById('ded-imgs').querySelectorAll('.img-preview-item img');
+  if(imgEls.length && currentDeductIdx !== null){
+    var existing = orderImages[currentDeductIdx] || [];
+    imgEls.forEach(function(img){ existing.push(img.src); });
+    orderImages[currentDeductIdx] = existing;
+  }
+  closeModal('deductModal');
+  filterCards();
+  showToast('消耗扣除成功');
+  if(o.backendId){
+    callZion(ZION.create_delivery_record,{record_json:JSON.stringify({
+      order_id:o.backendId,period:o.deliveries.length,delivery_date:ds,
+      quantity:qty,unit:'斤',note:note||qty+'斤',status:'done'
+    })});
+    callZion(ZION.create_adjust_log,{log_json:JSON.stringify({
+      order_id:o.backendId,action:'deduct',old_value:'',new_value:qty+'斤',
+      reason:'草莓消耗',note:note,image_url:'',operator:'管理员'
+    })});
+  }
 }
 
-function markDone(btn, name){
-  var item = btn.closest('.user-item');
-  var tag = item.querySelector('.tag');
-  tag.className = 'tag tag-gray';
-  tag.textContent = '已完成';
-  btn.textContent = '已完成';
-  btn.disabled = true;
-  btn.style.background = '#f0f0f0';
-  btn.style.color = '#999';
-  showToast(name + ' 配送完成，通知已发送');
+function openDetail(idx){
+  var o = getOrderByIdx(idx);
+  document.getElementById('detail-title').textContent = o.wechat + ' · 配送/消耗记录';
+  var h = '<div style="margin-bottom:12px;font-size:13px;color:var(--text-3)">';
+  h += o.memberType + ' · ' + o.totalStr + ' · ¥' + o.amount.toFixed(2) + '</div>';
+  if(!o.deliveries.length){
+    h += '<div style="text-align:center;padding:30px 0;color:var(--text-3)">暂无记录</div>';
+  } else {
+    o.deliveries.forEach(function(d, i){
+      var cls = d === '已完成' ? 'tag tag-gray' : 'tag tag-green';
+      h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0">';
+      h += '<span style="font-size:14px;font-weight:500">第 '+(i+1)+' 次</span>';
+      h += '<span class="'+cls+'">'+d+'</span>';
+      h += '</div>';
+    });
+  }
+  document.getElementById('detail-body').innerHTML = h;
+  document.getElementById('detailModal').classList.add('show');
+}
+
+function deleteOrder(idx){
+  var o = getOrderByIdx(idx);
+  if(!confirm('确定删除「'+o.wechat+' · '+o.productName+'」？\n此操作不可恢复，将同时删除该订单的配送记录和操作日志。')) return;
+  orders = orders.filter(function(x){ return x.idx !== idx; });
+  delete orderImages[idx];
+  updateStats();
+  filterCards();
+  showToast('已删除：'+o.wechat+' · '+o.productName);
+  if(o.backendId && ZION.delete_order!=='PLACEHOLDER_DELETE'){
+    callZion(ZION.delete_order,{order_id:o.backendId}).then(function(r){
+      if(r&&r.result==='deleted') console.log('后端删除成功: order_id='+o.backendId);
+      else console.error('后端删除失败:',r);
+    });
+  }
+}
+
+function togglePause(idx){
+  var o = getOrderByIdx(idx);
+  o.paused = !o.paused;
+  filterCards();
+  showToast(o.wechat + (o.paused ? ' 已暂停配送' : ' 已恢复配送'));
+  if(o.backendId){
+    var ns = o.paused ? 'paused' : 'active';
+    callZion(ZION.update_order,{order_id:o.backendId,update_json:JSON.stringify({status:ns})});
+    callZion(ZION.create_adjust_log,{log_json:JSON.stringify({
+      order_id:o.backendId,action:o.paused?'pause':'resume',
+      old_value:o.paused?'active':'paused',new_value:ns,
+      reason:o.paused?'暂停配送':'恢复配送',note:'',image_url:'',operator:'管理员'
+    })});
+  }
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.overlay').forEach(function(m){
+  m.addEventListener('click', function(e){ if(e.target===this) this.classList.remove('show'); });
+});
+
+function handleImgUpload(input, containerId){
+  var container = document.getElementById(containerId);
+  var files = input.files;
+  for(var i=0;i<files.length;i++){
+    (function(file){
+      var reader = new FileReader();
+      reader.onload = function(e){
+        var wrap = document.createElement('div');
+        wrap.className = 'img-preview-item';
+        wrap.innerHTML = '<img src="'+e.target.result+'"><div class="img-del" onclick="this.parentElement.remove()">×</div>';
+        container.appendChild(wrap);
+      };
+      reader.readAsDataURL(file);
+    })(files[i]);
+  }
+  input.value = '';
+}
+
+function openRemarkImg(idx){
+  currentRemarkIdx = idx;
+  var o = getOrderByIdx(idx);
+  document.getElementById('remark-img-title').textContent = o.wechat + ' · 备注图片';
+  var container = document.getElementById('remark-imgs');
+  container.innerHTML = '';
+  var imgs = orderImages[idx] || [];
+  imgs.forEach(function(src){
+    var wrap = document.createElement('div');
+    wrap.className = 'img-preview-item';
+    wrap.innerHTML = '<img src="'+src+'"><div class="img-del" onclick="this.parentElement.remove()">×</div>';
+    container.appendChild(wrap);
+  });
+  document.getElementById('remarkImgModal').classList.add('show');
+}
+
+function handleRemarkImgUpload(input){
+  handleImgUpload(input, 'remark-imgs');
+}
+
+function saveRemarkImgs(){
+  var container = document.getElementById('remark-imgs');
+  var imgEls = container.querySelectorAll('.img-preview-item img');
+  var srcs = [];
+  imgEls.forEach(function(img){ srcs.push(img.src); });
+  orderImages[currentRemarkIdx] = srcs;
+  closeModal('remarkImgModal');
+  filterCards();
+  showToast('备注图片已保存');
+}
+
+function previewImg(idx, imgIdx){
+  var imgs = orderImages[idx] || [];
+  if(imgs[imgIdx]){
+    document.getElementById('preview-img').src = imgs[imgIdx];
+    document.getElementById('imgPreviewModal').classList.add('show');
+  }
+}
+
+function exportExcel(){
+  if(!orders.length){ showToast('暂无数据可导出'); return; }
+  var header = ['年月','付款平台','支付时间','配送方式','商品分类','商品名称',
+    '次数/有效期','原价','折扣','实付金额','下单微信','客户来源','复购标签',
+    '包年会员','状态'];
+  var maxDel = 0;
+  orders.forEach(function(o){ if(o.deliveries.length > maxDel) maxDel = o.deliveries.length; });
+  for(var d = 1; d <= maxDel; d++) header.push('第'+d+'次');
+
+  var rows = [header];
+  orders.forEach(function(o){
+    var statusText = o.paused ? '已暂停' : (getStatusKey(o) === 'done' ? '已完成' : '进行中');
+    var row = [o.yearMonth, o.platform, o.payTime, o.deliveryMethod, o.category,
+      o.productName, o.totalStr, o.price, o.discount, o.amount, o.wechat,
+      o.source, o.repurchase, o.memberType, statusText];
+    o.deliveries.forEach(function(dd){ row.push(dd); });
+    rows.push(row);
+  });
+
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  var colWidths = header.map(function(h,i){
+    if(i <= 4) return {wch:10};
+    if(i === 5) return {wch:28};
+    if(i === 10) return {wch:16};
+    return {wch:12};
+  });
+  ws['!cols'] = colWidths;
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '会员订单');
+  var now = new Date();
+  var fname = '咯咯哒后台数据_' + now.getFullYear() +
+    ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2) +
+    ('0'+now.getHours()).slice(-2) + ('0'+now.getMinutes()).slice(-2) + '.xlsx';
+  XLSX.writeFile(wb, fname);
+  showToast('导出成功：' + fname);
 }
 
 function showToast(msg){
@@ -486,140 +990,8 @@ function showToast(msg){
   t.classList.remove('show');
   void t.offsetWidth;
   t.classList.add('show');
-  setTimeout(function(){ t.classList.remove('show'); }, 2000);
+  setTimeout(function(){ t.classList.remove('show'); }, 2500);
 }
-
-var pauseMap = { '王女士':'wangPauseBtn', '李先生':'liPauseBtn', '张太太':'zhangPauseBtn', '刘女士':'liuPauseBtn' };
-var tagMap = { '王女士':'wangTag', '李先生':'liTag', '张太太':'zhangTag', '刘女士':'liuTag' };
-var pauseState = { '张太太': true };
-
-function toggleAdminPause(name){
-  var isPaused = pauseState[name];
-  var btn = document.getElementById(pauseMap[name]);
-  var tag = document.getElementById(tagMap[name]);
-  if(isPaused){
-    pauseState[name] = false;
-    btn.textContent = '暂停';
-    btn.style.borderColor = '';
-    btn.style.color = '';
-    btn.className = 'btn btn-sm btn-outline-gray';
-    tag.textContent = '正常';
-    tag.className = 'tag tag-green';
-    showToast(name + ' 已恢复配送');
-  } else {
-    pauseState[name] = true;
-    btn.textContent = '恢复配送';
-    btn.style.borderColor = 'var(--green)';
-    btn.style.color = 'var(--green)';
-    btn.className = 'btn btn-sm btn-outline';
-    tag.textContent = '已暂停';
-    tag.className = 'tag tag-orange';
-    showToast(name + ' 已暂停配送');
-  }
-}
-
-var strawberryRecords = [
-  { date: '2026年1月20日', amount: '5.00斤', note: '快递发货' },
-  { date: '2026年1月1日', amount: '4.00斤', note: '快递发货' }
-];
-var gardenRecords = [
-  { date: '2026年4月5日', type: '到店采摘', note: '白菜、萝卜、菠菜' },
-  { date: '2026年3月22日', type: '到店采摘', note: '生菜、香菜、小葱' },
-  { date: '2026年3月8日', type: '蔬菜配送', note: '应季蔬菜5种' }
-];
-var deductData = {};
-
-function openConsume(name, product, total, used){
-  document.getElementById('consumeTitle').textContent = name + ' · 消耗记录';
-  var h = '<div style="display:flex;justify-content:space-between;padding:8px 0 12px;border-bottom:1px solid #f0f0f0;margin-bottom:8px;font-size:13px;color:var(--text-3);">';
-  h += '<span>总量 ' + total.toFixed(2) + '斤</span><span>已消耗 <b style="color:var(--green);">' + used.toFixed(2) + '</b>斤</span><span>剩余 <b>' + (total - used).toFixed(2) + '</b>斤</span></div>';
-  for(var i = 0; i < strawberryRecords.length; i++){
-    var r = strawberryRecords[i];
-    h += '<div class="delivery-row"><div class="delivery-top"><span class="delivery-period" style="font-size:14px;">' + r.date + '</span>';
-    h += '<span class="tag tag-gray">' + r.amount + '</span></div>';
-    h += '<div class="delivery-detail">' + r.note + '</div></div>';
-  }
-  document.getElementById('consumeBody').innerHTML = h;
-  document.getElementById('consumeModal').classList.add('show');
-}
-function closeConsume(){ document.getElementById('consumeModal').classList.remove('show'); }
-
-function openDeduct(name, product, unit, remain){
-  deductData = { name: name, unit: unit, remain: remain, val: 0.50 };
-  document.getElementById('deductName').textContent = name;
-  document.getElementById('deductRemain').textContent = remain.toFixed(2) + unit;
-  document.getElementById('deductUnit').textContent = unit;
-  document.getElementById('deductVal').textContent = '0.50';
-  document.getElementById('deductNote').value = '';
-  document.getElementById('deductModal').classList.add('show');
-}
-function closeDeduct(){ document.getElementById('deductModal').classList.remove('show'); }
-function stepDeduct(d){
-  deductData.val = Math.max(0.25, Math.min(deductData.remain, +(deductData.val + d * 0.25).toFixed(2)));
-  document.getElementById('deductVal').textContent = deductData.val.toFixed(2);
-}
-function confirmDeduct(){
-  closeDeduct();
-  showToast('已扣除 ' + deductData.val.toFixed(2) + deductData.unit + '，通知已发送');
-}
-
-function openGardenLog(name){
-  var h = '';
-  for(var i = 0; i < gardenRecords.length; i++){
-    var r = gardenRecords[i];
-    h += '<div class="delivery-row"><div class="delivery-top"><span class="delivery-period" style="font-size:14px;">' + r.date + '</span>';
-    h += '<span class="tag tag-gray">' + r.type + '</span></div>';
-    h += '<div class="delivery-detail">' + r.note + '</div></div>';
-  }
-  document.getElementById('gardenLogBody').innerHTML = h;
-  document.getElementById('gardenLogModal').classList.add('show');
-}
-function closeGardenLog(){ document.getElementById('gardenLogModal').classList.remove('show'); }
-
-function openGardenAdd(name){
-  document.getElementById('gardenAddName').textContent = name;
-  document.getElementById('gardenContent').value = '';
-  document.getElementById('gardenAddModal').classList.add('show');
-}
-function closeGardenAdd(){ document.getElementById('gardenAddModal').classList.remove('show'); }
-function confirmGardenAdd(){
-  var type = document.getElementById('gardenType').value;
-  var content = document.getElementById('gardenContent').value.trim();
-  if(!content){ showToast('请填写详细内容'); return; }
-  closeGardenAdd();
-  showToast('使用记录已添加');
-}
-
-function triggerUpload(inputId){
-  document.getElementById(inputId).click();
-}
-
-function handleUpload(input, zoneId){
-  var zone = document.getElementById(zoneId);
-  var files = input.files;
-  for(var i = 0; i < files.length; i++){
-    (function(file){
-      var reader = new FileReader();
-      reader.onload = function(e){
-        var wrap = document.createElement('div');
-        wrap.className = 'upload-preview';
-        wrap.innerHTML = '<img src="' + e.target.result + '"><div class="upload-del" onclick="removeUpload(this)">x</div>';
-        var btn = zone.querySelector('.upload-btn');
-        zone.insertBefore(wrap, btn);
-      };
-      reader.readAsDataURL(file);
-    })(files[i]);
-  }
-  input.value = '';
-}
-
-function removeUpload(delBtn){
-  delBtn.parentElement.remove();
-}
-
-document.querySelectorAll('.overlay').forEach(function(m){
-  m.addEventListener('click', function(e){ if(e.target === this) this.classList.remove('show'); });
-});
 </script>
 </body>
 </html>
