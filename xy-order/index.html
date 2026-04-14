@@ -128,7 +128,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
   <div class="section">
     <div class="section-body">
       <div class="form-group">
-        <label>要求描述<span class="hint">（选填）</span></label>
+        <label>要求描述<span class="req">*</span></label>
         <textarea id="desc" placeholder="写清楚你的需求，比如问卷主题、题目数量、格式要求等"></textarea>
       </div>
     </div>
@@ -311,6 +311,7 @@ function submitOrder(){
   var desc=document.getElementById('desc').value.trim();
   if(!name){showToast('请填写咸鱼名称');return;}
   if(!email){showToast('请填写邮箱');return;}
+  if(!desc){showToast('请填写要求描述');return;}
   if(!dl){showToast('请选择最迟完成时间');return;}
   if(!tasks.length){showToast('请选择任务类型');return;}
   if(!isAllUploaded()){showToast('文件还在上传中，请稍候');return;}
