@@ -154,14 +154,14 @@
       </div>
     </div>
     <div class="user-nums">
-      <div class="user-num-item"><div class="user-num-val">30<span style="font-size:12px;font-weight:400;">斤</span></div><div class="user-num-label">总量</div></div>
-      <div class="user-num-item"><div class="user-num-val text-green">9<span style="font-size:12px;font-weight:400;">斤</span></div><div class="user-num-label">已消耗</div></div>
-      <div class="user-num-item"><div class="user-num-val">21<span style="font-size:12px;font-weight:400;">斤</span></div><div class="user-num-label">剩余</div></div>
+      <div class="user-num-item"><div class="user-num-val">30.00<span style="font-size:12px;font-weight:400;">斤</span></div><div class="user-num-label">总量</div></div>
+      <div class="user-num-item"><div class="user-num-val text-green">9.00<span style="font-size:12px;font-weight:400;">斤</span></div><div class="user-num-label">已消耗</div></div>
+      <div class="user-num-item"><div class="user-num-val">21.00<span style="font-size:12px;font-weight:400;">斤</span></div><div class="user-num-label">剩余</div></div>
     </div>
     <div style="font-size:12px;color:var(--text-3);padding:6px 0 2px;border-top:1px solid #f5f5f5;">有效期：2025.11 - 2026.11</div>
     <div class="user-actions">
-      <button class="btn btn-sm btn-outline" onclick="openConsume('龚女士','草莓',30,9)">消耗记录</button>
-      <button class="btn btn-sm btn-primary" onclick="openDeduct('龚女士','草莓','斤',21)">扣除消耗</button>
+      <button class="btn btn-sm btn-outline" onclick="openConsume('龚女士','草莓',30.00,9.00)">消耗记录</button>
+      <button class="btn btn-sm btn-primary" onclick="openDeduct('龚女士','草莓','斤',21.00)">扣除消耗</button>
     </div>
   </div>
 
@@ -525,8 +525,8 @@ function toggleAdminPause(name){
 }
 
 var strawberryRecords = [
-  { date: '2026年1月20日', amount: '5斤', note: '快递发货' },
-  { date: '2026年1月1日', amount: '4斤', note: '快递发货' }
+  { date: '2026年1月20日', amount: '5.00斤', note: '快递发货' },
+  { date: '2026年1月1日', amount: '4.00斤', note: '快递发货' }
 ];
 var gardenRecords = [
   { date: '2026年4月5日', type: '到店采摘', note: '白菜、萝卜、菠菜' },
@@ -538,7 +538,7 @@ var deductData = {};
 function openConsume(name, product, total, used){
   document.getElementById('consumeTitle').textContent = name + ' · 消耗记录';
   var h = '<div style="display:flex;justify-content:space-between;padding:8px 0 12px;border-bottom:1px solid #f0f0f0;margin-bottom:8px;font-size:13px;color:var(--text-3);">';
-  h += '<span>总量 ' + total + '斤</span><span>已消耗 <b style="color:var(--green);">' + used + '</b>斤</span><span>剩余 <b>' + (total - used) + '</b>斤</span></div>';
+  h += '<span>总量 ' + total.toFixed(2) + '斤</span><span>已消耗 <b style="color:var(--green);">' + used.toFixed(2) + '</b>斤</span><span>剩余 <b>' + (total - used).toFixed(2) + '</b>斤</span></div>';
   for(var i = 0; i < strawberryRecords.length; i++){
     var r = strawberryRecords[i];
     h += '<div class="delivery-row"><div class="delivery-top"><span class="delivery-period" style="font-size:14px;">' + r.date + '</span>';
@@ -551,22 +551,22 @@ function openConsume(name, product, total, used){
 function closeConsume(){ document.getElementById('consumeModal').classList.remove('show'); }
 
 function openDeduct(name, product, unit, remain){
-  deductData = { name: name, unit: unit, remain: remain, val: 1 };
+  deductData = { name: name, unit: unit, remain: remain, val: 0.50 };
   document.getElementById('deductName').textContent = name;
-  document.getElementById('deductRemain').textContent = remain + unit;
+  document.getElementById('deductRemain').textContent = remain.toFixed(2) + unit;
   document.getElementById('deductUnit').textContent = unit;
-  document.getElementById('deductVal').textContent = '1';
+  document.getElementById('deductVal').textContent = '0.50';
   document.getElementById('deductNote').value = '';
   document.getElementById('deductModal').classList.add('show');
 }
 function closeDeduct(){ document.getElementById('deductModal').classList.remove('show'); }
 function stepDeduct(d){
-  deductData.val = Math.max(1, Math.min(deductData.remain, deductData.val + d));
-  document.getElementById('deductVal').textContent = deductData.val;
+  deductData.val = Math.max(0.25, Math.min(deductData.remain, +(deductData.val + d * 0.25).toFixed(2)));
+  document.getElementById('deductVal').textContent = deductData.val.toFixed(2);
 }
 function confirmDeduct(){
   closeDeduct();
-  showToast('已扣除 ' + deductData.val + deductData.unit + '，通知已发送');
+  showToast('已扣除 ' + deductData.val.toFixed(2) + deductData.unit + '，通知已发送');
 }
 
 function openGardenLog(name){
