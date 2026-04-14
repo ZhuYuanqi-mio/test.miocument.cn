@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>咯咯哒生态农场 · 后台管理</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://gosspublic.alicdn.com/aliyun-oss-sdk-6.18.0.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--green:#4B9E3F;--green-light:#EDF7EB;--green-dark:#3D8535;--red:#E4393C;--orange:#F0A03C;--text-1:#333;--text-2:#666;--text-3:#999;--border:#e8e8e8;--bg:#f5f5f5;--white:#fff;--radius:10px}
@@ -375,6 +376,21 @@ var ZION = {
   list_orders: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/20ac40dd-0181-43c8-beaf-6e4c9636b3ed',
   delete_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/9402a4bf-db53-4d38-9a61-dfcda0eda2f4'
 };
+
+var ossClient = new OSS({
+  region: 'oss-cn-wuhan-lr',
+  accessKeyId: 'LTAI5tBcUNsZqv33UggKtQds',
+  accessKeySecret: '1pZrU9wXOQW64dqYeGWMBvH0JVC4qs',
+  bucket: 'my-video-storage-shihuang'
+});
+var OSS_BASE = 'https://my-video-storage-shihuang.oss-cn-wuhan-lr.aliyuncs.com/';
+
+async function uploadImgToOSS(file){
+  var ext = file.name.split('.').pop();
+  var key = 'farm/img/' + Date.now() + '_' + Math.random().toString(36).slice(2,6) + '.' + ext;
+  await ossClient.put(key, file);
+  return OSS_BASE + key;
+}
 
 async function callZion(url, data){
   var res = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
@@ -891,18 +907,30 @@ document.querySelectorAll('.overlay').forEach(function(m){
 
 function handleImgUpload(input, containerId){
   var container = document.getElementById(containerId);
-  var files = input.files;
-  for(var i=0;i<files.length;i++){
+  var fileList = input.files;
+  for(var i=0;i<fileList.length;i++){
     (function(file){
-      var reader = new FileReader();
-      reader.onload = function(e){
-        var wrap = document.createElement('div');
-        wrap.className = 'img-preview-item';
-        wrap.innerHTML = '<img src="'+e.target.result+'"><div class="img-del" onclick="this.parentElement.remove()">×</div>';
-        container.appendChild(wrap);
-      };
-      reader.readAsDataURL(file);
-    })(files[i]);
+      var wrap = document.createElement('div');
+      wrap.className = 'img-preview-item';
+      var localUrl = URL.createObjectURL(file);
+      wrap.innerHTML = '<img src="'+localUrl+'"><div class="img-del" style="opacity:.4;pointer-events:none">...</div>';
+      container.appendChild(wrap);
+      uploadImgToOSS(file).then(function(ossUrl){
+        wrap.querySelector('img').src = ossUrl;
+        wrap.querySelector('.img-del').style.opacity = '';
+        wrap.querySelector('.img-del').style.pointerEvents = '';
+        wrap.querySelector('.img-del').textContent = '×';
+        wrap.querySelector('.img-del').onclick = function(){ wrap.remove(); };
+        URL.revokeObjectURL(localUrl);
+      }).catch(function(e){
+        console.error('OSS upload failed:', e);
+        wrap.querySelector('.img-del').textContent = '×';
+        wrap.querySelector('.img-del').style.opacity = '';
+        wrap.querySelector('.img-del').style.pointerEvents = '';
+        wrap.querySelector('.img-del').onclick = function(){ wrap.remove(); };
+        showToast(file.name + ' 上传失败');
+      });
+    })(fileList[i]);
   }
   input.value = '';
 }
