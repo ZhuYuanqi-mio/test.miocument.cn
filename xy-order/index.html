@@ -270,7 +270,10 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
       <li><span class="num">4.</span>我答应了售后就会售后的，不要催我，我回复也得打字不是</li>
       <li><span class="num">5.</span>请允许我也会去吃饭、睡觉，没有回复别急，，，</li>
     </ul>
-    <div style="text-align:center"><button class="again" onclick="resetForAfterSale()">售后申请</button></div>
+    <div style="text-align:center;margin-top:16px" id="doneActions">
+      <div id="donePending" style="font-size:13px;color:#888">需求处理中，完成后可提交新需求</div>
+      <button class="again" id="doneAfterSaleBtn" style="display:none" onclick="resetForAfterSale()">提交新需求 / 售后申请</button>
+    </div>
   </div>
 </div>
 
@@ -280,6 +283,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 <script>
 var ZION = {
   create_xy_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/b4a14608-e61e-46b6-a748-94be7e205d0d',
+  list_xy_orders: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/33fde63b-4f5e-4811-aece-cf6d4cde4dc4',
   send_xy_message: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/bda9f3b9-9f40-41f7-98dc-8fe6f79aa66a',
   list_xy_messages: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/ece148b9-d21f-48ca-bf69-e8c119ecc8df'
 };
@@ -300,6 +304,8 @@ var images = [], files = [];
 var messages = [];
 var curTab = 'order';
 
+var hasPending = false;
+
 /* ===== Login ===== */
 function doLogin(){
   var name = document.getElementById('loginName').value.trim();
@@ -308,10 +314,46 @@ function doLogin(){
   sessionStorage.setItem('xy_user', name);
   document.getElementById('loginGate').classList.add('hide');
   document.getElementById('bottomNav').style.display = 'flex';
-  document.getElementById('tabOrder').classList.add('active');
   document.getElementById('chatTitle').textContent = '消息 · ' + curUser;
+  checkUserOrders();
   loadMessages();
 }
+
+function checkUserOrders(){
+  if(!curUser || !ZION.list_xy_orders) {
+    showOrderTab(); return;
+  }
+  fetch(ZION.list_xy_orders,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var all = JSON.parse(d.orders_data||'[]');
+    var pending = all.filter(function(o){return o.xianyu_name === curUser && o.status === 'pending';});
+    hasPending = pending.length > 0;
+    if(hasPending){
+      showDoneScreen(true);
+    } else {
+      showOrderTab();
+    }
+  }).catch(function(e){console.error(e); showOrderTab();});
+}
+
+function showOrderTab(){
+  document.getElementById('doneScreen').classList.remove('show');
+  document.getElementById('tabOrder').classList.add('active');
+}
+
+function showDoneScreen(isPending){
+  document.getElementById('tabOrder').classList.add('active');
+  document.getElementById('doneScreen').classList.add('show');
+  if(isPending){
+    document.getElementById('donePending').style.display = 'block';
+    document.getElementById('doneAfterSaleBtn').style.display = 'none';
+  } else {
+    document.getElementById('donePending').style.display = 'none';
+    document.getElementById('doneAfterSaleBtn').style.display = 'inline-block';
+  }
+}
+
 (function initLogin(){
   var saved = sessionStorage.getItem('xy_user');
   if(saved){
@@ -328,6 +370,7 @@ function switchTab(tab){
   if(tab === 'order'){
     document.getElementById('tabOrder').classList.add('active');
     document.querySelectorAll('.nav-item')[0].classList.add('on');
+    if(hasPending) showDoneScreen(true);
   } else {
     document.getElementById('tabChat').classList.add('active');
     document.querySelectorAll('.nav-item')[1].classList.add('on');
@@ -455,10 +498,10 @@ function submitOrder(){
   if(ZION.create_xy_order){
     fetch(ZION.create_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
-    .then(function(){btn.disabled=false;btn.textContent='提 交';document.getElementById('doneScreen').classList.add('show');})
+    .then(function(){btn.disabled=false;btn.textContent='提 交';hasPending=true;showDoneScreen(true);})
     .catch(function(e){btn.disabled=false;btn.textContent='提 交';showToast('提交失败，请重试');console.error(e);});
   }else{
-    setTimeout(function(){btn.disabled=false;btn.textContent='提 交';document.getElementById('doneScreen').classList.add('show');},400);
+    setTimeout(function(){btn.disabled=false;btn.textContent='提 交';hasPending=true;showDoneScreen(true);},400);
   }
 }
 function resetForm(preSelect){
@@ -473,7 +516,10 @@ function resetForm(preSelect){
     document.querySelectorAll('#taskTags span[data-v]').forEach(function(s){if(s.getAttribute('data-v')===preSelect)s.classList.add('on');});
   }
 }
-function resetForAfterSale(){resetForm('售后修改');}
+function resetForAfterSale(){
+  hasPending = false;
+  resetForm('售后修改');
+}
 
 /* ===== Chat Logic ===== */
 function fileIconUrl(name){
