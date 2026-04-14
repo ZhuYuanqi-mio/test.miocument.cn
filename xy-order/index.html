@@ -20,17 +20,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .login-gate button{margin-top:14px;width:100%;max-width:320px;padding:13px;border:none;border-radius:8px;background:#222;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
 .login-gate button:active{opacity:.75}
 
-/* ===== Bottom Nav ===== */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e0e0e0;z-index:300;display:flex;height:56px}
-.bottom-nav .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#999;transition:color .15s;position:relative}
-.bottom-nav .nav-item.on{color:#222}
-.bottom-nav .nav-item svg{width:22px;height:22px;margin-bottom:2px}
-.bottom-nav .nav-item span{font-size:10px;font-weight:500}
-.msg-dot{position:absolute;top:4px;right:50%;transform:translateX(16px);min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px;display:none}
-.msg-dot.show{display:block}
-
 /* ===== Tab Pages ===== */
-.tab-page{display:none;padding-bottom:56px}
+.tab-page{display:none;padding-bottom:0}
 .tab-page.active{display:block}
 
 /* ===== Order Form (需求) ===== */
@@ -81,7 +72,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 .file-row .sz{color:#999;margin:0 8px;flex-shrink:0;font-size:12px}
 .file-row .st{margin:0 6px;flex-shrink:0;font-size:11px;color:#555}
 .file-row .rm{color:#c00;cursor:pointer;flex-shrink:0;font-size:12px;font-weight:500}
-.bar{position:fixed;bottom:56px;left:0;right:0;background:#fff;padding:12px 16px;border-top:1px solid #e0e0e0;z-index:100}
+.bar{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:12px 16px;border-top:1px solid #e0e0e0;z-index:100}
 .bar .inner{max-width:500px;margin:0 auto}
 .bar button{width:100%;padding:13px;border:none;border-radius:8px;background:#222;color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s;letter-spacing:.5px}
 .bar button:active{opacity:.75}
@@ -105,7 +96,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 .chat-top h2{font-size:15px;font-weight:600;color:#222}
 .chat-top .sync-btn{padding:5px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;color:#222;font-size:12px;cursor:pointer}
 .chat-top .sync-btn:active{background:#f2f2f2}
-.chat-msgs{padding:12px 16px 130px;max-width:500px;margin:0 auto;min-height:calc(100vh - 56px - 46px)}
+.chat-msgs{padding:12px 16px 80px;max-width:500px;margin:0 auto;min-height:calc(100vh - 46px)}
 .chat-empty{text-align:center;padding:60px 0;color:#aaa;font-size:14px}
 .msg-row{display:flex;margin-bottom:14px;align-items:flex-start}
 .msg-row.me{flex-direction:row-reverse}
@@ -128,7 +119,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 .msg-row.me .msg-file-card .file-info .fn{color:#fff}
 .msg-row.me .msg-file-card .file-info .fs{color:rgba(255,255,255,.6)}
 
-.chat-input-bar{position:fixed;bottom:56px;left:0;right:0;background:#fff;border-top:1px solid #e0e0e0;padding:8px 12px;z-index:100;display:flex;align-items:flex-end;gap:8px}
+.chat-input-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e0e0e0;padding:8px 12px;z-index:100;display:flex;align-items:flex-end;gap:8px}
 .chat-input-bar .ci-actions{display:flex;gap:4px;flex-shrink:0;padding-bottom:4px}
 .chat-input-bar .ci-btn{width:32px;height:32px;border-radius:50%;border:1px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#666}
 .chat-input-bar .ci-btn:active{background:#f0f0f0}
@@ -232,7 +223,8 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 <!-- ===== 消息 Tab ===== -->
 <div class="tab-page" id="tabChat">
   <div class="chat-top">
-    <h2 id="chatTitle">消息</h2>
+    <span style="cursor:pointer;font-size:18px;padding:4px 8px" onclick="switchTab('order')">&#8592;</span>
+    <h2 id="chatTitle" style="flex:1">消息</h2>
     <button class="sync-btn" onclick="loadMessages()">同步消息</button>
   </div>
   <div class="chat-msgs" id="chatMsgs">
@@ -248,18 +240,6 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
   </div>
 </div>
 
-<!-- ===== Bottom Nav ===== -->
-<div class="bottom-nav" id="bottomNav" style="display:none">
-  <div class="nav-item on" onclick="switchTab('order')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-    <span>需求</span>
-  </div>
-  <div class="nav-item" onclick="switchTab('chat')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-    <span>消息</span>
-    <div class="msg-dot" id="userMsgDot"></div>
-  </div>
-</div>
 
 <!-- ===== Done Screen ===== -->
 <div class="done-screen" id="doneScreen">
@@ -273,7 +253,8 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
       <li><span class="num">5.</span>请允许我也会去吃饭、睡觉，没有回复别急，，，</li>
     </ul>
     <div style="text-align:center;margin-top:16px" id="doneActions">
-      <div id="donePending" style="font-size:13px;color:#888">需求处理中，完成后可提交新需求</div>
+      <div id="donePending" style="font-size:13px;color:#888;margin-bottom:16px">需求处理中，完成后可提交新需求</div>
+      <button class="again" style="background:#4a90d9;margin-bottom:10px" onclick="switchTab('chat')">聊一聊</button>
       <button class="again" id="doneAfterSaleBtn" style="display:none" onclick="resetForAfterSale()">提交新需求 / 售后申请</button>
     </div>
   </div>
@@ -315,7 +296,6 @@ function doLogin(){
   curUser = name;
   sessionStorage.setItem('xy_user', name);
   document.getElementById('loginGate').classList.add('hide');
-  document.getElementById('bottomNav').style.display = 'flex';
   document.getElementById('chatTitle').textContent = '消息';
   checkUserOrders();
   loadMessages();
@@ -368,14 +348,11 @@ function showDoneScreen(isPending){
 function switchTab(tab){
   curTab = tab;
   document.querySelectorAll('.tab-page').forEach(function(p){p.classList.remove('active');});
-  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('on');});
   if(tab === 'order'){
     document.getElementById('tabOrder').classList.add('active');
-    document.querySelectorAll('.nav-item')[0].classList.add('on');
     if(hasPending) showDoneScreen(true);
   } else {
     document.getElementById('tabChat').classList.add('active');
-    document.querySelectorAll('.nav-item')[1].classList.add('on');
     loadMessages();
     scrollChatBottom();
   }
