@@ -22,7 +22,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 label{font-size:14px;font-weight:500;color:#333;margin-bottom:6px;display:block}
 label .req{color:#c00;margin-left:2px}
 label .hint{color:#999;font-weight:400;font-size:12px;margin-left:4px}
-input[type=text],input[type=datetime-local],textarea{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;color:#222;background:#fafafa;outline:none;transition:border-color .2s;font-family:inherit}
+input[type=text],input[type=datetime-local],textarea{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;color:#222;background:#fafafa;outline:none;transition:border-color .2s;font-family:inherit;max-width:100%}
+input[type=datetime-local]{-webkit-appearance:none;appearance:none}
 input:focus,textarea:focus{border-color:#555}
 ::placeholder{color:#aaa}
 textarea{min-height:90px;resize:vertical;line-height:1.6}
@@ -116,7 +117,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
   <div class="section">
     <div class="section-body">
       <div class="form-group">
-        <label>要求描述</label>
+        <label>要求描述<span class="hint">（选填）</span></label>
         <textarea id="desc" placeholder="写清楚你的需求，比如问卷主题、题目数量、格式要求等"></textarea>
       </div>
     </div>
@@ -125,7 +126,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
   <div class="section">
     <div class="section-body">
       <div class="form-group">
-        <label>上传图片</label>
+        <label>上传图片<span class="hint">（选填）</span></label>
         <div class="upload-area" onclick="document.getElementById('imgInput').click()">
           <div class="ico">[ 图片 ]</div>
           <div class="txt">点击选择图片</div>
@@ -140,7 +141,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
   <div class="section">
     <div class="section-body">
       <div class="form-group">
-        <label>上传文件</label>
+        <label>上传文件<span class="hint">（选填）</span></label>
         <div class="upload-area" onclick="document.getElementById('fileInput').click()">
           <div class="ico">[ 文件 ]</div>
           <div class="txt">点击选择文件</div>
