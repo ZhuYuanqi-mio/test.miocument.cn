@@ -371,7 +371,8 @@ var ZION = {
   create_delivery_record: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/0fb85988-f446-409e-b7cf-9c44e165c52c',
   create_adjust_log: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/7907638c-110e-41b0-899a-7815af0f10bc',
   get_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/2df7e8d5-8990-469d-b589-f0080d5e0068',
-  update_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/d1ac7a26-b198-4727-aa77-19e2e7da3619'
+  update_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/d1ac7a26-b198-4727-aa77-19e2e7da3619',
+  list_orders: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/20ac40dd-0181-43c8-beaf-6e4c9636b3ed'
 };
 
 async function callZion(url, data){
@@ -402,6 +403,54 @@ async function syncToBackend(list){
   if(fail>0)showToast('后端同步：成功 '+ok+' / 失败 '+fail);
   else showToast('后端同步完成：'+ok+' 条订单已入库');
 }
+
+async function loadFromBackend(){
+  if(ZION.list_orders==='PLACEHOLDER') return;
+  try{
+    document.getElementById('dropZone').innerHTML='<h3>正在加载数据...</h3><p>从后端获取订单中</p>';
+    var res=await callZion(ZION.list_orders,{});
+    if(!res||!res.orders_data) return;
+    var list=JSON.parse(res.orders_data);
+    if(!list||!list.length){
+      document.getElementById('dropZone').innerHTML='<h3>点击或拖拽导入 Excel 表格</h3><p>支持 .xlsx / .xls 格式，将自动解析会员信息</p>';
+      return;
+    }
+    orders=list.map(function(bo){
+      var isStrawberry=bo.member_type==='草莓会员';
+      var deliveries=[];
+      if(bo.delivery_records){
+        bo.delivery_records.forEach(function(dr){
+          if(isStrawberry) deliveries.push((dr.delivery_date||'')+' '+(dr.quantity||0)+'斤');
+          else deliveries.push(dr.delivery_date||dr.note||'');
+        });
+      }
+      if(bo.status==='completed'&&!isStrawberry&&bo.member_type!=='共享菜地') deliveries.push('已完成');
+      var totalNum=bo.total_count||0;
+      var unit=bo.total_unit||unitByType(bo.member_type);
+      return {
+        idx:nextIdx++, backendId:bo.id,
+        yearMonth:'', platform:bo.platform||'',
+        payTime:bo.pay_time?bo.pay_time.split('T')[0]:'',
+        deliveryMethod:bo.delivery_method||'',
+        category:bo.category||'', productName:bo.ud_product_name_d340d0||'',
+        totalStr:String(totalNum)+unit, totalNum:totalNum,
+        price:String(bo.price||''), discount:String(bo.discount||''),
+        amount:bo.amount_paid||0, wechat:bo.wechat_name||'',
+        source:bo.source||'', repurchase:bo.repurchase||'',
+        memberType:bo.member_type||'', deliveries:deliveries,
+        doneCount:bo.delivery_records?bo.delivery_records.length:0,
+        paused:bo.status==='paused'
+      };
+    });
+    renderAll();
+    showToast('已加载 '+orders.length+' 条订单');
+  }catch(e){
+    console.error('loadFromBackend:',e);
+    document.getElementById('dropZone').innerHTML='<h3>点击或拖拽导入 Excel 表格</h3><p>支持 .xlsx / .xls 格式，将自动解析会员信息</p>';
+  }
+}
+
+loadFromBackend();
 
 function triggerImport(){ document.getElementById('fileInput').click(); }
 
