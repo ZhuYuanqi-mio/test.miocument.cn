@@ -46,15 +46,16 @@
 
 <!-- 下次配送（次数型会员） -->
 <div class="panel" id="nextPanel">
-  <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
-    <div>
-      <div style="font-size:12px;color:var(--text-3);">下一次配送（第6期）</div>
-      <div style="font-size:18px;font-weight:700;color:var(--text-1);margin-top:4px;">4月11日 [周五]</div>
-      <div style="font-size:12px;color:var(--text-3);margin-top:2px;">咯咯哒生态鸡蛋 · 散养土鸡蛋 30枚/份</div>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-sm" id="pauseBtn" style="border:1px solid #ddd;color:var(--text-2);" onclick="togglePause()">暂停配送</button>
-      <button class="btn btn-outline btn-sm" onclick="openModifyModal()">修改</button>
+  <div style="padding:14px 16px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;color:var(--text-3);">下一次配送（第6期）</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text-1);margin-top:4px;">4月11日 [周五]</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;margin-left:12px;">
+        <button class="btn btn-sm" id="pauseBtn" style="border:1px solid #ddd;color:var(--text-2);white-space:nowrap;padding:6px 12px;" onclick="togglePause()">暂停配送</button>
+        <button class="btn btn-outline btn-sm" style="white-space:nowrap;padding:6px 12px;" onclick="openModifyModal()">修改</button>
+      </div>
     </div>
   </div>
 </div>
@@ -82,28 +83,28 @@
         <span><span class="delivery-period">第6期</span><span class="delivery-count">1份</span></span>
         <span class="delivery-time">预计4月11日[周五]送达</span>
       </div>
-      <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 北京市东城区幸福大街88号阳光花园6号楼301</div>
+      <div class="delivery-detail delivery-addr"></div>
     </div>
     <div class="delivery-row">
       <div class="delivery-top">
         <span><span class="delivery-period">第7期</span><span class="delivery-count">1份</span></span>
         <span class="delivery-time">预计4月18日[周五]送达</span>
       </div>
-      <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 北京市东城区幸福大街88号阳光花园6号楼301</div>
+      <div class="delivery-detail delivery-addr"></div>
     </div>
     <div class="delivery-row">
       <div class="delivery-top">
         <span><span class="delivery-period">第8期</span><span class="delivery-count">1份</span></span>
         <span class="delivery-time">预计4月25日[周五]送达</span>
       </div>
-      <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 北京市东城区幸福大街88号阳光花园6号楼301</div>
+      <div class="delivery-detail delivery-addr"></div>
     </div>
     <div class="delivery-row">
       <div class="delivery-top">
         <span><span class="delivery-period">第9期</span><span class="delivery-count">1份</span></span>
         <span class="delivery-time">预计5月2日[周五]送达</span>
       </div>
-      <div class="delivery-detail">咯咯哒生态鸡蛋 30枚/份 x1<br>王女士 138****6688 · 北京市东城区幸福大街88号阳光花园6号楼301</div>
+      <div class="delivery-detail delivery-addr"></div>
     </div>
   </div>
 </div>
@@ -758,15 +759,14 @@ function switchUser(type){
     document.querySelectorAll('.stat-label')[1].textContent = '已配送';
     document.querySelectorAll('.stat-label')[2].textContent = '剩余';
 
-    document.querySelector('div[style*="font-size:12px"][style*="color:var(--text-3)"][style*="margin-top:2px"]').textContent = u.product + ' · ' + u.spec;
-
     var nextInfo = document.getElementById('nextPanel');
-    nextInfo.querySelector('div[style*="font-size:12px"]:first-child').innerHTML = '下一次配送（第' + u.nextPeriod + '期）';
+    nextInfo.querySelector('div[style*="font-size:12px"]').innerHTML = '下一次配送（第' + u.nextPeriod + '期）';
     nextInfo.querySelector('div[style*="font-size:18px"]').textContent = u.nextDate;
 
-    var rows = document.querySelectorAll('.panel-inner .delivery-detail');
+    var addrText = u.address ? (u.name + ' ' + u.phone + ' · ' + u.address) : '暂无配送地址';
+    var rows = document.querySelectorAll('.panel-inner .delivery-addr');
     rows.forEach(function(r){
-      r.innerHTML = u.product + ' ' + u.spec + ' x1<br>' + u.name + ' ' + u.phone + ' · ' + u.address;
+      r.textContent = addrText;
     });
 
     document.querySelector('.cell-value').textContent = '已完成' + u.done + '次';
