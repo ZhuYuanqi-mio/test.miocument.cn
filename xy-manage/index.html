@@ -212,7 +212,7 @@ function bCard(o,i){
   if(o.description)s+='<div class="card-desc">'+o.description+'</div>';
   if(o.images&&o.images.length){
     s+='<div class="card-thumbs">';
-    for(var j=0;j<Math.min(o.images.length,4);j++)s+='<img src="'+o.images[j].data+'">';
+    for(var j=0;j<Math.min(o.images.length,4);j++)s+='<img src="'+(o.images[j].url||o.images[j].data)+'">';
     if(o.images.length>4)s+='<div class="plus">+'+( o.images.length-4)+'</div>';
     s+='</div>';
   }
@@ -238,7 +238,7 @@ function openDtl(i){
   s+='<div class="d-card"><div class="lb">要求描述</div><div class="val">'+(o.description||'无').replace(/\n/g,'<br>')+'</div></div>';
   if(o.images&&o.images.length){
     s+='<div class="d-card"><div class="lb">图片 ('+o.images.length+')</div><div class="d-imgs">';
-    o.images.forEach(function(m){s+='<img src="'+m.data+'">';});
+    o.images.forEach(function(m){s+='<img src="'+(m.url||m.data)+'">';});
     s+='</div></div>';
   }
   if(o.files&&o.files.length){
@@ -278,7 +278,7 @@ function delOrder(i){
     fetch(ZION.delete_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id})});
   closeDtl();go();toast('已删除');
 }
-function dlFile(oi,fi){var f=orders[oi].files[fi];if(!f||!f.data)return;var a=document.createElement('a');a.href=f.data;a.download=f.name;document.body.appendChild(a);a.click();document.body.removeChild(a);}
+function dlFile(oi,fi){var f=orders[oi].files[fi];if(!f)return;var href=f.url||f.data;if(!href)return;var a=document.createElement('a');a.href=href;a.download=f.name;a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);}
 function fmtSz(b){return b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2000);}
 

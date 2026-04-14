@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>下单 - 咸鱼接单</title>
+<script src="https://gosspublic.alicdn.com/aliyun-oss-sdk-6.18.0.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue',sans-serif;background:#eef1f6;color:#2c3e50;min-height:100vh;-webkit-font-smoothing:antialiased}
@@ -14,12 +15,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .top p{font-size:13px;opacity:.8;margin-top:5px;font-weight:400}
 
 .section{background:#fff;border-radius:10px;margin:16px 0 0;overflow:hidden;border:1px solid #e2e8f0}
-.section-title{padding:14px 16px 0;font-size:13px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:1px}
 .section-body{padding:14px 16px 16px}
 .form-group{margin-bottom:16px}
 .form-group:last-child{margin-bottom:0}
 label{font-size:14px;font-weight:500;color:#334155;margin-bottom:6px;display:block}
 label .req{color:#e25555;margin-left:2px}
+label .hint{color:#94a3b8;font-weight:400;font-size:12px;margin-left:4px}
 input[type=text],input[type=datetime-local],textarea{width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;color:#1e293b;background:#fafbfc;outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit}
 input:focus,textarea:focus{border-color:#3a7bd5;box-shadow:0 0 0 3px rgba(58,123,213,.12)}
 ::placeholder{color:#94a3b8}
@@ -28,10 +29,15 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 .tags{display:flex;flex-wrap:wrap;gap:8px}
 .tags span{padding:7px 15px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#475569;cursor:pointer;transition:all .15s;user-select:none;background:#f8fafc}
 .tags span.on{border-color:#3a7bd5;background:#eef4fd;color:#2563eb;font-weight:500}
+.tags span.custom{border-style:dashed}
+.add-row{display:flex;gap:6px;margin-top:8px}
+.add-row input{flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;background:#fafbfc}
+.add-row input:focus{border-color:#3a7bd5}
+.add-row button{padding:7px 14px;border:1px solid #3a7bd5;border-radius:6px;background:#eef4fd;color:#2563eb;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
 
 .upload-area{border:1.5px dashed #c7d2e0;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:#f8fafc}
 .upload-area:active{background:#eef4fd;border-color:#3a7bd5}
-.upload-area .ico{font-size:24px;margin-bottom:4px;color:#94a3b8}
+.upload-area .ico{font-size:24px;margin-bottom:4px}
 .upload-area .txt{font-size:13px;color:#64748b}
 .upload-area .sub{font-size:11px;color:#94a3b8;margin-top:2px}
 
@@ -39,11 +45,14 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 .img-item{width:68px;height:68px;border-radius:6px;overflow:hidden;position:relative;border:1px solid #e2e8f0}
 .img-item img{width:100%;height:100%;object-fit:cover}
 .img-item .x{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;font-size:11px;line-height:18px;text-align:center;cursor:pointer}
+.img-item.uploading{opacity:.5}
+.img-item.uploading::after{content:'...';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.6);font-size:12px;color:#3a7bd5}
 
 .file-list{margin-top:10px}
 .file-row{display:flex;align-items:center;padding:9px 12px;background:#f1f5f9;border-radius:6px;margin-bottom:5px;font-size:13px}
 .file-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#334155}
 .file-row .sz{color:#94a3b8;margin:0 8px;flex-shrink:0;font-size:12px}
+.file-row .st{color:#3a7bd5;margin:0 6px;flex-shrink:0;font-size:11px}
 .file-row .rm{color:#e25555;cursor:pointer;flex-shrink:0;font-size:12px;font-weight:500}
 
 .bar{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:12px 16px;border-top:1px solid #e2e8f0;z-index:100}
@@ -83,13 +92,17 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
         <input type="datetime-local" id="deadline">
       </div>
       <div class="form-group">
-        <label>任务类型<span class="req">*</span></label>
+        <label>任务类型<span class="req">*</span><span class="hint">（可多选）</span></label>
         <div class="tags" id="taskTags">
           <span data-v="问卷设计">问卷设计</span>
           <span data-v="答卷设计">答卷设计</span>
           <span data-v="问卷填写">问卷填写</span>
           <span data-v="分析报告">分析报告</span>
           <span data-v="售后修改">售后修改</span>
+        </div>
+        <div class="add-row">
+          <input type="text" id="customTag" placeholder="输入自定义类型">
+          <button onclick="addCustomTag()">添加</button>
         </div>
       </div>
     </div>
@@ -152,47 +165,126 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 var ZION = {
   create_xy_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/b4a14608-e61e-46b6-a748-94be7e205d0d'
 };
-var images = [], files = [];
 
+var ossClient = new OSS({
+  region: 'oss-cn-wuhan-lr',
+  accessKeyId: 'LTAI5tBcUNsZqv33UggKtQds',
+  accessKeySecret: '1pZrU9wXOQW64dqYeGWMBvH0JVC4qs',
+  bucket: 'my-video-storage-shihuang'
+});
+var OSS_BASE = 'https://my-video-storage-shihuang.oss-cn-wuhan-lr.aliyuncs.com/';
+
+var images = []; // {name, url, localPreview, uploading}
+var files = [];  // {name, size, url, uploading}
+
+// --- 任务类型 ---
 document.getElementById('taskTags').onclick = function(e){
   var s = e.target.closest('span[data-v]');
   if(s) s.classList.toggle('on');
 };
+function addCustomTag(){
+  var inp = document.getElementById('customTag');
+  var val = inp.value.trim();
+  if(!val){ showToast('请输入类型名称'); return; }
+  var exists = document.querySelector('#taskTags span[data-v="'+val+'"]');
+  if(exists){ exists.classList.add('on'); inp.value=''; return; }
+  var sp = document.createElement('span');
+  sp.dataset.v = val;
+  sp.textContent = val;
+  sp.className = 'on custom';
+  document.getElementById('taskTags').appendChild(sp);
+  inp.value = '';
+}
+document.getElementById('customTag').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ e.preventDefault(); addCustomTag(); }
+});
 function getTasks(){
   var a=[];
   document.querySelectorAll('#taskTags span.on').forEach(function(s){a.push(s.dataset.v);});
   return a;
 }
 
+// --- OSS 上传 ---
+async function uploadToOSS(file, folder){
+  var ext = file.name.split('.').pop();
+  var key = 'xianyu/' + folder + '/' + Date.now() + '_' + Math.random().toString(36).slice(2,6) + '.' + ext;
+  var result = await ossClient.put(key, file);
+  return OSS_BASE + key;
+}
+
+// --- 图片处理 ---
 function handleImages(inp){
   Array.from(inp.files).forEach(function(f){
-    if(!f.type.startsWith('image/'))return;
-    var r=new FileReader();
-    r.onload=function(e){images.push({name:f.name,data:e.target.result});renderImgs();};
-    r.readAsDataURL(f);
-  }); inp.value='';
+    if(!f.type.startsWith('image/')) return;
+    var idx = images.length;
+    var localUrl = URL.createObjectURL(f);
+    images.push({name:f.name, url:'', localPreview:localUrl, uploading:true});
+    renderImgs();
+    uploadToOSS(f, 'img').then(function(url){
+      images[idx].url = url;
+      images[idx].uploading = false;
+      renderImgs();
+    }).catch(function(e){
+      console.error('图片上传失败:', e);
+      images[idx].uploading = false;
+      images[idx].url = 'FAILED';
+      renderImgs();
+      showToast(f.name + ' 上传失败');
+    });
+  });
+  inp.value='';
 }
 function renderImgs(){
   var h='';
-  images.forEach(function(m,i){h+='<div class="img-item"><img src="'+m.data+'"><div class="x" onclick="images.splice('+i+',1);renderImgs()">×</div></div>';});
+  images.forEach(function(m,i){
+    var cls = m.uploading ? 'img-item uploading' : 'img-item';
+    h+='<div class="'+cls+'"><img src="'+m.localPreview+'"><div class="x" onclick="removeImg('+i+')">×</div></div>';
+  });
   document.getElementById('imgList').innerHTML=h;
 }
+function removeImg(i){
+  if(images[i].localPreview) URL.revokeObjectURL(images[i].localPreview);
+  images.splice(i,1);
+  renderImgs();
+}
 
+// --- 文件处理 ---
 function fmtSize(b){return b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';}
 function handleFiles(inp){
   Array.from(inp.files).forEach(function(f){
-    var r=new FileReader();
-    r.onload=function(e){files.push({name:f.name,size:f.size,data:e.target.result});renderFiles();};
-    r.readAsDataURL(f);
-  }); inp.value='';
+    var idx = files.length;
+    files.push({name:f.name, size:f.size, url:'', uploading:true});
+    renderFiles();
+    uploadToOSS(f, 'file').then(function(url){
+      files[idx].url = url;
+      files[idx].uploading = false;
+      renderFiles();
+    }).catch(function(e){
+      console.error('文件上传失败:', e);
+      files[idx].uploading = false;
+      files[idx].url = 'FAILED';
+      renderFiles();
+      showToast(f.name + ' 上传失败');
+    });
+  });
+  inp.value='';
 }
 function renderFiles(){
   var h='';
-  files.forEach(function(f,i){h+='<div class="file-row"><span class="nm">'+f.name+'</span><span class="sz">'+fmtSize(f.size)+'</span><span class="rm" onclick="files.splice('+i+',1);renderFiles()">删除</span></div>';});
+  files.forEach(function(f,i){
+    var status = f.uploading ? '<span class="st">上传中...</span>' : (f.url==='FAILED' ? '<span class="st" style="color:#e25555">失败</span>' : '<span class="st" style="color:#16a34a">✓</span>');
+    h+='<div class="file-row"><span class="nm">'+f.name+'</span><span class="sz">'+fmtSize(f.size)+'</span>'+status+'<span class="rm" onclick="files.splice('+i+',1);renderFiles()">删除</span></div>';
+  });
   document.getElementById('fileList').innerHTML=h;
 }
 
-function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2000);}
+function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+
+function isAllUploaded(){
+  for(var i=0;i<images.length;i++) if(images[i].uploading) return false;
+  for(var j=0;j<files.length;j++) if(files[j].uploading) return false;
+  return true;
+}
 
 function submitOrder(){
   var name=document.getElementById('xyName').value.trim();
@@ -202,31 +294,42 @@ function submitOrder(){
   if(!name){showToast('请填写咸鱼名称');return;}
   if(!dl){showToast('请选择最迟完成时间');return;}
   if(!tasks.length){showToast('请选择任务类型');return;}
+  if(!isAllUploaded()){showToast('文件还在上传中，请稍候');return;}
+
+  var validImgs = images.filter(function(m){return m.url && m.url!=='FAILED';});
+  var validFiles = files.filter(function(f){return f.url && f.url!=='FAILED';});
+
   var btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='提交中...';
+
   var payload={order_json:JSON.stringify({
-    xianyu_name:name,deadline:dl+':00+08:00',task_types:tasks.join(','),description:desc,
-    image_data:JSON.stringify(images.map(function(m){return{name:m.name,data:m.data};})),
-    file_data:JSON.stringify(files.map(function(f){return{name:f.name,size:f.size,data:f.data};})),
+    xianyu_name:name,
+    deadline:dl+':00+08:00',
+    task_types:tasks.join(','),
+    description:desc,
+    image_data:JSON.stringify(validImgs.map(function(m){return{name:m.name,url:m.url};})),
+    file_data:JSON.stringify(validFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};})),
     status:'pending'
   })};
+
   if(ZION.create_xy_order){
     fetch(ZION.create_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
     .then(function(){btn.disabled=false;btn.textContent='提 交';document.getElementById('doneScreen').classList.add('show');})
     .catch(function(e){btn.disabled=false;btn.textContent='提 交';showToast('提交失败，请重试');console.error(e);});
   }else{
-    var saved=JSON.parse(localStorage.getItem('xy_orders')||'[]');
-    saved.push({id:Date.now(),xianyu_name:name,deadline:dl,task_types:tasks,description:desc,images:images.slice(),files:files.slice(),status:'pending',created_at:new Date().toISOString()});
-    localStorage.setItem('xy_orders',JSON.stringify(saved));
     setTimeout(function(){btn.disabled=false;btn.textContent='提 交';document.getElementById('doneScreen').classList.add('show');},400);
   }
 }
+
 function resetForm(){
   document.getElementById('doneScreen').classList.remove('show');
   document.getElementById('xyName').value='';document.getElementById('deadline').value='';document.getElementById('desc').value='';
-  document.querySelectorAll('#taskTags span').forEach(function(s){s.classList.remove('on');});
-  images=[];files=[];document.getElementById('imgList').innerHTML='';document.getElementById('fileList').innerHTML='';
+  document.querySelectorAll('#taskTags span.on').forEach(function(s){s.classList.remove('on');});
+  document.querySelectorAll('#taskTags span.custom').forEach(function(s){s.remove();});
+  images=[];files=[];
+  document.getElementById('imgList').innerHTML='';document.getElementById('fileList').innerHTML='';
+  document.getElementById('customTag').value='';
 }
 </script>
 </body>
