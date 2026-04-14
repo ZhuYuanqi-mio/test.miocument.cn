@@ -108,6 +108,11 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 .img-preview-item{position:relative;width:72px;height:72px;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
 .img-preview-item img{width:100%;height:100%;object-fit:cover}
 .img-preview-item .img-del{position:absolute;top:2px;right:2px;width:20px;height:20px;background:rgba(0,0,0,.55);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;line-height:1}
+.dup-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#FFF8E1;border-radius:6px;margin-bottom:6px;font-size:13px}
+.dup-item .dup-idx{width:24px;height:24px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.dup-item .dup-info{flex:1;min-width:0}
+.dup-item .dup-name{font-weight:600;color:var(--text-1)}
+.dup-item .dup-detail{font-size:12px;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 @media(max-width:768px){
   .app-header{padding:0 14px;height:48px}
@@ -158,6 +163,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
   <h1>咯咯哒生态农场 <span>后台管理</span></h1>
   <div class="header-actions">
     <button class="btn btn-outline" onclick="triggerImport()">导入表格</button>
+    <button class="btn btn-primary" onclick="exportExcel()">导出表格</button>
     <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFile(this)">
   </div>
 </div>
@@ -324,6 +330,22 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
   </div>
 </div>
 
+<!-- 重复数据弹窗 -->
+<div class="overlay" id="dupModal">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-head"><h3>发现重复数据</h3><button class="close" onclick="closeModal('dupModal')">X</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:12px">以下 <strong id="dup-count">0</strong> 条数据与已有订单重复（微信名+商品名+支付时间相同），已自动跳过。</p>
+      <div id="dup-list" style="max-height:300px;overflow-y:auto"></div>
+      <p style="font-size:13px;color:var(--text-3);margin-top:12px">不重复的数据已成功导入。如需覆盖重复数据，请点击「覆盖导入」。</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline-gray" onclick="closeModal('dupModal')">跳过重复</button>
+      <button class="btn btn-primary" onclick="forceImportDups()">覆盖导入</button>
+    </div>
+  </div>
+</div>
+
 <!-- 图片预览弹窗 -->
 <div class="overlay" id="imgPreviewModal" style="background:rgba(0,0,0,.8)">
   <div style="position:relative;max-width:90vw;max-height:90vh">
@@ -340,6 +362,8 @@ var adjData = {};
 var orderImages = {};
 var currentRemarkIdx = null;
 var currentDeductIdx = null;
+var pendingDups = [];
+var nextIdx = 1;
 
 function triggerImport(){ document.getElementById('fileInput').click(); }
 
@@ -387,54 +411,108 @@ function fmtDate(v){
   return String(v);
 }
 
+function buildOrderKey(o){
+  return (o.wechat + '||' + o.productName + '||' + o.payTime).toLowerCase();
+}
+
+function parseRow(r){
+  var deliveries = [];
+  for(var j = 14; j < r.length; j++){
+    if(r[j] !== '' && r[j] !== null && r[j] !== undefined){
+      deliveries.push(String(r[j]) === '完' ? '已完成' : fmtDate(r[j]) || String(r[j]));
+    }
+  }
+  var totalStr = String(r[6] || '');
+  var totalNum = parseNum(totalStr);
+  var memberType = String(r[13] || '');
+  var category = String(r[4] || '');
+  var doneCount = 0;
+  var isStrawberry = memberType === '草莓会员';
+  var isGarden = memberType === '共享菜地';
+  if(!isStrawberry && !isGarden){
+    doneCount = deliveries.filter(function(d){ return d !== '已完成'; }).length;
+    if(deliveries.indexOf('已完成') >= 0) doneCount = deliveries.indexOf('已完成');
+    else doneCount = deliveries.length;
+  }
+  var amount = parseNum(r[9]);
+  return {
+    idx: nextIdx++,
+    yearMonth: String(r[0] || ''),
+    platform: String(r[1] || ''),
+    payTime: fmtDate(r[2]),
+    deliveryMethod: String(r[3] || ''),
+    category: category,
+    productName: String(r[5] || ''),
+    totalStr: totalStr,
+    totalNum: totalNum || 0,
+    price: String(r[7] || ''),
+    discount: String(r[8] || ''),
+    amount: amount,
+    wechat: String(r[10] || ''),
+    source: String(r[11] || ''),
+    repurchase: String(r[12] || ''),
+    memberType: memberType,
+    deliveries: deliveries,
+    doneCount: doneCount,
+    paused: false
+  };
+}
+
 function processData(data){
-  orders = [];
+  var existingKeys = {};
+  orders.forEach(function(o){ existingKeys[buildOrderKey(o)] = true; });
+
+  var newOrders = [];
+  var dups = [];
   for(var i = 1; i < data.length; i++){
     var r = data[i];
     if(!r[10]) continue;
-    var deliveries = [];
-    for(var j = 14; j < r.length; j++){
-      if(r[j] !== '' && r[j] !== null && r[j] !== undefined){
-        deliveries.push(String(r[j]) === '完' ? '已完成' : fmtDate(r[j]) || String(r[j]));
+    var o = parseRow(r);
+    var key = buildOrderKey(o);
+    if(existingKeys[key]){
+      dups.push(o);
+    } else {
+      newOrders.push(o);
+      existingKeys[key] = true;
+    }
+  }
+
+  orders = orders.concat(newOrders);
+
+  if(dups.length > 0){
+    pendingDups = dups;
+    document.getElementById('dup-count').textContent = dups.length;
+    var h = '';
+    dups.forEach(function(d, i){
+      h += '<div class="dup-item"><span class="dup-idx">'+(i+1)+'</span>';
+      h += '<div class="dup-info"><div class="dup-name">'+d.wechat+'</div>';
+      h += '<div class="dup-detail">'+d.productName+' · '+d.payTime+' · ¥'+d.amount.toFixed(2)+'</div></div></div>';
+    });
+    document.getElementById('dup-list').innerHTML = h;
+    document.getElementById('dupModal').classList.add('show');
+    renderAll();
+    showToast('新增 ' + newOrders.length + ' 条，' + dups.length + ' 条重复');
+  } else {
+    renderAll();
+    showToast('导入成功，新增 ' + newOrders.length + ' 条订单（共 ' + orders.length + ' 条）');
+  }
+}
+
+function forceImportDups(){
+  pendingDups.forEach(function(dup){
+    var key = buildOrderKey(dup);
+    for(var i = orders.length - 1; i >= 0; i--){
+      if(buildOrderKey(orders[i]) === key){
+        orders.splice(i, 1);
+        break;
       }
     }
-    var totalStr = String(r[6] || '');
-    var totalNum = parseNum(totalStr);
-    var memberType = String(r[13] || '');
-    var category = String(r[4] || '');
-    var doneCount = 0;
-    var isStrawberry = memberType === '草莓会员';
-    var isGarden = memberType === '共享菜地';
-    if(!isStrawberry && !isGarden){
-      doneCount = deliveries.filter(function(d){ return d !== '已完成'; }).length;
-      if(deliveries.indexOf('已完成') >= 0) doneCount = deliveries.indexOf('已完成');
-      else doneCount = deliveries.length;
-    }
-    var amount = parseNum(r[9]);
-    orders.push({
-      idx: i,
-      yearMonth: String(r[0] || ''),
-      platform: String(r[1] || ''),
-      payTime: fmtDate(r[2]),
-      deliveryMethod: String(r[3] || ''),
-      category: category,
-      productName: String(r[5] || ''),
-      totalStr: totalStr,
-      totalNum: totalNum || 0,
-      price: String(r[7] || ''),
-      discount: String(r[8] || ''),
-      amount: amount,
-      wechat: String(r[10] || ''),
-      source: String(r[11] || ''),
-      repurchase: String(r[12] || ''),
-      memberType: memberType,
-      deliveries: deliveries,
-      doneCount: doneCount,
-      paused: false
-    });
-  }
+    orders.push(dup);
+  });
+  closeModal('dupModal');
   renderAll();
-  showToast('导入成功，共 ' + orders.length + ' 条订单');
+  showToast('已覆盖 ' + pendingDups.length + ' 条重复数据');
+  pendingDups = [];
 }
 
 function renderAll(){
@@ -715,6 +793,44 @@ function previewImg(idx, imgIdx){
     document.getElementById('preview-img').src = imgs[imgIdx];
     document.getElementById('imgPreviewModal').classList.add('show');
   }
+}
+
+function exportExcel(){
+  if(!orders.length){ showToast('暂无数据可导出'); return; }
+  var header = ['年月','付款平台','支付时间','配送方式','商品分类','商品名称',
+    '次数/有效期','原价','折扣','实付金额','下单微信','客户来源','复购标签',
+    '包年会员','状态'];
+  var maxDel = 0;
+  orders.forEach(function(o){ if(o.deliveries.length > maxDel) maxDel = o.deliveries.length; });
+  for(var d = 1; d <= maxDel; d++) header.push('第'+d+'次');
+
+  var rows = [header];
+  orders.forEach(function(o){
+    var statusText = o.paused ? '已暂停' : (getStatusKey(o) === 'done' ? '已完成' : '进行中');
+    var row = [o.yearMonth, o.platform, o.payTime, o.deliveryMethod, o.category,
+      o.productName, o.totalStr, o.price, o.discount, o.amount, o.wechat,
+      o.source, o.repurchase, o.memberType, statusText];
+    o.deliveries.forEach(function(dd){ row.push(dd); });
+    rows.push(row);
+  });
+
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  var colWidths = header.map(function(h,i){
+    if(i <= 4) return {wch:10};
+    if(i === 5) return {wch:28};
+    if(i === 10) return {wch:16};
+    return {wch:12};
+  });
+  ws['!cols'] = colWidths;
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '会员订单');
+  var now = new Date();
+  var fname = '咯咯哒后台数据_' + now.getFullYear() +
+    ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2) +
+    ('0'+now.getHours()).slice(-2) + ('0'+now.getMinutes()).slice(-2) + '.xlsx';
+  XLSX.writeFile(wb, fname);
+  showToast('导出成功：' + fname);
 }
 
 function showToast(msg){
