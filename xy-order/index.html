@@ -183,7 +183,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
       <li><span class="num">4.</span>我答应了售后就会售后的，不要催我，我回复也得打字不是</li>
       <li><span class="num">5.</span>请允许我也会去吃饭、睡觉，没有回复别急，，，</li>
     </ul>
-    <div style="text-align:center"><button class="again" onclick="resetForm()">继续下单</button></div>
+    <div style="text-align:center"><button class="again" onclick="resetForAfterSale()">售后申请</button></div>
   </div>
 </div>
 
@@ -338,7 +338,7 @@ function submitOrder(){
     setTimeout(function(){btn.disabled=false;btn.textContent='提 交';document.getElementById('doneScreen').classList.add('show');},400);
   }
 }
-function resetForm(){
+function resetForm(preSelect){
   document.getElementById('doneScreen').classList.remove('show');
   document.getElementById('xyName').value='';document.getElementById('email').value='';document.getElementById('deadline').value='';document.getElementById('desc').value='';toggleDlPh();
   document.querySelectorAll('#taskTags span.on').forEach(function(s){s.classList.remove('on');});
@@ -346,7 +346,11 @@ function resetForm(){
   images=[];files=[];
   document.getElementById('imgList').innerHTML='';document.getElementById('fileList').innerHTML='';
   document.getElementById('customTag').value='';
+  if(preSelect){
+    document.querySelectorAll('#taskTags span[data-v]').forEach(function(s){if(s.getAttribute('data-v')===preSelect)s.classList.add('on');});
+  }
 }
+function resetForAfterSale(){resetForm('售后修改');}
 </script>
 </body>
 </html>
