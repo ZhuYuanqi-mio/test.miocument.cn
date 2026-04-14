@@ -348,6 +348,7 @@ function showDoneScreen(isPending){
 function switchTab(tab){
   curTab = tab;
   document.querySelectorAll('.tab-page').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('doneScreen').classList.remove('show');
   if(tab === 'order'){
     document.getElementById('tabOrder').classList.add('active');
     if(hasPending) showDoneScreen(true);
