@@ -365,6 +365,44 @@ var currentDeductIdx = null;
 var pendingDups = [];
 var nextIdx = 1;
 
+var ZION = {
+  create_member: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/247542fb-3078-4ca8-b622-7b2183caab4b',
+  create_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/c222ca8b-693f-4bd7-a038-fbb7cbf5a6b2',
+  create_delivery_record: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/0fb85988-f446-409e-b7cf-9c44e165c52c',
+  create_adjust_log: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/7907638c-110e-41b0-899a-7815af0f10bc',
+  get_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/2df7e8d5-8990-469d-b589-f0080d5e0068',
+  update_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/d1ac7a26-b198-4727-aa77-19e2e7da3619'
+};
+
+async function callZion(url, data){
+  var res = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  return await res.json();
+}
+
+function toISO(d){ return d?(d.indexOf('T')>=0?d:d+'T00:00:00+08:00'):null; }
+function unitByType(t){ return t==='鸡会员'?'只':t==='草莓会员'?'斤':t==='共享菜地'?'月':'次'; }
+
+async function syncToBackend(list){
+  var ok=0,fail=0;
+  showToast('正在同步到后端（'+list.length+'条）...');
+  for(var i=0;i<list.length;i++){
+    var o=list[i];
+    try{
+      var payload={phone:'',wechat_name:o.wechat,source:o.source,repurchase:o.repurchase,
+        member_type:o.memberType,category:o.category,product_name:o.productName,
+        total_count:o.totalNum,total_unit:unitByType(o.memberType),
+        price:parseNum(o.price),discount:parseNum(o.discount),amount_paid:o.amount,
+        platform:o.platform,pay_time:toISO(o.payTime),
+        delivery_method:o.deliveryMethod,status:'active'};
+      var r=await callZion(ZION.create_order,{order_json:JSON.stringify(payload)});
+      if(r&&r.order_id){o.backendId=r.order_id;ok++;}
+      else{fail++;console.error('create_order fail:',o.wechat,r);}
+    }catch(e){fail++;console.error('sync error:',e);}
+  }
+  if(fail>0)showToast('后端同步：成功 '+ok+' / 失败 '+fail);
+  else showToast('后端同步完成：'+ok+' 条订单已入库');
+}
+
 function triggerImport(){ document.getElementById('fileInput').click(); }
 
 var dz = document.getElementById('dropZone');
@@ -492,13 +530,16 @@ function processData(data){
     document.getElementById('dupModal').classList.add('show');
     renderAll();
     showToast('新增 ' + newOrders.length + ' 条，' + dups.length + ' 条重复');
+    if(newOrders.length) syncToBackend(newOrders);
   } else {
     renderAll();
     showToast('导入成功，新增 ' + newOrders.length + ' 条订单（共 ' + orders.length + ' 条）');
+    syncToBackend(newOrders);
   }
 }
 
 function forceImportDups(){
+  var toSync = [];
   pendingDups.forEach(function(dup){
     var key = buildOrderKey(dup);
     for(var i = orders.length - 1; i >= 0; i--){
@@ -508,11 +549,13 @@ function forceImportDups(){
       }
     }
     orders.push(dup);
+    toSync.push(dup);
   });
   closeModal('dupModal');
   renderAll();
   showToast('已覆盖 ' + pendingDups.length + ' 条重复数据');
   pendingDups = [];
+  syncToBackend(toSync);
 }
 
 function renderAll(){
@@ -667,6 +710,13 @@ function stepAdj(d){
   document.getElementById('adj-result').style.color = adjData.delta>0?'var(--green)':adjData.delta<0?'var(--red)':'var(--text-3)';
 }
 function confirmAdj(){
+  var o = getOrderByIdx(adjData.idx);
+  var oldTotal = o.totalNum;
+  var newTotal = Math.max(0, oldTotal + adjData.delta);
+  o.totalNum = newTotal;
+  o.totalStr = String(newTotal) + unitByType(o.memberType);
+  var reason = document.getElementById('adj-reason').value;
+  var note = document.getElementById('adj-note').value;
   var imgEls = document.getElementById('adj-imgs').querySelectorAll('.img-preview-item img');
   if(imgEls.length){
     var existing = orderImages[adjData.idx] || [];
@@ -676,6 +726,13 @@ function confirmAdj(){
   closeModal('adjustModal');
   filterCards();
   showToast('配送次数调整成功');
+  if(o.backendId){
+    callZion(ZION.update_order,{order_id:o.backendId,update_json:JSON.stringify({total_count:newTotal})});
+    callZion(ZION.create_adjust_log,{log_json:JSON.stringify({
+      order_id:o.backendId,action:'adjust_count',old_value:String(oldTotal),
+      new_value:String(newTotal),reason:reason,note:note,image_url:'',operator:'管理员'
+    })});
+  }
 }
 
 function openDeduct(idx){
@@ -695,6 +752,12 @@ function openDeduct(idx){
   document.getElementById('deductModal').classList.add('show');
 }
 function confirmDeduct(){
+  var o = getOrderByIdx(currentDeductIdx);
+  var qty = parseFloat(document.getElementById('ded-val').value) || 0;
+  var note = document.getElementById('ded-note').value;
+  var today = new Date();
+  var ds = today.getFullYear()+'-'+('0'+(today.getMonth()+1)).slice(-2)+'-'+('0'+today.getDate()).slice(-2);
+  o.deliveries.push(ds+' '+qty+'斤');
   var imgEls = document.getElementById('ded-imgs').querySelectorAll('.img-preview-item img');
   if(imgEls.length && currentDeductIdx !== null){
     var existing = orderImages[currentDeductIdx] || [];
@@ -704,6 +767,16 @@ function confirmDeduct(){
   closeModal('deductModal');
   filterCards();
   showToast('消耗扣除成功');
+  if(o.backendId){
+    callZion(ZION.create_delivery_record,{record_json:JSON.stringify({
+      order_id:o.backendId,period:o.deliveries.length,delivery_date:ds,
+      quantity:qty,unit:'斤',note:note||qty+'斤',status:'done'
+    })});
+    callZion(ZION.create_adjust_log,{log_json:JSON.stringify({
+      order_id:o.backendId,action:'deduct',old_value:'',new_value:qty+'斤',
+      reason:'草莓消耗',note:note,image_url:'',operator:'管理员'
+    })});
+  }
 }
 
 function openDetail(idx){
@@ -731,6 +804,15 @@ function togglePause(idx){
   o.paused = !o.paused;
   filterCards();
   showToast(o.wechat + (o.paused ? ' 已暂停配送' : ' 已恢复配送'));
+  if(o.backendId){
+    var ns = o.paused ? 'paused' : 'active';
+    callZion(ZION.update_order,{order_id:o.backendId,update_json:JSON.stringify({status:ns})});
+    callZion(ZION.create_adjust_log,{log_json:JSON.stringify({
+      order_id:o.backendId,action:o.paused?'pause':'resume',
+      old_value:o.paused?'active':'paused',new_value:ns,
+      reason:o.paused?'暂停配送':'恢复配送',note:'',image_url:'',operator:'管理员'
+    })});
+  }
 }
 
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
