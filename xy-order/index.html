@@ -565,10 +565,12 @@ function renderMessages(){
     if(m.msg_type === 'image'){
       h+='<div class="msg-bubble"><img class="msg-img" src="'+m.content+'" onclick="viewImg(\''+m.content+'\')"></div>';
     } else if(m.msg_type === 'file'){
-      h+='<div class="msg-file-card" onclick="window.open(\''+m.content+'\',\'_blank\')">';
-      h+='<img class="file-ico" src="'+fileIconUrl(m.file_name)+'">';
-      h+='<div class="file-info"><div class="fn">'+m.file_name+'</div><div class="fs">'+(m.file_size||'')+'</div></div>';
-      h+='</div>';
+      var fname=m.file_name||m.content.split('/').pop()||'文件';
+      var fsize=m.file_size||'';
+      h+='<div class="msg-bubble" style="padding:0;overflow:hidden;border:none;background:none"><div class="msg-file-card" onclick="window.open(\''+m.content+'\',\'_blank\')">';
+      h+='<img class="file-ico" src="'+fileIconUrl(fname)+'">';
+      h+='<div class="file-info"><div class="fn">'+escHtml(fname)+'</div><div class="fs">'+fsize+'</div></div>';
+      h+='</div></div>';
     } else {
       h+='<div class="msg-bubble">'+escHtml(m.content).replace(/\n/g,'<br>')+'</div>';
     }
