@@ -8,6 +8,15 @@
 </head>
 <body>
 
+<!-- 加载中提示 -->
+<div id="loadingState" style="text-align:center;padding:60px 0;">
+  <div style="font-size:16px;color:var(--text-2);margin-bottom:8px;">正在加载数据...</div>
+  <div style="font-size:13px;color:var(--text-3);">从后端获取用户信息</div>
+</div>
+
+<!-- 主内容区域（初始隐藏） -->
+<div id="mainContent" style="display:none;">
+
 <!-- 服务状态 -->
 <div class="panel">
   <div style="padding:16px;display:flex;justify-content:space-between;align-items:center;">
@@ -139,6 +148,8 @@
 </div>
 
 <div style="height:70px;"></div>
+
+</div><!-- /mainContent -->
 
 <!-- 底部导航 -->
 <div class="tab-bar">
@@ -405,9 +416,14 @@ async function loadFromBackend(){
       }
     });
     buildSwitchList();
-    if(userKeys.length)switchUser(userKeys[0]);
+    if(userKeys.length){
+      document.getElementById('loadingState').style.display='none';
+      document.getElementById('mainContent').style.display='';
+      switchUser(userKeys[0]);
+    }
   }catch(e){
     console.error('loadFromBackend:',e);
+    document.getElementById('loadingState').innerHTML='<div style="font-size:16px;color:var(--text-2);margin-bottom:8px;">加载失败</div><div style="font-size:13px;color:var(--text-3);">请刷新页面重试</div>';
     document.getElementById('switchList').innerHTML='<div style="text-align:center;padding:24px;color:var(--text-3);">加载失败，请刷新重试</div>';
   }
 }
