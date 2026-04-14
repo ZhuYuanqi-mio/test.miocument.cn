@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>排单管理</title>
+<script src="https://gosspublic.alicdn.com/aliyun-oss-sdk-6.18.0.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue',sans-serif;background:#f7f7f7;color:#222;min-height:100vh;-webkit-font-smoothing:antialiased}
@@ -40,6 +41,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .b-amber{background:#f5f5f5;color:#666}
 .b-green{background:#f5f5f5;color:#888}
 .b-gray{background:#f0f0f0;color:#aaa}
+.unread-badge{position:absolute;top:8px;right:8px;min-width:18px;height:18px;border-radius:9px;background:#c00;color:#fff;font-size:10px;line-height:18px;text-align:center;padding:0 5px;font-weight:600}
 .card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
 .card-tags span{padding:2px 7px;border-radius:3px;font-size:11px;background:#f2f2f2;color:#555}
 .card-desc{font-size:13px;color:#666;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:6px}
@@ -52,13 +54,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .cd-amber{color:#666}
 .cd-green{color:#888}
 
+/* Detail overlay */
 .detail{display:none;position:fixed;inset:0;background:#f7f7f7;z-index:200;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .detail.show{display:block}
 .detail-head{position:sticky;top:0;z-index:10;background:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e0e0e0}
 .detail-head h2{font-size:15px;font-weight:600;flex:1;text-align:center;color:#222}
 .detail-head .bk{font-size:13px;color:#222;cursor:pointer;min-width:44px}
+.detail-head .hd-actions{display:flex;gap:6px;min-width:90px;justify-content:flex-end}
 .detail-head .st-btn{padding:5px 12px;border-radius:6px;border:1px solid #222;background:none;color:#222;font-size:12px;font-weight:500;cursor:pointer}
 .detail-head .st-btn.done{border-color:#888;color:#888}
+.detail-head .chat-btn{padding:5px 12px;border-radius:6px;border:1px solid #4a90d9;background:#4a90d9;color:#fff;font-size:12px;font-weight:500;cursor:pointer;position:relative}
+.detail-head .chat-btn .cb-dot{position:absolute;top:-4px;right:-4px;min-width:14px;height:14px;border-radius:7px;background:#c00;color:#fff;font-size:9px;line-height:14px;text-align:center;padding:0 3px;display:none}
+.detail-head .chat-btn .cb-dot.show{display:block}
 .detail-inner{max-width:640px;margin:0 auto;padding:14px 16px 24px}
 .d-card{background:#fff;border-radius:8px;padding:14px 16px;margin-bottom:10px;border:1px solid #e0e0e0}
 .d-card .lb{font-size:12px;color:#999;margin-bottom:5px}
@@ -73,9 +80,48 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .d-files .fr .dl{color:#222;margin-left:8px;cursor:pointer;font-weight:500;font-size:12px;text-decoration:underline}
 .del-btn{display:block;margin:20px auto 0;padding:11px 0;width:100%;border:none;border-radius:8px;background:#fef2f2;color:#c00;font-size:14px;font-weight:500;cursor:pointer;border:1px solid #fcc}
 
+/* Chat overlay */
+.chat-ov{display:none;position:fixed;inset:0;background:#f7f7f7;z-index:250;flex-direction:column}
+.chat-ov.show{display:flex}
+.chat-ov-head{background:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e0e0e0;flex-shrink:0}
+.chat-ov-head .bk{font-size:13px;color:#222;cursor:pointer;min-width:44px}
+.chat-ov-head h2{font-size:15px;font-weight:600;flex:1;text-align:center;color:#222}
+.chat-ov-head .sync-btn{padding:5px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;color:#222;font-size:12px;cursor:pointer;min-width:74px;text-align:center}
+.chat-ov-head .sync-btn:active{background:#f2f2f2}
+.chat-ov-msgs{flex:1;overflow-y:auto;padding:12px 16px;-webkit-overflow-scrolling:touch}
+.chat-ov-msgs .chat-empty{text-align:center;padding:60px 0;color:#aaa;font-size:14px}
+
+.msg-row{display:flex;margin-bottom:14px;align-items:flex-start}
+.msg-row.me{flex-direction:row-reverse}
+.msg-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.msg-body{max-width:70%;margin:0 10px}
+.msg-bubble{padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.5;word-break:break-word}
+.msg-row.other .msg-bubble{background:#fff;color:#222;border:1px solid #e0e0e0;border-top-left-radius:4px}
+.msg-row.me .msg-bubble{background:#4a90d9;color:#fff;border-top-right-radius:4px}
+.msg-time{font-size:11px;color:#aaa;margin-top:3px}
+.msg-row.me .msg-time{text-align:right}
+.msg-bubble img.msg-img{max-width:200px;max-height:200px;border-radius:6px;cursor:pointer;display:block}
+.msg-file-card{display:flex;align-items:center;background:#f5f5f5;border-radius:8px;padding:10px 12px;min-width:200px;cursor:pointer;border:1px solid #e0e0e0}
+.msg-row.me .msg-file-card{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2)}
+.msg-file-card img.file-ico{width:36px;height:36px;flex-shrink:0;margin-right:10px}
+.msg-file-card .file-info{flex:1;min-width:0}
+.msg-file-card .file-info .fn{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg-file-card .file-info .fs{font-size:11px;color:#999;margin-top:2px}
+.msg-row.me .msg-file-card .file-info .fn{color:#fff}
+.msg-row.me .msg-file-card .file-info .fs{color:rgba(255,255,255,.6)}
+
+.chat-ov-input{background:#fff;border-top:1px solid #e0e0e0;padding:8px 12px;display:flex;align-items:flex-end;gap:8px;flex-shrink:0}
+.chat-ov-input .ci-actions{display:flex;gap:4px;flex-shrink:0;padding-bottom:4px}
+.chat-ov-input .ci-btn{width:32px;height:32px;border-radius:50%;border:1px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#666}
+.chat-ov-input .ci-btn:active{background:#f0f0f0}
+.chat-ov-input .ci-btn svg{width:16px;height:16px}
+.chat-ov-input textarea{flex:1;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:14px;resize:none;outline:none;max-height:100px;min-height:36px;font-family:inherit;line-height:1.4;background:#fafafa}
+.chat-ov-input textarea:focus{border-color:#555}
+.chat-ov-input .send-btn{padding:8px 16px;border:none;border-radius:8px;background:#222;color:#fff;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;align-self:flex-end}
+.chat-ov-input .send-btn:active{opacity:.7}
+
 .toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(34,34,34,.9);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.show{opacity:1}
-
 .viewer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;justify-content:center;align-items:center;cursor:pointer}
 .viewer.show{display:flex}
 .viewer img{max-width:95%;max-height:90vh;border-radius:4px}
@@ -107,13 +153,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
   <div id="list"></div>
 </div>
 
+<!-- Detail overlay -->
 <div class="detail" id="detailOv">
   <div class="detail-head">
     <span class="bk" onclick="closeDtl()">< 返回</span>
     <h2 id="dtlTitle"></h2>
-    <button class="st-btn" id="dtlBtn" onclick="toggleSt()">完成</button>
+    <div class="hd-actions">
+      <button class="chat-btn" id="dtlChatBtn" onclick="openChat()">消息<span class="cb-dot" id="dtlChatDot"></span></button>
+      <button class="st-btn" id="dtlBtn" onclick="toggleSt()">完成</button>
+    </div>
   </div>
   <div class="detail-inner" id="dtlBody"></div>
+</div>
+
+<!-- Chat overlay -->
+<div class="chat-ov" id="chatOv">
+  <div class="chat-ov-head">
+    <span class="bk" onclick="closeChat()">< 返回</span>
+    <h2 id="chatOvTitle"></h2>
+    <button class="sync-btn" onclick="loadChatMsgs()">同步消息</button>
+  </div>
+  <div class="chat-ov-msgs" id="chatOvMsgs">
+    <div class="chat-empty">暂无消息</div>
+  </div>
+  <div class="chat-ov-input">
+    <div class="ci-actions">
+      <label class="ci-btn" title="发送图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><input type="file" accept="image/*" style="display:none" onchange="adminSendImage(this)"></label>
+      <label class="ci-btn" title="发送文件"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><input type="file" style="display:none" onchange="adminSendFile(this)"></label>
+    </div>
+    <textarea id="adminChatInput" rows="1" placeholder="输入消息..." oninput="autoGrow(this)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();adminSendText();}"></textarea>
+    <button class="send-btn" onclick="adminSendText()">发送</button>
+  </div>
 </div>
 
 <div class="viewer" id="viewer" onclick="this.classList.remove('show')"><img id="vImg" src=""></div>
@@ -123,10 +193,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 var ZION={
   list_xy_orders:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/33fde63b-4f5e-4811-aece-cf6d4cde4dc4',
   update_xy_order:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/fac52f37-4c00-46ef-abce-9d41bf0511e4',
-  delete_xy_order:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/45edfb1a-1236-4982-9c1b-5c8940e6e096'
+  delete_xy_order:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/45edfb1a-1236-4982-9c1b-5c8940e6e096',
+  send_xy_message:'',
+  list_xy_messages:'',
+  unread_xy_counts:'',
+  mark_xy_read:''
 };
-var orders=[],curFilter='all',curIdx=null;
+var OSS_BASE='https://my-video-storage-shihuang.oss-cn-wuhan-lr.aliyuncs.com/';
+var ICON_BASE=OSS_BASE+'xianyu/icon/';
+var ADMIN_AVATAR=OSS_BASE+'xianyu/logo.jpg';
+var USER_AVATAR=OSS_BASE+'xianyu/avatar-user.jpg';
 
+var ossClient=new OSS({region:'oss-cn-wuhan-lr',accessKeyId:'LTAI5tBcUNsZqv33UggKtQds',accessKeySecret:'1pZrU9wXOQW64dqYeGWMBvH0JVC4qs',bucket:'my-video-storage-shihuang'});
+
+var orders=[],curFilter='all',curIdx=null;
+var unreadMap={};
+var chatMsgs=[];
+var chatUser='';
+
+/* ===== Load orders + unread ===== */
 function load(){
   if(ZION.list_xy_orders){
     fetch(ZION.list_xy_orders,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
@@ -144,6 +229,7 @@ function load(){
       go();
     }).catch(function(e){console.error(e);goLocal();});
   }else goLocal();
+  loadUnreadCounts();
 }
 function goLocal(){orders=JSON.parse(localStorage.getItem('xy_orders')||'[]');go();}
 function go(){
@@ -153,6 +239,16 @@ function go(){
     return new Date(a.deadline)-new Date(b.deadline);
   });
   stats();filterCards();
+}
+
+function loadUnreadCounts(){
+  if(!ZION.unread_xy_counts) return;
+  fetch(ZION.unread_xy_counts,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    unreadMap=JSON.parse(d.counts_data||'{}');
+    filterCards();
+  }).catch(function(e){console.error('Unread counts error:',e);});
 }
 
 function stats(){
@@ -200,6 +296,8 @@ function bCard(o,i){
   var bc=u==='over'||u==='urg'?'b-red':(u==='soon'?'b-amber':(u==='done'?'b-gray':'b-green'));
   var bt=u==='over'?'超时':(u==='urg'?'紧急':(u==='soon'?'今天':(u==='done'?'完成':'充裕')));
   var s='<div class="card '+cc+'" onclick="openDtl('+i+')">';
+  var uc=unreadMap[o.xianyu_name]||0;
+  if(uc>0) s+='<div class="unread-badge">'+uc+'</div>';
   var isSh=o.task_types.indexOf('售后修改')>=0;
   s+='<div class="card-head"><span class="card-name">'+o.xianyu_name+'</span><span style="display:flex;gap:4px;align-items:center">'+(isSh?'<span class="badge" style="background:#fff7ed;color:#c60">售后</span>':'')+'<span class="badge '+bc+'">'+bt+'</span></span></div>';
   if(o.email) s+='<div style="font-size:12px;color:#888;margin-bottom:4px">'+o.email+'</div>';
@@ -219,12 +317,16 @@ function bCard(o,i){
 }
 function fmtDl(d){var t=new Date(d);return(t.getMonth()+1)+'/'+t.getDate()+' '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2);}
 
+/* ===== Detail ===== */
 function openDtl(i){
   curIdx=i;var o=orders[i];
   document.getElementById('dtlTitle').textContent=o.xianyu_name;
   var btn=document.getElementById('dtlBtn');
   if(o.status==='completed'){btn.textContent='恢复';btn.className='st-btn done';}
   else{btn.textContent='完成';btn.className='st-btn';}
+  var uc=unreadMap[o.xianyu_name]||0;
+  var dot=document.getElementById('dtlChatDot');
+  if(uc>0){dot.textContent=uc;dot.classList.add('show');}else{dot.classList.remove('show');}
   var g=cd(o),s='';
   s+='<div class="d-card"><div class="lb">截止时间</div><div class="val">'+fmtDl(o.deadline)+'</div><div class="card-cd '+g.c+'" style="margin-top:4px">'+g.t+'</div></div>';
   if(o.email) s+='<div class="d-card"><div class="lb">邮箱</div><div class="val">'+o.email+'</div></div>';
@@ -272,7 +374,145 @@ function delOrder(i){
 }
 function dlFile(oi,fi){var f=orders[oi].files[fi];if(!f)return;var href=f.url||f.data;if(!href)return;var a=document.createElement('a');a.href=href;a.download=f.name;a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);}
 function fmtSz(b){return b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';}
+
+/* ===== Chat ===== */
+function fileIconUrl(name){
+  var ext=(name||'').split('.').pop().toLowerCase();
+  var map={xls:'Excel',xlsx:'Excel',csv:'Excel',ppt:'PPT',pptx:'PPT',pdf:'Pdf',txt:'Txt',doc:'Word',docx:'Word',
+    zip:'压缩包',rar:'压缩包','7z':'压缩包',gz:'压缩包',
+    jpg:'图片',jpeg:'图片',png:'图片',gif:'图片',webp:'图片',bmp:'图片',
+    mp4:'视频',avi:'视频',mov:'视频',mkv:'视频',
+    mp3:'音频',wav:'音频',flac:'音频',aac:'音频',
+    exe:'程序',app:'程序',dmg:'程序'};
+  var t=map[ext]||'未知文件';
+  return ICON_BASE+encodeURIComponent('文件类型-'+t+'.png');
+}
+function fmtChatTime(iso){
+  var d=new Date(iso),now=new Date();
+  var pad=function(n){return n<10?'0'+n:n;};
+  var time=pad(d.getHours())+':'+pad(d.getMinutes());
+  if(d.toDateString()===now.toDateString())return time;
+  return(d.getMonth()+1)+'/'+d.getDate()+' '+time;
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function openChat(){
+  if(curIdx===null)return;
+  chatUser=orders[curIdx].xianyu_name;
+  document.getElementById('chatOvTitle').textContent=chatUser;
+  document.getElementById('chatOv').classList.add('show');
+  loadChatMsgs();
+  markRead();
+}
+function closeChat(){
+  document.getElementById('chatOv').classList.remove('show');
+  chatUser='';chatMsgs=[];
+  loadUnreadCounts();
+}
+
+function loadChatMsgs(){
+  if(!chatUser||!ZION.list_xy_messages)return;
+  fetch(ZION.list_xy_messages,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({xianyu_name:chatUser})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    chatMsgs=JSON.parse(d.messages_data||'[]');
+    renderChatMsgs();
+    scrollChatOvBottom();
+  }).catch(function(e){console.error('Load chat error:',e);});
+}
+
+function renderChatMsgs(){
+  var el=document.getElementById('chatOvMsgs');
+  if(!chatMsgs.length){el.innerHTML='<div class="chat-empty">暂无消息</div>';return;}
+  var h='';
+  chatMsgs.forEach(function(m){
+    var isMe=m.sender==='admin';
+    var cls=isMe?'msg-row me':'msg-row other';
+    var avatar=isMe?ADMIN_AVATAR:USER_AVATAR;
+    h+='<div class="'+cls+'">';
+    h+='<img class="msg-avatar" src="'+avatar+'">';
+    h+='<div class="msg-body">';
+    if(m.msg_type==='image'){
+      h+='<div class="msg-bubble"><img class="msg-img" src="'+m.content+'" onclick="viewImg(\''+m.content+'\')"></div>';
+    }else if(m.msg_type==='file'){
+      h+='<div class="msg-file-card" onclick="window.open(\''+m.content+'\',\'_blank\')">';
+      h+='<img class="file-ico" src="'+fileIconUrl(m.file_name)+'">';
+      h+='<div class="file-info"><div class="fn">'+(m.file_name||'文件')+'</div><div class="fs">'+(m.file_size||'')+'</div></div>';
+      h+='</div>';
+    }else{
+      h+='<div class="msg-bubble">'+escHtml(m.content||'').replace(/\n/g,'<br>')+'</div>';
+    }
+    h+='<div class="msg-time">'+fmtChatTime(m.created_at)+'</div>';
+    h+='</div></div>';
+  });
+  el.innerHTML=h;
+}
+
+function viewImg(url){document.getElementById('vImg').src=url;document.getElementById('viewer').classList.add('show');}
+
+function markRead(){
+  if(!chatUser||!ZION.mark_xy_read)return;
+  fetch(ZION.mark_xy_read,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({xianyu_name:chatUser})})
+  .then(function(){
+    delete unreadMap[chatUser];
+    document.getElementById('dtlChatDot').classList.remove('show');
+    filterCards();
+  }).catch(function(e){console.error(e);});
+}
+
+function adminSendMsg(payload){
+  if(!ZION.send_xy_message){toast('消息功能尚未配置');return Promise.reject();}
+  return fetch(ZION.send_xy_message,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message_json:JSON.stringify(payload)})})
+  .then(function(r){return r.json();});
+}
+
+async function uploadOSS(file,folder){
+  var ext=file.name.split('.').pop();
+  var key='xianyu/'+folder+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,6)+'.'+ext;
+  await ossClient.put(key,file);
+  return OSS_BASE+key;
+}
+
+function adminSendText(){
+  var inp=document.getElementById('adminChatInput');
+  var txt=inp.value.trim();
+  if(!txt||!chatUser)return;
+  inp.value='';inp.style.height='36px';
+  var msg={xianyu_name:chatUser,sender:'admin',msg_type:'text',content:txt};
+  chatMsgs.push({sender:'admin',msg_type:'text',content:txt,created_at:new Date().toISOString()});
+  renderChatMsgs();scrollChatOvBottom();
+  adminSendMsg(msg).catch(function(){toast('发送失败');});
+}
+
+function adminSendImage(inp){
+  var f=inp.files[0];if(!f||!chatUser)return;
+  inp.value='';toast('图片上传中...');
+  uploadOSS(f,'chat').then(function(url){
+    var msg={xianyu_name:chatUser,sender:'admin',msg_type:'image',content:url};
+    chatMsgs.push({sender:'admin',msg_type:'image',content:url,created_at:new Date().toISOString()});
+    renderChatMsgs();scrollChatOvBottom();
+    adminSendMsg(msg).catch(function(){toast('发送失败');});
+  }).catch(function(){toast('图片上传失败');});
+}
+
+function adminSendFile(inp){
+  var f=inp.files[0];if(!f||!chatUser)return;
+  inp.value='';toast('文件上传中...');
+  var sz=fmtSz(f.size);
+  uploadOSS(f,'chat').then(function(url){
+    var msg={xianyu_name:chatUser,sender:'admin',msg_type:'file',content:url,file_name:f.name,file_size:sz};
+    chatMsgs.push({sender:'admin',msg_type:'file',content:url,file_name:f.name,file_size:sz,created_at:new Date().toISOString()});
+    renderChatMsgs();scrollChatOvBottom();
+    adminSendMsg(msg).catch(function(){toast('发送失败');});
+  }).catch(function(){toast('文件上传失败');});
+}
+
+function scrollChatOvBottom(){
+  setTimeout(function(){var el=document.getElementById('chatOvMsgs');el.scrollTop=el.scrollHeight;},50);
+}
+function autoGrow(el){el.style.height='36px';el.style.height=Math.min(el.scrollHeight,100)+'px';}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2000);}
+
 load();
 setInterval(filterCards,60000);
 </script>
