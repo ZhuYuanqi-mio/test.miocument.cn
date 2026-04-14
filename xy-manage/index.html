@@ -107,6 +107,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .msg-file-card .file-info{flex:1;min-width:0}
 .msg-file-card .file-info .fn{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .msg-file-card .file-info .fs{font-size:11px;color:#999;margin-top:2px}
+.msg-file-card .dl-icon{width:28px;height:28px;flex-shrink:0;margin-left:8px;border-radius:50%;background:#4a90d9;display:flex;align-items:center;justify-content:center}
+.msg-file-card .dl-icon svg{width:14px;height:14px;stroke:#fff}
 .msg-row.me .msg-file-card .file-info .fn{color:#fff}
 .msg-row.me .msg-file-card .file-info .fs{color:rgba(255,255,255,.6)}
 
@@ -440,6 +442,7 @@ function renderChatMsgs(){
       h+='<div class="msg-bubble" style="padding:0;overflow:hidden;border:none;background:none"><div class="msg-file-card" onclick="window.open(\''+m.content+'\',\'_blank\')">';
       h+='<img class="file-ico" src="'+fileIconUrl(fname)+'">';
       h+='<div class="file-info"><div class="fn">'+escHtml(fname)+'</div><div class="fs">'+fsize+'</div></div>';
+      h+='<div class="dl-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>';
       h+='</div></div>';
     }else{
       h+='<div class="msg-bubble">'+escHtml(m.content||'').replace(/\n/g,'<br>')+'</div>';

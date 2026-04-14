@@ -112,19 +112,21 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 .msg-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0}
 .msg-body{max-width:70%;margin:0 10px}
 .msg-bubble{padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.5;word-break:break-word}
-.msg-row.other .msg-bubble{background:#4a90d9;color:#fff;border-top-left-radius:4px}
-.msg-row.me .msg-bubble{background:#fff;color:#222;border:1px solid #e0e0e0;border-top-right-radius:4px}
+.msg-row.other .msg-bubble{background:#fff;color:#222;border:1px solid #e0e0e0;border-top-left-radius:4px}
+.msg-row.me .msg-bubble{background:#4a90d9;color:#fff;border-top-right-radius:4px}
 .msg-time{font-size:11px;color:#aaa;margin-top:3px}
 .msg-row.me .msg-time{text-align:right}
 .msg-bubble img.msg-img{max-width:200px;max-height:200px;border-radius:6px;cursor:pointer;display:block}
 .msg-file-card{display:flex;align-items:center;background:#f5f5f5;border-radius:8px;padding:10px 12px;min-width:200px;cursor:pointer;border:1px solid #e0e0e0}
-.msg-row.other .msg-file-card{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2)}
+.msg-row.me .msg-file-card{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2)}
 .msg-file-card img.file-ico{width:36px;height:36px;flex-shrink:0;margin-right:10px}
 .msg-file-card .file-info{flex:1;min-width:0}
 .msg-file-card .file-info .fn{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .msg-file-card .file-info .fs{font-size:11px;color:#999;margin-top:2px}
-.msg-row.other .msg-file-card .file-info .fn{color:#fff}
-.msg-row.other .msg-file-card .file-info .fs{color:rgba(255,255,255,.6)}
+.msg-file-card .dl-icon{width:28px;height:28px;flex-shrink:0;margin-left:8px;border-radius:50%;background:#4a90d9;display:flex;align-items:center;justify-content:center}
+.msg-file-card .dl-icon svg{width:14px;height:14px;stroke:#fff}
+.msg-row.me .msg-file-card .file-info .fn{color:#fff}
+.msg-row.me .msg-file-card .file-info .fs{color:rgba(255,255,255,.6)}
 
 .chat-input-bar{position:fixed;bottom:56px;left:0;right:0;background:#fff;border-top:1px solid #e0e0e0;padding:8px 12px;z-index:100;display:flex;align-items:flex-end;gap:8px}
 .chat-input-bar .ci-actions{display:flex;gap:4px;flex-shrink:0;padding-bottom:4px}
@@ -314,7 +316,7 @@ function doLogin(){
   sessionStorage.setItem('xy_user', name);
   document.getElementById('loginGate').classList.add('hide');
   document.getElementById('bottomNav').style.display = 'flex';
-  document.getElementById('chatTitle').textContent = '消息 · ' + curUser;
+  document.getElementById('chatTitle').textContent = '消息';
   checkUserOrders();
   loadMessages();
 }
@@ -570,6 +572,7 @@ function renderMessages(){
       h+='<div class="msg-bubble" style="padding:0;overflow:hidden;border:none;background:none"><div class="msg-file-card" onclick="window.open(\''+m.content+'\',\'_blank\')">';
       h+='<img class="file-ico" src="'+fileIconUrl(fname)+'">';
       h+='<div class="file-info"><div class="fn">'+escHtml(fname)+'</div><div class="fs">'+fsize+'</div></div>';
+      h+='<div class="dl-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>';
       h+='</div></div>';
     } else {
       h+='<div class="msg-bubble">'+escHtml(m.content).replace(/\n/g,'<br>')+'</div>';
