@@ -49,7 +49,7 @@
     <div class="user-top">
       <div class="user-avatar">王</div>
       <div class="user-meta">
-        <div class="user-name">王女士 <span class="tag tag-green" style="margin-left:6px;">正常</span></div>
+        <div class="user-name">王女士 <span class="tag tag-green" style="margin-left:6px;" id="wangTag">正常</span></div>
         <div class="user-phone">138****6688 · 咯咯哒生态鸡蛋 30枚/份</div>
       </div>
     </div>
@@ -60,6 +60,7 @@
     </div>
     <div class="user-actions">
       <button class="btn btn-sm btn-outline" onclick="openAdjust('王女士',24)">调整次数</button>
+      <button class="btn btn-sm btn-outline-gray" id="wangPauseBtn" onclick="toggleAdminPause('王女士')">暂停</button>
       <button class="btn btn-sm btn-primary" onclick="openConfirm('王女士',6)">配送完成</button>
     </div>
   </div>
@@ -68,7 +69,7 @@
     <div class="user-top">
       <div class="user-avatar">李</div>
       <div class="user-meta">
-        <div class="user-name">李先生 <span class="tag tag-green" style="margin-left:6px;">正常</span></div>
+        <div class="user-name">李先生 <span class="tag tag-green" style="margin-left:6px;" id="liTag">正常</span></div>
         <div class="user-phone">139****5678 · 有机蔬菜 8种/份</div>
       </div>
     </div>
@@ -79,7 +80,8 @@
     </div>
     <div class="user-actions">
       <button class="btn btn-sm btn-outline" onclick="openAdjust('李先生',12)">调整次数</button>
-      <button class="btn btn-sm btn-primary" onclick="openConfirm('李先生',9)">配送完成</button>
+      <button class="btn btn-sm btn-outline-gray" id="liPauseBtn" onclick="toggleAdminPause('李先生')">暂停</button>
+      <button class="btn btn-sm btn-primary" id="liDeliverBtn" onclick="openConfirm('李先生',9)">配送完成</button>
     </div>
   </div>
 
@@ -87,7 +89,7 @@
     <div class="user-top">
       <div class="user-avatar">张</div>
       <div class="user-meta">
-        <div class="user-name">张太太 <span class="tag tag-orange" style="margin-left:6px;">已暂停</span></div>
+        <div class="user-name">张太太 <span class="tag tag-orange" style="margin-left:6px;" id="zhangTag">已暂停</span></div>
         <div class="user-phone">150****9999 · 药膳鸡 1只/份</div>
       </div>
     </div>
@@ -98,7 +100,7 @@
     </div>
     <div class="user-actions">
       <button class="btn btn-sm btn-outline" onclick="openAdjust('张太太',24)">调整次数</button>
-      <button class="btn btn-sm btn-outline-gray" disabled style="opacity:.5;">已暂停</button>
+      <button class="btn btn-sm btn-outline" id="zhangPauseBtn" style="border-color:var(--green);color:var(--green);" onclick="toggleAdminPause('张太太')">恢复配送</button>
     </div>
   </div>
 
@@ -125,7 +127,7 @@
     <div class="user-top">
       <div class="user-avatar">刘</div>
       <div class="user-meta">
-        <div class="user-name">刘女士 <span class="tag tag-green" style="margin-left:6px;">正常</span></div>
+        <div class="user-name">刘女士 <span class="tag tag-green" style="margin-left:6px;" id="liuTag">正常</span></div>
         <div class="user-phone">186****2222 · 有机蔬菜+鸡蛋包年套餐</div>
       </div>
     </div>
@@ -136,6 +138,7 @@
     </div>
     <div class="user-actions">
       <button class="btn btn-sm btn-outline" onclick="openAdjust('刘女士',24)">调整次数</button>
+      <button class="btn btn-sm btn-outline-gray" id="liuPauseBtn" onclick="toggleAdminPause('刘女士')">暂停</button>
       <button class="btn btn-sm btn-primary" onclick="openConfirm('刘女士',4)">配送完成</button>
     </div>
   </div>
@@ -273,6 +276,13 @@
           <option>其他原因</option>
         </select>
       </div>
+      <div class="upload-area">
+        <label>图片备注（可选）</label>
+        <div class="upload-zone" id="adjUploadZone">
+          <div class="upload-btn" onclick="triggerUpload('adjUpload')"><span class="upload-icon">+</span>上传图片</div>
+        </div>
+        <input type="file" id="adjUpload" accept="image/*" multiple style="display:none;" onchange="handleUpload(this,'adjUploadZone')">
+      </div>
     </div>
     <div class="sheet-foot">
       <button class="btn btn-primary btn-block" onclick="confirmAdj()">确认调整</button>
@@ -282,16 +292,26 @@
 
 <!-- 配送确认弹窗 -->
 <div class="overlay" id="confirmModal">
-  <div class="sheet" style="border-radius:12px;max-width:320px;margin:auto;">
-    <div style="padding:30px 20px;text-align:center;">
-      <div style="font-size:16px;font-weight:600;margin-bottom:10px;">确认完成配送？</div>
-      <div style="font-size:14px;color:var(--text-3);line-height:1.8;">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="sheet-title">确认完成配送</span>
+      <button class="close" onclick="closeConfirm()">X</button>
+    </div>
+    <div class="sheet-body">
+      <div style="font-size:14px;color:var(--text-3);line-height:1.8;margin-bottom:12px;">
         将为 <span id="cfmUser" style="color:var(--green);font-weight:600;">王女士</span> 的第 <span id="cfmPeriod" style="color:var(--green);font-weight:600;">6</span> 期标记已完成，并自动发送配送完成通知
       </div>
-      <div style="display:flex;gap:12px;margin-top:20px;">
-        <button class="btn btn-outline" style="flex:1;" onclick="closeConfirm()">取消</button>
-        <button class="btn btn-primary" style="flex:1;" onclick="doConfirm()">确认</button>
+      <div class="upload-area" style="margin-top:0;">
+        <label>配送凭证（可选）</label>
+        <div class="upload-zone" id="cfmUploadZone">
+          <div class="upload-btn" onclick="triggerUpload('cfmUpload')"><span class="upload-icon">+</span>上传图片</div>
+        </div>
+        <input type="file" id="cfmUpload" accept="image/*" multiple style="display:none;" onchange="handleUpload(this,'cfmUploadZone')">
       </div>
+    </div>
+    <div class="sheet-foot" style="display:flex;gap:12px;">
+      <button class="btn btn-outline" style="flex:1;" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="doConfirm()">确认</button>
     </div>
   </div>
 </div>
@@ -335,6 +355,13 @@
         <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">备注</div>
         <input type="text" id="deductNote" placeholder="如：快递发货" style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:14px;">
       </div>
+      <div class="upload-area">
+        <label>图片凭证（可选）</label>
+        <div class="upload-zone" id="deductUploadZone">
+          <div class="upload-btn" onclick="triggerUpload('deductUpload')"><span class="upload-icon">+</span>上传图片</div>
+        </div>
+        <input type="file" id="deductUpload" accept="image/*" multiple style="display:none;" onchange="handleUpload(this,'deductUploadZone')">
+      </div>
     </div>
     <div class="sheet-foot">
       <button class="btn btn-primary btn-block" onclick="confirmDeduct()">确认扣除</button>
@@ -377,6 +404,13 @@
       <div style="margin-top:16px;">
         <div style="font-size:13px;color:var(--text-3);margin-bottom:8px;">详细内容</div>
         <input type="text" id="gardenContent" placeholder="如：白菜、萝卜、菠菜" style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:14px;">
+      </div>
+      <div class="upload-area">
+        <label>图片记录（可选）</label>
+        <div class="upload-zone" id="gardenUploadZone">
+          <div class="upload-btn" onclick="triggerUpload('gardenUpload')"><span class="upload-icon">+</span>上传图片</div>
+        </div>
+        <input type="file" id="gardenUpload" accept="image/*" multiple style="display:none;" onchange="handleUpload(this,'gardenUploadZone')">
       </div>
     </div>
     <div class="sheet-foot">
@@ -461,6 +495,35 @@ function showToast(msg){
   setTimeout(function(){ t.classList.remove('show'); }, 2000);
 }
 
+var pauseMap = { '王女士':'wangPauseBtn', '李先生':'liPauseBtn', '张太太':'zhangPauseBtn', '刘女士':'liuPauseBtn' };
+var tagMap = { '王女士':'wangTag', '李先生':'liTag', '张太太':'zhangTag', '刘女士':'liuTag' };
+var pauseState = { '张太太': true };
+
+function toggleAdminPause(name){
+  var isPaused = pauseState[name];
+  var btn = document.getElementById(pauseMap[name]);
+  var tag = document.getElementById(tagMap[name]);
+  if(isPaused){
+    pauseState[name] = false;
+    btn.textContent = '暂停';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    btn.className = 'btn btn-sm btn-outline-gray';
+    tag.textContent = '正常';
+    tag.className = 'tag tag-green';
+    showToast(name + ' 已恢复配送');
+  } else {
+    pauseState[name] = true;
+    btn.textContent = '恢复配送';
+    btn.style.borderColor = 'var(--green)';
+    btn.style.color = 'var(--green)';
+    btn.className = 'btn btn-sm btn-outline';
+    tag.textContent = '已暂停';
+    tag.className = 'tag tag-orange';
+    showToast(name + ' 已暂停配送');
+  }
+}
+
 var strawberryRecords = [
   { date: '2026年1月20日', amount: '5斤', note: '快递发货' },
   { date: '2026年1月1日', amount: '4斤', note: '快递发货' }
@@ -531,6 +594,33 @@ function confirmGardenAdd(){
   if(!content){ showToast('请填写详细内容'); return; }
   closeGardenAdd();
   showToast('使用记录已添加');
+}
+
+function triggerUpload(inputId){
+  document.getElementById(inputId).click();
+}
+
+function handleUpload(input, zoneId){
+  var zone = document.getElementById(zoneId);
+  var files = input.files;
+  for(var i = 0; i < files.length; i++){
+    (function(file){
+      var reader = new FileReader();
+      reader.onload = function(e){
+        var wrap = document.createElement('div');
+        wrap.className = 'upload-preview';
+        wrap.innerHTML = '<img src="' + e.target.result + '"><div class="upload-del" onclick="removeUpload(this)">x</div>';
+        var btn = zone.querySelector('.upload-btn');
+        zone.insertBefore(wrap, btn);
+      };
+      reader.readAsDataURL(file);
+    })(files[i]);
+  }
+  input.value = '';
+}
+
+function removeUpload(delBtn){
+  delBtn.parentElement.remove();
 }
 
 document.querySelectorAll('.overlay').forEach(function(m){

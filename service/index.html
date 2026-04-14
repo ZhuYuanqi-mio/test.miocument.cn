@@ -417,10 +417,10 @@ var users = {
     product: '草莓采摘自由', spec: '北京会员快递版',
     mode: 'period', memberType: '草莓会员',
     validity: '2025.11 - 2026.11',
-    unit: '斤', total: 30, used: 9, remain: 21,
+    unit: '斤', total: 30.00, used: 9.00, remain: 21.00,
     records: [
-      { date: '2026年1月20日', amount: '5斤', note: '快递发货' },
-      { date: '2026年1月1日', amount: '4斤', note: '快递发货' }
+      { date: '2026年1月20日', amount: '5.00斤', note: '快递发货' },
+      { date: '2026年1月1日', amount: '4.00斤', note: '快递发货' }
     ],
     notice: '草莓消耗由管理员操作，如有疑问请联系客服。'
   },
@@ -693,14 +693,15 @@ function switchUser(type){
       document.getElementById('periodTotalLabel').textContent = '总量';
       document.getElementById('periodUsedLabel').textContent = '已消耗';
       document.getElementById('periodRemainLabel').textContent = '剩余';
-      document.getElementById('periodTotal').textContent = u.total + u.unit;
-      document.getElementById('periodUsed').textContent = u.used + u.unit;
-      document.getElementById('periodRemain').textContent = u.remain + u.unit;
+      var fmt = function(v){ return typeof v === 'number' ? v.toFixed(2) : v; };
+      document.getElementById('periodTotal').textContent = fmt(u.total) + u.unit;
+      document.getElementById('periodUsed').textContent = fmt(u.used) + u.unit;
+      document.getElementById('periodRemain').textContent = fmt(u.remain) + u.unit;
 
       var sNums = document.querySelectorAll('.stat-num');
-      sNums[0].textContent = u.total + u.unit;
-      sNums[1].textContent = u.used + u.unit;
-      sNums[2].textContent = u.remain + u.unit;
+      sNums[0].textContent = fmt(u.total) + u.unit;
+      sNums[1].textContent = fmt(u.used) + u.unit;
+      sNums[2].textContent = fmt(u.remain) + u.unit;
       document.querySelectorAll('.stat-label')[0].textContent = '总量';
       document.querySelectorAll('.stat-label')[1].textContent = '已消耗';
       document.querySelectorAll('.stat-label')[2].textContent = '剩余';
