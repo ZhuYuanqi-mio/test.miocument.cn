@@ -108,6 +108,48 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 .img-preview-item{position:relative;width:72px;height:72px;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
 .img-preview-item img{width:100%;height:100%;object-fit:cover}
 .img-preview-item .img-del{position:absolute;top:2px;right:2px;width:20px;height:20px;background:rgba(0,0,0,.55);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;line-height:1}
+
+@media(max-width:768px){
+  .app-header{padding:0 14px;height:48px}
+  .app-header h1{font-size:15px;gap:6px}
+  .app-header h1 span{font-size:11px;padding:1px 6px}
+  .container{padding:12px 12px}
+  .stats-bar{grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .stat-card{padding:10px 12px}
+  .stat-card .sc-val{font-size:20px}
+  .stat-card .sc-label{font-size:11px}
+  .toolbar{gap:8px;margin-bottom:12px}
+  .search-input{width:100%;font-size:14px}
+  .filter-select{flex:1;min-width:0;font-size:13px}
+  .order-grid{grid-template-columns:1fr;gap:12px}
+  .oc-head{padding:12px 14px;gap:8px}
+  .oc-avatar{width:36px;height:36px;font-size:14px}
+  .oc-name{font-size:14px;flex-wrap:wrap;gap:4px}
+  .oc-sub{font-size:11px}
+  .oc-body{padding:10px 14px}
+  .oc-row{font-size:12px;line-height:1.8}
+  .oc-foot{padding:10px 14px;gap:6px}
+  .btn-sm{height:28px;font-size:11px;padding:0 10px}
+  .btn{height:34px;font-size:12px;padding:0 14px}
+  .upload-zone{padding:28px 16px}
+  .upload-zone h3{font-size:14px}
+  .upload-zone p{font-size:12px}
+  .modal{width:94%;max-width:none;border-radius:10px;max-height:85vh}
+  .modal-head{padding:12px 16px}
+  .modal-head h3{font-size:15px}
+  .modal-body{padding:14px 16px}
+  .modal-foot{padding:10px 16px}
+  .toast{top:12px;right:12px;left:12px;text-align:center;font-size:13px;padding:10px 16px}
+  .empty-state{padding:50px 0}
+  .empty-state h3{font-size:16px}
+}
+
+@media(max-width:374px){
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .stat-card .sc-val{font-size:18px}
+  .oc-name{font-size:13px}
+  .oc-row{font-size:11px}
+}
 </style>
 </head>
 <body>
