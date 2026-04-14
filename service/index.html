@@ -57,7 +57,7 @@
     <span class="cell-value">共24期</span>
     <span class="cell-arrow"></span>
   </a>
-  <a class="cell" href="/records/">
+  <a class="cell" href="records.html">
     <div class="cell-body"><span class="cell-label">配送记录</span></div>
     <span class="cell-value">已完成5次</span>
     <span class="cell-arrow"></span>
@@ -142,13 +142,13 @@
 
 <!-- 底部导航 -->
 <div class="tab-bar">
-  <a class="tab-item active" href="/service/">
+  <a class="tab-item active" href="service.html">
     <span class="tab-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </span>
     <span>首页</span>
   </a>
-  <a class="tab-item" href="/my/">
+  <a class="tab-item" href="my.html">
     <span class="tab-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     </span>
@@ -343,43 +343,8 @@
       <span class="sheet-title">切换演示用户</span>
       <button class="close" onclick="closeSwitchModal()">X</button>
     </div>
-    <div class="sheet-body" style="padding:0;">
-      <div class="cell" onclick="switchUser('egg')" id="sw-egg" style="background:var(--green-light);">
-        <div class="cell-body">
-          <span class="cell-label">王女士 · 鸡蛋客户</span>
-          <div class="cell-desc">咯咯哒生态鸡蛋 30枚/份 · 配送时间无限制</div>
-        </div>
-        <span class="cell-arrow"></span>
-      </div>
-      <div class="cell" onclick="switchUser('vegetable')" id="sw-vegetable">
-        <div class="cell-body">
-          <span class="cell-label">李先生 · 蔬菜客户</span>
-          <div class="cell-desc">有机蔬菜 8种/份 · 仅周一、周四可配送</div>
-        </div>
-        <span class="cell-arrow"></span>
-      </div>
-      <div class="cell" onclick="switchUser('chicken')" id="sw-chicken">
-        <div class="cell-body">
-          <span class="cell-label">张太太 · 鸡客户</span>
-          <div class="cell-desc">药膳鸡 1只/份 · 仅周五可配送</div>
-        </div>
-        <span class="cell-arrow"></span>
-      </div>
-      <div style="padding:8px 16px 4px;font-size:11px;color:var(--text-3);background:#fafafa;">有效期型会员（只读）</div>
-      <div class="cell" onclick="switchUser('strawberry')" id="sw-strawberry">
-        <div class="cell-body">
-          <span class="cell-label">龚女士 · 草莓会员</span>
-          <div class="cell-desc">草莓采摘自由 30斤 · 只可查看消耗记录</div>
-        </div>
-        <span class="cell-arrow"></span>
-      </div>
-      <div class="cell" onclick="switchUser('garden')" id="sw-garden">
-        <div class="cell-body">
-          <span class="cell-label">晓媛 · 共享菜地</span>
-          <div class="cell-desc">家庭耕种认领计划 · 只可查看使用记录</div>
-        </div>
-        <span class="cell-arrow"></span>
-      </div>
+    <div class="sheet-body" style="padding:0;" id="switchList">
+      <div style="text-align:center;padding:24px;color:var(--text-3);font-size:13px;">加载中...</div>
     </div>
   </div>
 </div>
@@ -387,62 +352,84 @@
 <div class="toast" id="toast"></div>
 
 <script>
-var users = {
-  egg: {
-    name: '王女士', phone: '138****6688',
-    product: '咯咯哒生态鸡蛋', spec: '散养土鸡蛋 30枚/份',
-    frequency: '每周配送', total: 24, done: 5, remain: 19,
-    nextPeriod: 6, nextDate: '4月11日 [周五]',
-    address: '北京市东城区幸福大街88号阳光花园6号楼301',
-    mode: 'count'
-  },
-  vegetable: {
-    name: '李先生', phone: '139****5678',
-    product: '有机蔬菜', spec: '应季蔬菜 8种/份',
-    frequency: '每周配送（周一/周四）', total: 12, done: 8, remain: 4,
-    nextPeriod: 9, nextDate: '4月10日 [周四]',
-    address: '北京市丰台区绿洲路12号翠微园3栋1602',
-    mode: 'count'
-  },
-  chicken: {
-    name: '张太太', phone: '150****9999',
-    product: '药膳鸡', spec: '散养药膳鸡 1只/份',
-    frequency: '每周配送（周五）', total: 24, done: 10, remain: 14,
-    nextPeriod: 11, nextDate: '4月11日 [周五]',
-    address: '北京市通州区新华路36号悦景苑5号楼801',
-    mode: 'count'
-  },
-  strawberry: {
-    name: '龚女士', phone: '136****3300',
-    product: '草莓采摘自由', spec: '北京会员快递版',
-    mode: 'period', memberType: '草莓会员',
-    validity: '2025.11 - 2026.11',
-    unit: '斤', total: 30.00, used: 9.00, remain: 21.00,
-    records: [
-      { date: '2026年1月20日', amount: '5.00斤', note: '快递发货' },
-      { date: '2026年1月1日', amount: '4.00斤', note: '快递发货' }
-    ],
-    notice: '草莓消耗由管理员操作，如有疑问请联系客服。'
-  },
-  garden: {
-    name: '晓媛', phone: '133****8800',
-    product: '共享菜地', spec: '家庭耕种认领计划',
-    mode: 'period', memberType: '共享菜地会员',
-    validity: '2025年4月 - 2026年4月',
-    unit: '', total: '', used: '', remain: '',
-    rights: ['有机蔬菜自种区域 1块（约15㎡）', '每周可到农场采摘 1次', '节假日亲子农耕体验', '应季蔬菜优先配送'],
-    records: [
-      { date: '2026年4月5日', amount: '采摘', note: '到店自提·白菜、萝卜、菠菜' },
-      { date: '2026年3月22日', amount: '采摘', note: '到店自提·生菜、香菜、小葱' },
-      { date: '2026年3月8日', amount: '配送', note: '快递发货·应季蔬菜5种' }
-    ],
-    notice: '共享菜地使用记录由管理员更新，如有疑问请联系客服。'
-  }
-};
+var users = {};
+var userKeys = [];
+var ZION_LIST = 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/20ac40dd-0181-43c8-beaf-6e4c9636b3ed';
 
-var productType = 'egg';
-var dateRules = { egg: [0,1,2,3,4,5,6], vegetable: [1,4], chicken: [5] };
-var today = new Date(2026, 3, 9);
+var productType = 'default';
+var dateRules = { default: [0,1,2,3,4,5,6] };
+var today = new Date();
+
+async function loadFromBackend(){
+  try{
+    var res=await fetch(ZION_LIST,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    var data=await res.json();
+    var list=JSON.parse(data.orders_data||'[]');
+    if(!list||!list.length){
+      document.getElementById('switchList').innerHTML='<div style="text-align:center;padding:24px;color:var(--text-3);font-size:13px;">暂无用户数据，请先在管理面板导入</div>';
+      return;
+    }
+    users={};userKeys=[];
+    list.forEach(function(o){
+      var key='order_'+o.id;
+      userKeys.push(key);
+      var isSt=o.member_type==='草莓会员',isGd=o.member_type==='共享菜地';
+      var isPeriod=isSt||isGd;
+      var drs=o.delivery_records||[];
+      var doneCount=drs.filter(function(r){return r.status==='done';}).length;
+      var totalCount=o.total_count||0;
+      var pname=o.ud_product_name_d340d0||o.member_type||'';
+      if(isPeriod){
+        var used=0;
+        if(isSt) drs.forEach(function(r){used+=(r.quantity||0);});
+        users[key]={
+          name:o.wechat_name||'未知',phone:o.phone||'',
+          product:pname,spec:o.category||'',
+          mode:'period',memberType:o.member_type,
+          validity:(o.validity_start||'')+' - '+(o.validity_end||''),
+          unit:isSt?'斤':'',total:isSt?totalCount:'',
+          used:isSt?used:'',remain:isSt?(totalCount-used):'',
+          records:drs.map(function(r){return{date:r.delivery_date||'',amount:isSt?(r.quantity||0)+'斤':(r.note||''),note:r.note||''};}),
+          notice:o.member_type+'由管理员操作，如有疑问请联系客服。',
+          status:o.status
+        };
+      }else{
+        users[key]={
+          name:o.wechat_name||'未知',phone:o.phone||'',
+          product:pname,spec:o.category||'',
+          frequency:o.delivery_method||'',total:totalCount,
+          done:doneCount,remain:totalCount-doneCount,
+          nextPeriod:doneCount+1,nextDate:'待安排',
+          address:'',mode:'count',status:o.status
+        };
+      }
+    });
+    buildSwitchList();
+    if(userKeys.length)switchUser(userKeys[0]);
+  }catch(e){
+    console.error('loadFromBackend:',e);
+    document.getElementById('switchList').innerHTML='<div style="text-align:center;padding:24px;color:var(--text-3);">加载失败，请刷新重试</div>';
+  }
+}
+
+function buildSwitchList(){
+  var c=document.getElementById('switchList');
+  var h='',lastMode='';
+  userKeys.forEach(function(key){
+    var u=users[key];
+    if(u.mode==='period'&&lastMode!=='period'){
+      h+='<div style="padding:8px 16px 4px;font-size:11px;color:var(--text-3);background:#fafafa;">有效期型会员</div>';
+    }
+    lastMode=u.mode;
+    h+='<div class="cell" onclick="switchUser(\''+key+'\')" id="sw-'+key+'">';
+    h+='<div class="cell-body"><span class="cell-label">'+u.name+' · '+(u.memberType||u.spec||'会员')+'</span>';
+    h+='<div class="cell-desc">'+u.product+'</div></div>';
+    h+='<span class="cell-arrow"></span></div>';
+  });
+  c.innerHTML=h;
+}
+
+loadFromBackend();
 
 var addrList = [
   { id: 1, name: '王女士', phone: '138****6688', region: '北京市东城区', detail: '幸福大街88号阳光花园6号楼301', isDefault: true },
@@ -656,12 +643,14 @@ function openSwitchModal(){ document.getElementById('switchModal').classList.add
 function closeSwitchModal(){ document.getElementById('switchModal').classList.remove('show'); }
 
 function switchUser(type){
-  productType = type;
+  productType = 'default';
   var u = users[type];
+  if(!u) return;
   closeSwitchModal();
 
-  document.querySelectorAll('#switchModal .cell').forEach(function(c){ c.style.background = ''; });
-  document.getElementById('sw-' + type).style.background = 'var(--green-light)';
+  document.querySelectorAll('#switchList .cell').forEach(function(c){ c.style.background = ''; });
+  var swEl = document.getElementById('sw-' + type);
+  if(swEl) swEl.style.background = 'var(--green-light)';
 
   var isPeriod = u.mode === 'period';
   var countSections = ['nextPanel','menuPanel','schedulePanel','noticeBar'];
