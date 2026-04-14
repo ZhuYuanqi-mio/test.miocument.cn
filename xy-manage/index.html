@@ -136,7 +136,7 @@ function load(){
       orders=ls.map(function(o){
         var imgs=[];try{imgs=JSON.parse(o.image_data||'[]');}catch(e){}
         var fls=[];try{fls=JSON.parse(o.file_data||'[]');}catch(e){}
-        return{id:o.id,xianyu_name:o.xianyu_name||'',deadline:o.deadline||'',
+        return{id:o.id,xianyu_name:o.xianyu_name||'',email:o.email||'',deadline:o.deadline||'',
           task_types:(o.task_types||'').split(',').filter(Boolean),
           description:o.description||'',images:imgs,files:fls,
           status:o.status||'pending',created_at:o.created_at||''};
@@ -201,6 +201,7 @@ function bCard(o,i){
   var bt=u==='over'?'超时':(u==='urg'?'紧急':(u==='soon'?'今天':(u==='done'?'完成':'充裕')));
   var s='<div class="card '+cc+'" onclick="openDtl('+i+')">';
   s+='<div class="card-head"><span class="card-name">'+o.xianyu_name+'</span><span class="badge '+bc+'">'+bt+'</span></div>';
+  if(o.email) s+='<div style="font-size:12px;color:#888;margin-bottom:4px">'+o.email+'</div>';
   if(o.task_types.length){s+='<div class="card-tags">';o.task_types.forEach(function(t){s+='<span>'+t+'</span>';});s+='</div>';}
   if(o.description)s+='<div class="card-desc">'+o.description+'</div>';
   if(o.images&&o.images.length){
@@ -225,6 +226,7 @@ function openDtl(i){
   else{btn.textContent='完成';btn.className='st-btn';}
   var g=cd(o),s='';
   s+='<div class="d-card"><div class="lb">截止时间</div><div class="val">'+fmtDl(o.deadline)+'</div><div class="card-cd '+g.c+'" style="margin-top:4px">'+g.t+'</div></div>';
+  if(o.email) s+='<div class="d-card"><div class="lb">邮箱</div><div class="val">'+o.email+'</div></div>';
   s+='<div class="d-card"><div class="lb">任务类型</div><div class="tl">';
   o.task_types.forEach(function(t){s+='<span>'+t+'</span>';});
   s+='</div></div>';
