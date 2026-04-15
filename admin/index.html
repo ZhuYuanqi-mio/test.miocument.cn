@@ -108,8 +108,12 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 .order-table th{background:#f9f9f9;padding:10px 12px;text-align:left;font-weight:600;font-size:12px;color:var(--text-3);border-bottom:1px solid var(--border);white-space:nowrap}
 .order-table td{padding:10px 12px;border-bottom:1px solid #f5f5f5;color:var(--text-1);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .order-table tr:hover td{background:#fafffe}
-.order-table .tbl-actions{display:flex;gap:4px;flex-wrap:nowrap}
-.order-table .tbl-actions button{white-space:nowrap}
+.order-table .tbl-actions{display:flex;gap:6px;align-items:center}
+.tbl-icon{width:30px;height:30px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;border:none;background:none;padding:0}
+.tbl-icon:hover{background:#f0f0f0}
+.tbl-icon svg{width:18px;height:18px}
+.tbl-icon[title="删除"]:hover{background:#ffebee}
+.tbl-icon[title="已完成"]:hover{background:var(--green-light)}
 .stepper{display:inline-flex;align-items:center}
 .stepper button{width:32px;height:32px;border:1px solid #ddd;background:var(--white);font-size:16px;color:var(--text-2);display:flex;align-items:center;justify-content:center}
 .stepper button:first-child{border-radius:6px 0 0 6px}
@@ -914,13 +918,13 @@ function renderTable(list){
     h += '<td><span class="tag '+stCls+'">'+stText+'</span></td>';
     h += '<td><div class="tbl-actions">';
     if(o.memberType==='草莓会员'){
-      h += '<button class="btn btn-sm btn-primary" onclick="openDeduct('+o.idx+')">扣除</button>';
+      h += '<button class="tbl-icon" title="扣除" onclick="openDeduct('+o.idx+')"><svg viewBox="0 0 24 24" fill="none" stroke="#F0A03C" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>';
     } else if(o.memberType!=='共享菜地'){
-      h += '<button class="btn btn-sm btn-outline" onclick="openAdjust('+o.idx+')">调整</button>';
+      h += '<button class="tbl-icon" title="调整" onclick="openAdjust('+o.idx+')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>';
     }
-    if(getStatusKey(o)!=='done') h += '<button class="btn btn-sm btn-outline" style="border-color:var(--green);color:var(--green)" onclick="markComplete('+o.idx+')">已完成</button>';
-    h += '<button class="btn btn-sm btn-outline" onclick="openEdit('+o.idx+')">编辑</button>';
-    h += '<button class="btn btn-sm btn-danger" onclick="deleteOrder('+o.idx+')">删除</button>';
+    if(getStatusKey(o)!=='done') h += '<button class="tbl-icon" title="已完成" onclick="markComplete('+o.idx+')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>';
+    h += '<button class="tbl-icon" title="编辑" onclick="openEdit('+o.idx+')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+    h += '<button class="tbl-icon" title="删除" onclick="deleteOrder('+o.idx+')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>';
     h += '</div></td></tr>';
   });
   h += '</tbody>';
