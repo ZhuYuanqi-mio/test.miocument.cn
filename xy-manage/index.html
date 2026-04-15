@@ -199,7 +199,9 @@ var ZION={
   send_xy_message:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/bda9f3b9-9f40-41f7-98dc-8fe6f79aa66a',
   list_xy_messages:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/ece148b9-d21f-48ca-bf69-e8c119ecc8df',
   unread_xy_counts:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/6d1feec2-382f-42e9-ae1f-7cf14450aaf7',
-  mark_xy_read:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/ff2afd54-8d81-4a68-bd47-c7162540b755'
+  mark_xy_read:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/ff2afd54-8d81-4a68-bd47-c7162540b755',
+  append_xy_chat_note:'',
+  grant_xy_edit:''
 };
 var OSS_BASE='https://my-video-storage-shihuang.oss-cn-wuhan-lr.aliyuncs.com/';
 var ICON_BASE=OSS_BASE+'xianyu/icon/';
@@ -226,7 +228,7 @@ function load(){
         return{id:o.id,xianyu_name:o.xianyu_name||'',email:o.email||'',deadline:o.deadline||'',
           task_types:(o.task_types||'').split(',').filter(Boolean),
           description:o.description||'',images:imgs,files:fls,
-          status:o.status||'pending',created_at:o.created_at||''};
+          status:o.status||'pending',chat_notes:o.chat_notes||'',can_edit:!!o.can_edit,created_at:o.created_at||''};
       });
       go();
     }).catch(function(e){console.error(e);goLocal();});
@@ -350,6 +352,10 @@ function openDtl(i){
     });
     s+='</div></div>';
   }
+  s+='<div class="d-card"><div class="lb">聊天备注</div><div class="val" style="white-space:pre-wrap">'+(escHtml(o.chat_notes||'暂无'))+'</div></div>';
+  var editLabel = o.can_edit ? '已授权编辑' : '允许用户修改';
+  var editStyle = o.can_edit ? 'opacity:.5;cursor:default' : '';
+  s+='<button style="display:block;margin:12px auto 0;padding:11px 0;width:100%;border:none;border-radius:8px;background:#4a90d9;color:#fff;font-size:14px;font-weight:500;cursor:pointer;'+editStyle+'" onclick="grantEdit('+i+')" id="grantBtn">'+editLabel+'</button>';
   s+='<button class="del-btn" onclick="delOrder('+i+')">删除此订单</button>';
   document.getElementById('dtlBody').innerHTML=s;
   var ov=document.getElementById('detailOv');ov.classList.add('show');ov.scrollTop=0;
@@ -376,6 +382,47 @@ function delOrder(i){
 }
 function dlFile(oi,fi){var f=orders[oi].files[fi];if(!f)return;var href=f.url||f.data;if(!href)return;var a=document.createElement('a');a.href=href;a.download=f.name;a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);}
 function fmtSz(b){return b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';}
+
+function grantEdit(i){
+  var o=orders[i];
+  if(o.can_edit){toast('已授权');return;}
+  if(ZION.grant_xy_edit){
+    fetch(ZION.grant_xy_edit,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({xianyu_name:o.xianyu_name})})
+    .then(function(r){return r.json();})
+    .then(function(){
+      o.can_edit=true;
+      var btn=document.getElementById('grantBtn');
+      if(btn){btn.textContent='已授权编辑';btn.style.opacity='.5';btn.style.cursor='default';}
+      toast('已允许 '+o.xianyu_name+' 编辑');
+    }).catch(function(e){console.error(e);toast('授权失败');});
+  } else {
+    o.can_edit=true;
+    fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({can_edit:true})})});
+    var btn=document.getElementById('grantBtn');
+    if(btn){btn.textContent='已授权编辑';btn.style.opacity='.5';btn.style.cursor='default';}
+    toast('已允许 '+o.xianyu_name+' 编辑');
+  }
+}
+
+function appendChatNote(text){
+  if(!chatUser) return;
+  var o=null;
+  for(var i=0;i<orders.length;i++){if(orders[i].xianyu_name===chatUser&&orders[i].status==='pending'){o=orders[i];break;}}
+  if(!o){toast('该用户无待处理订单');return;}
+  if(ZION.append_xy_chat_note){
+    fetch(ZION.append_xy_chat_note,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({xianyu_name:chatUser,note_text:text})})
+    .then(function(r){return r.json();})
+    .then(function(){o.chat_notes=(o.chat_notes?(o.chat_notes+'\n'+text):text);})
+    .catch(function(e){console.error(e);});
+  } else {
+    var old=o.chat_notes||'';
+    o.chat_notes=old?(old+'\n'+text):text;
+    fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({chat_notes:o.chat_notes})})});
+  }
+  toast('已添加到聊天备注');
+}
+
+function escAttr(s){return "'" + s.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n') + "'";}
 
 /* ===== Chat ===== */
 function fileIconUrl(name){
@@ -431,21 +478,23 @@ function renderChatMsgs(){
     var isMe=m.sender==='admin';
     var cls=isMe?'msg-row me':'msg-row other';
     var avatar=isMe?ADMIN_AVATAR:USER_AVATAR;
+    var noteContent=m.msg_type==='file'?(m.file_name||'文件'):(m.content||'');
+    var dblHandler=' ondblclick="appendChatNote('+escAttr(noteContent)+')"';
     h+='<div class="'+cls+'">';
     h+='<img class="msg-avatar" src="'+avatar+'">';
     h+='<div class="msg-body">';
     if(m.msg_type==='image'){
-      h+='<div class="msg-bubble"><img class="msg-img" src="'+m.content+'" onclick="viewImg(\''+m.content+'\')"></div>';
+      h+='<div class="msg-bubble"'+dblHandler+'><img class="msg-img" src="'+m.content+'" onclick="viewImg(\''+m.content+'\')"></div>';
     }else if(m.msg_type==='file'){
       var fname=m.file_name||m.content.split('/').pop()||'文件';
       var fsize=m.file_size||'';
-      h+='<div class="msg-bubble" style="padding:0;overflow:hidden;border:none;background:none"><div class="msg-file-card" onclick="window.open(\''+m.content+'\',\'_blank\')">';
+      h+='<div class="msg-bubble" style="padding:0;overflow:hidden;border:none;background:none"'+dblHandler+'><div class="msg-file-card" onclick="window.open(\''+m.content+'\',\'_blank\')">';
       h+='<img class="file-ico" src="'+fileIconUrl(fname)+'">';
       h+='<div class="file-info"><div class="fn">'+escHtml(fname)+'</div><div class="fs">'+fsize+'</div></div>';
       h+='<div class="dl-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>';
       h+='</div></div>';
     }else{
-      h+='<div class="msg-bubble">'+escHtml(m.content||'').replace(/\n/g,'<br>')+'</div>';
+      h+='<div class="msg-bubble"'+dblHandler+'>'+escHtml(m.content||'').replace(/\n/g,'<br>')+'</div>';
     }
     h+='<div class="msg-time">'+fmtChatTime(m.created_at)+'</div>';
     h+='</div></div>';
