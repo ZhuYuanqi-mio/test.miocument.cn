@@ -156,7 +156,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
     <span class="chip on" data-f="pending" onclick="pick(this)">未完成</span>
     <span class="chip" data-f="urgent" onclick="pick(this)">紧急</span>
     <span class="chip" data-f="today" onclick="pick(this)">今天</span>
-    <span class="chip" data-f="completed" onclick="pick(this)">已完成</span>
+    <span class="chip" data-f="completed" onclick="pick(this)" style="position:relative">已完成<span class="chip-badge" id="completedBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
     <span class="chip" data-f="all" onclick="pick(this)">全部</span>
   </div>
 </div>
@@ -272,7 +272,7 @@ function go(){
     if(a.status!=='completed'&&b.status==='completed')return -1;
     return new Date(a.deadline)-new Date(b.deadline);
   });
-  stats();filterCards();
+  stats();filterCards();updateCompletedBadge();
 }
 
 function loadUnreadCounts(){
@@ -282,7 +282,20 @@ function loadUnreadCounts(){
   .then(function(d){
     unreadMap=JSON.parse(d.counts_data||'{}');
     filterCards();
+    updateCompletedBadge();
   }).catch(function(e){console.error('Unread counts error:',e);});
+}
+
+function updateCompletedBadge(){
+  var total=0;
+  orders.forEach(function(o){
+    if(o.status==='completed' && unreadMap[o.xianyu_name]){
+      total+=unreadMap[o.xianyu_name];
+    }
+  });
+  var badge=document.getElementById('completedBadge');
+  if(total>0){badge.textContent=total;badge.style.display='block';}
+  else{badge.style.display='none';}
 }
 
 function stats(){
