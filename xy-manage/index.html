@@ -368,20 +368,19 @@ function openDtl(i){
   o.task_types.forEach(function(t){s+='<span>'+t+'</span>';});
   s+='</div></div>';
   s+='<div class="d-card"><div class="lb">要求描述</div><div class="val">'+(o.description||'无').replace(/\n/g,'<br>')+'</div></div>';
-  if(o.images&&o.images.length){
-    s+='<div class="d-card"><div class="lb">图片 ('+o.images.length+')</div><div class="d-imgs">';
-    o.images.forEach(function(m){s+='<img src="'+imgSrc(m)+'">';});
-    s+='</div></div>';
-  }
+  s+='<div class="d-card"><div class="lb">图片 ('+(o.images?o.images.length:0)+') <label style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px">上传<input type="file" accept="image/*" multiple style="display:none" onchange="adminUploadImg(this,'+i+')"></label></div><div class="d-imgs" id="dtlImgs">';
+  if(o.images&&o.images.length) o.images.forEach(function(m){s+='<img src="'+imgSrc(m)+'">';});
+  else s+='<span style="color:#aaa;font-size:13px">暂无</span>';
+  s+='</div></div>';
+  s+='<div class="d-card"><div class="lb">文件 ('+(o.files?o.files.length:0)+') <label style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px">上传<input type="file" multiple style="display:none" onchange="adminUploadFile(this,'+i+')"></label></div><div class="d-files" id="dtlFiles">';
   if(o.files&&o.files.length){
-    s+='<div class="d-card"><div class="lb">文件 ('+o.files.length+')</div><div class="d-files">';
     o.files.forEach(function(f,fi){
       s+='<div class="fr"><span class="nm">'+f.name+'</span>';
       if(f.size)s+='<span class="sz">'+fmtSz(f.size)+'</span>';
       s+='<span class="dl" onclick="event.stopPropagation();dlFile('+i+','+fi+')">下载</span></div>';
     });
-    s+='</div></div>';
-  }
+  } else s+='<span style="color:#aaa;font-size:13px">暂无</span>';
+  s+='</div></div>';
   s+='<div class="d-card"><div class="lb">聊天备注</div><div class="val" style="white-space:pre-wrap">'+(escHtml(o.chat_notes||'暂无'))+'</div></div>';
   var editLabel = o.can_edit ? '已授权编辑' : '允许用户修改';
   var editStyle = o.can_edit ? 'opacity:.5;cursor:default' : '';
@@ -445,6 +444,40 @@ function saveDlChange(){
     toast('截止时间已修改');
     go();openDtl(orders.indexOf(o));
   }).catch(function(e){console.error(e);toast('修改失败');});
+}
+
+function adminUploadImg(inp,i){
+  var o=orders[i];
+  if(!o.images) o.images=[];
+  Array.from(inp.files).forEach(function(f){
+    if(!f.type.startsWith('image/')) return;
+    toast('图片上传中...');
+    uploadOSS(f,'img').then(function(url){
+      o.images.push({name:f.name,url:url});
+      var newData=JSON.stringify(o.images.map(function(m){return{name:m.name,url:m.url||m.data||''};}));
+      fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({image_data:newData})})});
+      toast('图片已上传');
+      openDtl(orders.indexOf(o));
+    }).catch(function(){toast('上传失败');});
+  });
+  inp.value='';
+}
+
+function adminUploadFile(inp,i){
+  var o=orders[i];
+  if(!o.files) o.files=[];
+  Array.from(inp.files).forEach(function(f){
+    toast('文件上传中...');
+    var sz=fmtSz(f.size);
+    uploadOSS(f,'file').then(function(url){
+      o.files.push({name:f.name,size:f.size,url:url});
+      var newData=JSON.stringify(o.files.map(function(fl){return{name:fl.name,size:fl.size,url:fl.url||fl.data||''};}));
+      fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({file_data:newData})})});
+      toast('文件已上传');
+      openDtl(orders.indexOf(o));
+    }).catch(function(){toast('上传失败');});
+  });
+  inp.value='';
 }
 
 function grantEdit(i){
