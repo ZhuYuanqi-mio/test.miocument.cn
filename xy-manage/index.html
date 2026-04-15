@@ -333,7 +333,7 @@ function openDtl(i){
   if(uc>0){dot.textContent=uc;dot.classList.add('show');}else{dot.classList.remove('show');}
   var g=cd(o),s='';
   s+='<div class="d-card"><div class="lb">截止时间</div><div class="val">'+fmtDl(o.deadline)+'</div><div class="card-cd '+g.c+'" style="margin-top:4px">'+g.t+'</div></div>';
-  if(o.email) s+='<div class="d-card"><div class="lb">邮箱</div><div class="val">'+o.email+'</div></div>';
+  s+='<div class="d-card"><div class="lb">邮箱</div><div class="val">'+(o.email||'未填写')+'</div></div>';
   s+='<div class="d-card"><div class="lb">任务类型</div><div class="tl">';
   o.task_types.forEach(function(t){s+='<span>'+t+'</span>';});
   s+='</div></div>';
