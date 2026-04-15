@@ -367,7 +367,7 @@ function openDtl(i){
   s+='<div class="d-card"><div class="lb">任务类型</div><div class="tl">';
   o.task_types.forEach(function(t){s+='<span>'+t+'</span>';});
   s+='</div></div>';
-  s+='<div class="d-card"><div class="lb">要求描述</div><div class="val">'+(o.description||'无').replace(/\n/g,'<br>')+'</div></div>';
+  s+='<div class="d-card"><div class="lb">要求描述 <span style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px;float:right" onclick="copyDesc('+i+')">复制</span></div><div class="val">'+(o.description||'无').replace(/\n/g,'<br>')+'</div></div>';
   s+='<div class="d-card"><div class="lb">图片 ('+(o.images?o.images.length:0)+') <label style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px">上传<input type="file" accept="image/*" multiple style="display:none" onchange="adminUploadImg(this,'+i+')"></label></div><div class="d-imgs" id="dtlImgs">';
   if(o.images&&o.images.length) o.images.forEach(function(m){s+='<img src="'+imgSrc(m)+'">';});
   else s+='<span style="color:#aaa;font-size:13px">暂无</span>';
@@ -411,6 +411,18 @@ function delOrder(i){
 }
 function dlFile(oi,fi){var f=orders[oi].files[fi];if(!f)return;var href=f.url||f.data;if(!href)return;var a=document.createElement('a');a.href=href;a.download=f.name;a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);}
 function fmtSz(b){return b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';}
+
+function copyDesc(i){
+  var o=orders[i];
+  var text=o.description||'';
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(function(){toast('已复制');}).catch(function(){fallbackCopy(text);});
+  } else { fallbackCopy(text); }
+}
+function fallbackCopy(text){
+  var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('已复制');
+}
 
 var dlEditIdx=null;
 function editDeadline(i){
