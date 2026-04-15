@@ -346,7 +346,8 @@ function bCard(o,i){
   var uc=unreadMap[o.xianyu_name]||0;
   if(uc>0) s+='<div class="unread-badge">'+uc+'</div>';
   var isSh=o.task_types.indexOf('售后修改')>=0;
-  s+='<div class="card-head"><span class="card-name">'+o.xianyu_name+'</span><span style="display:flex;gap:4px;align-items:center">'+(isSh?'<span class="badge" style="background:#fff7ed;color:#c60">售后</span>':'')+'<span class="badge '+bc+'">'+bt+'</span></span></div>';
+  var isEditReq=!o.can_edit&&o.status==='pending'&&(o.chat_notes||'').indexOf('[申请修改]')>=0;
+  s+='<div class="card-head"><span class="card-name">'+o.xianyu_name+'</span><span style="display:flex;gap:4px;align-items:center">'+(isEditReq?'<span class="badge" style="background:#eef6ff;color:#4a90d9">申请修改</span>':'')+(isSh?'<span class="badge" style="background:#fff7ed;color:#c60">售后</span>':'')+'<span class="badge '+bc+'">'+bt+'</span></span></div>';
   if(o.email) s+='<div style="font-size:12px;color:#888;margin-bottom:4px">'+o.email+'</div>';
   if(o.task_types.length){s+='<div class="card-tags">';o.task_types.forEach(function(t){s+='<span>'+t+'</span>';});s+='</div>';}
   if(o.description)s+='<div class="card-desc">'+o.description+'</div>';
