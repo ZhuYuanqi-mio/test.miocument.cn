@@ -707,7 +707,7 @@ function renderMessages(){
     } else if(m.msg_type === 'file'){
       var fname=m.file_name||m.content.split('/').pop()||'文件';
       var fsize=m.file_size||'';
-      h+='<div class="msg-bubble" style="padding:0;overflow:hidden;border:none;background:none"'+dblHandler+'><div class="msg-file-card" onclick="window.open(\''+m.content+'\',\'_blank\')">';
+      h+='<div class="msg-bubble" style="padding:0;overflow:hidden;border:none;background:none"'+dblHandler+'><div class="msg-file-card" onclick="dlByName(\''+m.content+'\',\''+escHtml(fname)+'\')">';
       h+='<img class="file-ico" src="'+fileIconUrl(fname)+'">';
       h+='<div class="file-info"><div class="fn">'+escHtml(fname)+'</div><div class="fs">'+fsize+'</div></div>';
       h+='<div class="dl-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>';
@@ -727,6 +727,13 @@ function escAttr(s){return "'" + s.replace(/\\/g,'\\\\').replace(/'/g,"\\'").rep
 function viewImg(url){
   document.getElementById('vImg').src=url;
   document.getElementById('viewer').classList.add('show');
+}
+
+function dlByName(url,name){
+  fetch(url).then(function(r){return r.blob();}).then(function(b){
+    var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
+  }).catch(function(){window.open(url,'_blank');});
 }
 
 function loadMessages(){
