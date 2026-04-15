@@ -61,7 +61,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .cd-red{color:#c00}
 .cd-amber{color:#666}
 .cd-green{color:#888}
-.card-actions{display:flex;justify-content:flex-end;margin-top:8px}
+.card-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
 .card-chat-btn{padding:5px 14px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#555;font-size:12px;cursor:pointer;font-weight:500}
 .card-chat-btn:active{background:#f5f5f5}
 .card-unread{position:absolute;top:8px;right:8px;min-width:18px;height:18px;border-radius:9px;background:#c00;color:#fff;font-size:10px;line-height:18px;text-align:center;padding:0 5px;font-weight:600}
@@ -546,7 +546,7 @@ function buildCard(o,i){
     var requested=(o.chat_notes||'').indexOf('[申请修改]')>=0;
     editReq=requested?'<span class="card-chat-btn" style="color:#aaa;border-color:#ddd">已申请修改</span>':'<span class="card-chat-btn" onclick="event.stopPropagation();requestEdit('+i+')">申请修改</span>';
   } else if(o.status==='pending'&&o.can_edit){
-    editReq='<span class="card-chat-btn" style="color:#4a90d9;border-color:#4a90d9" onclick="event.stopPropagation();openDtl('+i+')">可以编辑</span>';
+    editReq='<span class="card-chat-btn" style="color:#4a90d9;border-color:#4a90d9" onclick="event.stopPropagation();openDtl('+i+')">修改</span>';
   }
   s+='<div class="card-actions">'+editReq+'<span class="card-chat-btn" onclick="event.stopPropagation();chatFromCard('+i+')">聊一聊</span></div>';
   s+='</div>';
