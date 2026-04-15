@@ -794,6 +794,26 @@ function autoGrow(el){
   el.style.height='36px';
   el.style.height=Math.min(el.scrollHeight,100)+'px';
 }
+
+document.getElementById('chatInput').addEventListener('paste',function(e){
+  var items=e.clipboardData&&e.clipboardData.items;
+  if(!items)return;
+  for(var i=0;i<items.length;i++){
+    if(items[i].type.indexOf('image/')===0){
+      e.preventDefault();
+      var f=items[i].getAsFile();
+      if(!f||!curUser)return;
+      showToast('图片上传中...');
+      uploadToOSS(f,'chat').then(function(url){
+        var msg={xianyu_name:curUser,sender:'user',msg_type:'image',content:url};
+        messages.push({sender:'user',msg_type:'image',content:url,created_at:new Date().toISOString()});
+        renderMessages();scrollChatBottom();
+        sendMsg(msg).catch(function(){showToast('发送失败');});
+      }).catch(function(){showToast('图片上传失败');});
+      return;
+    }
+  }
+});
 </script>
 </body>
 </html>

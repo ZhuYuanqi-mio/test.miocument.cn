@@ -664,6 +664,26 @@ function scrollChatOvBottom(){
 function autoGrow(el){el.style.height='36px';el.style.height=Math.min(el.scrollHeight,100)+'px';}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2000);}
 
+document.getElementById('adminChatInput').addEventListener('paste',function(e){
+  var items=e.clipboardData&&e.clipboardData.items;
+  if(!items)return;
+  for(var i=0;i<items.length;i++){
+    if(items[i].type.indexOf('image/')===0){
+      e.preventDefault();
+      var f=items[i].getAsFile();
+      if(!f||!chatUser)return;
+      toast('图片上传中...');
+      uploadOSS(f,'chat').then(function(url){
+        var msg={xianyu_name:chatUser,sender:'admin',msg_type:'image',content:url};
+        chatMsgs.push({sender:'admin',msg_type:'image',content:url,created_at:new Date().toISOString()});
+        renderChatMsgs();scrollChatOvBottom();
+        adminSendMsg(msg).catch(function(){toast('发送失败');});
+      }).catch(function(){toast('图片上传失败');});
+      return;
+    }
+  }
+});
+
 load();
 setInterval(filterCards,60000);
 </script>
