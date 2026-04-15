@@ -35,10 +35,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .chip.on{border-color:#fff;background:#fff;color:#222;font-weight:500}
 
 .list-body{max-width:640px;margin:0 auto;padding:12px 16px 96px}
-.empty-box{text-align:center;padding:80px 0 40px}
-.empty-box .em-txt{font-size:14px;color:#aaa;margin-bottom:20px}
-.empty-box .em-btn{display:inline-block;padding:12px 36px;border:none;border-radius:8px;background:#222;color:#fff;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none}
-.empty-box .em-btn:active{opacity:.75}
+.empty-box{padding:30px 20px 40px}
+.empty-tips{background:#fff;border-radius:12px;max-width:400px;margin:0 auto;padding:24px 20px;text-align:left;border:1px solid #e8e8e8}
+.empty-tips h3{font-size:15px;font-weight:700;color:#222;margin-bottom:12px;text-align:center}
+.empty-tips ul{margin:0;padding:0;list-style:none}
+.empty-tips li{font-size:13px;color:#444;line-height:1.9;display:flex}
+.empty-tips li .tn{width:20px;flex-shrink:0;font-weight:600;color:#222}
+
+@keyframes pulse-btn{0%,100%{opacity:1}50%{opacity:.5}}
+.bottom-bar.blink button{animation:pulse-btn 1.2s ease-in-out infinite}
 
 .card{background:#fff;border-radius:8px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:transform .1s;position:relative;border:1px solid #e0e0e0}
 .card:active{transform:scale(.985)}
@@ -245,7 +250,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
     </div>
   </div>
   <div class="list-body" id="listBody"></div>
-  <div class="bottom-bar"><div class="inner">
+  <div class="bottom-bar" id="bottomBar"><div class="inner">
     <button onclick="openForm()">提交需求</button>
   </div></div>
 </div>
@@ -512,11 +517,18 @@ function renderCards(){
     c++; h+=buildCard(o,i);
   });
   if(c===0 && myOrders.length===0){
-    h='<div class="empty-box"><div class="em-txt">还没有提交过需求</div><div class="em-btn" onclick="openForm()">提交第一个需求</div></div>';
+    h='<div class="empty-box"><div class="empty-tips"><h3>温馨提示</h3><ul>';
+    h+='<li><span class="tn">1.</span>在截止时间的前2h，这个页面里会出现我的联系方式，直接加我备注咸鱼名催我</li>';
+    h+='<li><span class="tn">2.</span>我答应了售后就会售后的，不要催我，我回复也得打字不是</li>';
+    h+='<li><span class="tn">3.</span>请允许我也会去吃饭、睡觉，没有回复别急，，，</li>';
+    h+='<li><span class="tn">4.</span><b>在这里联系我！在这里联系我！</b>因为我可以看到你的需求！</li>';
+    h+='</ul></div></div>';
   } else if(c===0){
-    h='<div class="empty-box"><div class="em-txt">暂无符合条件的需求</div></div>';
+    h='<div class="empty-box" style="text-align:center;padding:80px 0"><div style="font-size:14px;color:#aaa">暂无符合条件的需求</div></div>';
   }
   document.getElementById('listBody').innerHTML=h;
+  var bar=document.getElementById('bottomBar');
+  if(myOrders.length===0){bar.classList.add('blink');}else{bar.classList.remove('blink');}
 }
 
 function imgSrc(m){return m.url||m.data||'';}
