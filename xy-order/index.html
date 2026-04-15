@@ -64,6 +64,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .card-actions{display:flex;justify-content:flex-end;margin-top:8px}
 .card-chat-btn{padding:5px 14px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#555;font-size:12px;cursor:pointer;font-weight:500}
 .card-chat-btn:active{background:#f5f5f5}
+.card-unread{position:absolute;top:8px;right:8px;min-width:18px;height:18px;border-radius:9px;background:#c00;color:#fff;font-size:10px;line-height:18px;text-align:center;padding:0 5px;font-weight:600}
+.title-unread{display:inline-block;min-width:18px;height:18px;border-radius:9px;background:#c00;color:#fff;font-size:10px;line-height:18px;text-align:center;padding:0 5px;font-weight:600;margin-left:8px;vertical-align:middle}
 
 .bottom-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:12px 16px;border-top:1px solid #e0e0e0;z-index:40}
 .bottom-bar .inner{max-width:500px;margin:0 auto}
@@ -231,7 +233,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
   <div class="list-top">
     <div class="list-top-row">
       <div>
-        <h1 id="listTitle">我的需求单</h1>
+        <h1 id="listTitle">我的需求单<span class="title-unread" id="titleUnread" style="display:none"></span></h1>
         <div class="lt-sub" id="listSub"></div>
       </div>
       <img class="lt-logo" src="https://my-video-storage-shihuang.oss-cn-wuhan-lr.aliyuncs.com/xianyu/logo.jpg" alt="">
@@ -378,6 +380,8 @@ var ZION = {
   update_xy_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/fac52f37-4c00-46ef-abce-9d41bf0511e4',
   send_xy_message: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/bda9f3b9-9f40-41f7-98dc-8fe6f79aa66a',
   list_xy_messages: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/ece148b9-d21f-48ca-bf69-e8c119ecc8df',
+  unread_xy_counts: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/6d1feec2-382f-42e9-ae1f-7cf14450aaf7',
+  mark_xy_read: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/ff2afd54-8d81-4a68-bd47-c7162540b755',
   append_xy_chat_note: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/22a5f154-859c-4ef7-8ca0-443f8d359bc8',
   grant_xy_edit: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/132d2af6-77c2-480c-bf5c-84910ca592b2'
 };
@@ -399,6 +403,7 @@ var curFilter = 'all';
 var curDtlIdx = null;
 var chatMsgs = [];
 var images = [], files = [];
+var unreadCount = 0;
 
 /* ===== Login ===== */
 function doLogin(){
@@ -446,6 +451,35 @@ function loadMyOrders(){
 function showList(){
   document.getElementById('pageList').classList.add('active');
   renderCards();
+  loadUnreadCount();
+}
+
+function loadUnreadCount(){
+  if(!curUser||!ZION.unread_xy_counts) return;
+  fetch(ZION.unread_xy_counts,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var map=JSON.parse(d.counts_data||'{}');
+    unreadCount=map[curUser]||0;
+    updateUnreadUI();
+  }).catch(function(e){console.error(e);});
+}
+
+function updateUnreadUI(){
+  var badge=document.getElementById('titleUnread');
+  if(unreadCount>0){badge.textContent=unreadCount;badge.style.display='inline-block';}
+  else{badge.style.display='none';}
+  document.title=unreadCount>0?'('+unreadCount+'条新消息) 咸鱼接单':'咸鱼接单';
+  renderCards();
+}
+
+function markRead(){
+  if(!curUser||!ZION.mark_xy_read) return;
+  fetch(ZION.mark_xy_read,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({xianyu_name:curUser})})
+  .then(function(){
+    unreadCount=0;
+    updateUnreadUI();
+  }).catch(function(e){console.error(e);});
 }
 
 /* ===== Filter & Card Rendering ===== */
@@ -492,6 +526,7 @@ function buildCard(o,i){
   var bc=u==='over'||u==='urg'?'b-red':(u==='soon'?'b-amber':(u==='done'?'b-gray':'b-green'));
   var bt=u==='over'?'超时':(u==='urg'?'紧急':(u==='soon'?'今天':(u==='done'?'完成':'充裕')));
   var s='<div class="card '+cc+'" onclick="openDtl('+i+')">';
+  if(unreadCount>0&&o.status==='pending') s+='<div class="card-unread">'+unreadCount+'</div>';
   var isSh=o.task_types.indexOf('售后修改')>=0;
   s+='<div class="card-head"><span class="card-status">#'+(i+1)+'</span><span style="display:flex;gap:4px;align-items:center">'+(isSh?'<span class="badge" style="background:#fff7ed;color:#c60">售后</span>':'')+'<span class="badge '+bc+'">'+bt+'</span></span></div>';
   if(o.task_types.length){s+='<div class="card-tags">';o.task_types.forEach(function(t){s+='<span>'+t+'</span>';});s+='</div>';}
@@ -613,6 +648,7 @@ function chatFromCard(i){
   document.getElementById('chatOv').classList.add('show');
   checkQQUrgent(o);
   loadChatMsgs();
+  markRead();
   showTips();
 }
 
@@ -623,6 +659,7 @@ function openChat(){
   document.getElementById('chatOv').classList.add('show');
   checkQQUrgent(o);
   loadChatMsgs();
+  markRead();
   showTips();
 }
 function closeChat(){
@@ -963,7 +1000,12 @@ function fmtChatTime(iso){
   return(d.getMonth()+1)+'/'+d.getDate()+' '+time;
 }
 
-setInterval(function(){if(document.getElementById('pageList').classList.contains('active'))renderCards();},60000);
+setInterval(function(){
+  if(document.getElementById('pageList').classList.contains('active')){
+    renderCards();
+    loadUnreadCount();
+  }
+},30000);
 </script>
 </body>
 </html>
