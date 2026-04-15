@@ -153,11 +153,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
     <input id="searchInput" placeholder="搜索名称、描述..." oninput="filterCards()">
   </div>
   <div class="chips">
-    <span class="chip on" data-f="all" onclick="pick(this)">全部</span>
+    <span class="chip on" data-f="pending" onclick="pick(this)">未完成</span>
     <span class="chip" data-f="urgent" onclick="pick(this)">紧急</span>
     <span class="chip" data-f="today" onclick="pick(this)">今天</span>
-    <span class="chip" data-f="pending" onclick="pick(this)">待处理</span>
     <span class="chip" data-f="completed" onclick="pick(this)">已完成</span>
+    <span class="chip" data-f="all" onclick="pick(this)">全部</span>
   </div>
 </div>
 
@@ -240,7 +240,7 @@ var USER_AVATAR=OSS_BASE+'xianyu/avatar-user.jpg';
 
 var ossClient=new OSS({region:'oss-cn-wuhan-lr',accessKeyId:'LTAI5tBcUNsZqv33UggKtQds',accessKeySecret:'1pZrU9wXOQW64dqYeGWMBvH0JVC4qs',bucket:'my-video-storage-shihuang'});
 
-var orders=[],curFilter='all',curIdx=null;
+var orders=[],curFilter='pending',curIdx=null;
 var unreadMap={};
 var chatMsgs=[];
 var chatUser='';
