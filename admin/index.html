@@ -95,6 +95,21 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 .empty-state{text-align:center;padding:80px 0}
 .empty-state h3{font-size:18px;color:var(--text-2);margin-bottom:8px}
 .empty-state p{font-size:14px;color:var(--text-3)}
+
+.filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.filter-row label{font-size:12px;color:var(--text-3);white-space:nowrap}
+.filter-row input[type=date],.filter-row input[type=number]{height:34px;border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:13px;background:var(--white);width:140px}
+.filter-row input:focus{border-color:var(--green)}
+.view-toggle{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-left:auto}
+.view-toggle button{padding:6px 14px;font-size:12px;background:var(--white);border:none;color:var(--text-2);cursor:pointer}
+.view-toggle button.on{background:var(--green);color:#fff;font-weight:500}
+
+.order-table{width:100%;border-collapse:collapse;background:var(--white);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);font-size:13px}
+.order-table th{background:#f9f9f9;padding:10px 12px;text-align:left;font-weight:600;font-size:12px;color:var(--text-3);border-bottom:1px solid var(--border);white-space:nowrap}
+.order-table td{padding:10px 12px;border-bottom:1px solid #f5f5f5;color:var(--text-1);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.order-table tr:hover td{background:#fafffe}
+.order-table .tbl-actions{display:flex;gap:4px;flex-wrap:nowrap}
+.order-table .tbl-actions button{white-space:nowrap}
 .stepper{display:inline-flex;align-items:center}
 .stepper button{width:32px;height:32px;border:1px solid #ddd;background:var(--white);font-size:16px;color:var(--text-2);display:flex;align-items:center;justify-content:center}
 .stepper button:first-child{border-radius:6px 0 0 6px}
@@ -148,6 +163,12 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
   .toast{top:12px;right:12px;left:12px;text-align:center;font-size:13px;padding:10px 16px}
   .empty-state{padding:50px 0}
   .empty-state h3{font-size:16px}
+  .filter-row{gap:6px!important}
+  .filter-row input[type=date],.filter-row input[type=number]{width:110px!important;font-size:12px;height:32px}
+  .filter-row label{font-size:11px}
+  .view-toggle button{padding:5px 10px;font-size:11px}
+  .order-table{font-size:12px}
+  .order-table th,.order-table td{padding:8px 8px}
 }
 
 @media(max-width:374px){
@@ -163,6 +184,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 <div class="app-header">
   <h1>咯咯哒生态农场 <span>后台管理</span></h1>
   <div class="header-actions">
+    <button class="btn btn-outline" onclick="openManualAdd()">手动录入</button>
     <button class="btn btn-outline" onclick="triggerImport()">导入表格</button>
     <button class="btn btn-primary" onclick="exportExcel()">导出表格</button>
     <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFile(this)">
@@ -193,6 +215,21 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
       <option value="active">进行中</option>
       <option value="done">已完成</option>
     </select>
+    <div class="view-toggle">
+      <button class="on" id="vCard" onclick="switchView('card')">卡片</button>
+      <button id="vList" onclick="switchView('list')">列表</button>
+    </div>
+  </div>
+  <div class="filter-row" id="filterRow" style="display:none;margin-bottom:14px">
+    <label>日期</label>
+    <input type="date" id="dateFrom" onchange="filterCards()">
+    <span style="color:var(--text-3)">~</span>
+    <input type="date" id="dateTo" onchange="filterCards()">
+    <label style="margin-left:12px">金额</label>
+    <input type="number" id="amtMin" placeholder="最低" onchange="filterCards()" style="width:90px">
+    <span style="color:var(--text-3)">~</span>
+    <input type="number" id="amtMax" placeholder="最高" onchange="filterCards()" style="width:90px">
+    <button class="btn btn-sm btn-outline-gray" onclick="resetFilters()" style="margin-left:4px">重置</button>
   </div>
 
   <div id="uploadArea">
@@ -203,6 +240,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
   </div>
 
   <div class="order-grid" id="orderGrid"></div>
+  <div style="display:none;overflow-x:auto" id="orderTableWrap"><table class="order-table" id="orderTable"></table></div>
   <div class="empty-state" id="emptyState" style="display:none">
     <h3>没有匹配的结果</h3>
     <p>试试调整搜索条件或筛选项</p>
@@ -343,6 +381,62 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
     <div class="modal-foot">
       <button class="btn btn-outline-gray" onclick="closeModal('dupModal')">跳过重复</button>
       <button class="btn btn-primary" onclick="forceImportDups()">覆盖导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- 手动录入弹窗 -->
+<div class="overlay" id="manualModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><h3>手动录入会员</h3><button class="close" onclick="closeModal('manualModal')">X</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>下单微信 *</label><input type="text" id="m-wechat" placeholder="必填"></div>
+      <div class="form-group"><label>会员类型 *</label>
+        <select id="m-type"><option value="鸡蛋会员">鸡蛋会员</option><option value="蔬菜会员">蔬菜会员</option><option value="鸡会员">鸡会员</option><option value="草莓会员">草莓会员</option><option value="共享菜地">共享菜地</option></select>
+      </div>
+      <div class="form-group"><label>商品分类</label><input type="text" id="m-category" placeholder="如：鸡蛋类"></div>
+      <div class="form-group"><label>商品名称</label><input type="text" id="m-product" placeholder="如：土鸡蛋100枚包年"></div>
+      <div class="form-group"><label>次数/数量</label><input type="number" id="m-count" placeholder="如：24"></div>
+      <div class="form-group"><label>实付金额</label><input type="number" id="m-amount" step="0.01" placeholder="如：299.00"></div>
+      <div class="form-group"><label>原价</label><input type="text" id="m-price" placeholder="选填"></div>
+      <div class="form-group"><label>折扣</label><input type="text" id="m-discount" placeholder="选填"></div>
+      <div class="form-group"><label>付款平台</label><input type="text" id="m-platform" placeholder="如：微信/抖音"></div>
+      <div class="form-group"><label>支付时间</label><input type="date" id="m-paytime"></div>
+      <div class="form-group"><label>配送方式</label><input type="text" id="m-delivery" placeholder="如：快递/自提"></div>
+      <div class="form-group"><label>客户来源</label><input type="text" id="m-source" placeholder="选填"></div>
+      <div class="form-group"><label>复购标签</label><input type="text" id="m-repurchase" placeholder="选填"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline-gray" onclick="closeModal('manualModal')">取消</button>
+      <button class="btn btn-primary" onclick="confirmManualAdd()">确认添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑用户信息弹窗 -->
+<div class="overlay" id="editModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><h3>编辑用户信息</h3><button class="close" onclick="closeModal('editModal')">X</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>下单微信</label><input type="text" id="e-wechat"></div>
+      <div class="form-group"><label>会员类型</label>
+        <select id="e-type"><option value="鸡蛋会员">鸡蛋会员</option><option value="蔬菜会员">蔬菜会员</option><option value="鸡会员">鸡会员</option><option value="草莓会员">草莓会员</option><option value="共享菜地">共享菜地</option></select>
+      </div>
+      <div class="form-group"><label>商品分类</label><input type="text" id="e-category"></div>
+      <div class="form-group"><label>商品名称</label><input type="text" id="e-product"></div>
+      <div class="form-group"><label>次数/数量</label><input type="number" id="e-count"></div>
+      <div class="form-group"><label>实付金额</label><input type="number" id="e-amount" step="0.01"></div>
+      <div class="form-group"><label>原价</label><input type="text" id="e-price"></div>
+      <div class="form-group"><label>折扣</label><input type="text" id="e-discount"></div>
+      <div class="form-group"><label>付款平台</label><input type="text" id="e-platform"></div>
+      <div class="form-group"><label>支付时间</label><input type="date" id="e-paytime"></div>
+      <div class="form-group"><label>配送方式</label><input type="text" id="e-delivery"></div>
+      <div class="form-group"><label>客户来源</label><input type="text" id="e-source"></div>
+      <div class="form-group"><label>复购标签</label><input type="text" id="e-repurchase"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline-gray" onclick="closeModal('editModal')">取消</button>
+      <button class="btn btn-primary" onclick="confirmEdit()">保存修改</button>
     </div>
   </div>
 </div>
@@ -628,8 +722,9 @@ function renderAll(){
   document.getElementById('uploadArea').style.display = 'none';
   document.getElementById('statsBar').style.display = '';
   document.getElementById('toolbar').style.display = '';
+  document.getElementById('filterRow').style.display = '';
   updateStats();
-  renderCards(orders);
+  filterCards();
 }
 
 function updateStats(){
@@ -732,25 +827,104 @@ function renderCards(list){
     }
     h += '<button class="btn btn-sm btn-outline-gray" onclick="openRemarkImg('+o.idx+')">备注图片</button>';
     h += '<button class="btn btn-sm btn-danger" onclick="deleteOrder('+o.idx+')">删除</button>';
+    if(getStatusKey(o)!=='done') h += '<button class="btn btn-sm btn-outline" style="border-color:var(--green);color:var(--green)" onclick="markComplete('+o.idx+')">已完成</button>';
+    h += '<button class="btn btn-sm btn-outline" onclick="openEdit('+o.idx+')">编辑</button>';
     h += '</div></div>';
   });
   grid.innerHTML = h;
 }
 
-function filterCards(){
+var currentView = 'card';
+
+function applyFilter(){
   var kw = document.getElementById('searchInput').value.toLowerCase();
   var type = document.getElementById('filterType').value;
   var status = document.getElementById('filterStatus').value;
-  var filtered = orders.filter(function(o){
+  var dateFrom = document.getElementById('dateFrom').value;
+  var dateTo = document.getElementById('dateTo').value;
+  var amtMin = document.getElementById('amtMin').value;
+  var amtMax = document.getElementById('amtMax').value;
+  return orders.filter(function(o){
     if(type && o.memberType !== type) return false;
     if(status && getStatusKey(o) !== status) return false;
     if(kw){
       var haystack = (o.wechat + o.productName + o.memberType + o.category + o.totalStr).toLowerCase();
       if(haystack.indexOf(kw) < 0) return false;
     }
+    if(dateFrom && o.payTime && o.payTime < dateFrom) return false;
+    if(dateTo && o.payTime && o.payTime > dateTo) return false;
+    if(amtMin !== '' && o.amount < parseFloat(amtMin)) return false;
+    if(amtMax !== '' && o.amount > parseFloat(amtMax)) return false;
     return true;
   });
-  renderCards(filtered);
+}
+
+function filterCards(){
+  var filtered = applyFilter();
+  if(currentView === 'card'){
+    renderCards(filtered);
+    document.getElementById('orderGrid').style.display = '';
+    document.getElementById('orderTableWrap').style.display = 'none';
+  } else {
+    renderTable(filtered);
+    document.getElementById('orderGrid').style.display = 'none';
+    document.getElementById('orderTableWrap').style.display = '';
+  }
+}
+
+function resetFilters(){
+  document.getElementById('dateFrom').value = '';
+  document.getElementById('dateTo').value = '';
+  document.getElementById('amtMin').value = '';
+  document.getElementById('amtMax').value = '';
+  filterCards();
+}
+
+function switchView(v){
+  currentView = v;
+  document.getElementById('vCard').className = v==='card'?'on':'';
+  document.getElementById('vList').className = v==='list'?'on':'';
+  filterCards();
+}
+
+function renderTable(list){
+  var grid = document.getElementById('orderGrid');
+  var tWrap = document.getElementById('orderTableWrap');
+  var empty = document.getElementById('emptyState');
+  grid.innerHTML = '';
+  if(!list.length){ tWrap.style.display='none'; empty.style.display=''; return; }
+  empty.style.display='none';
+  tWrap.style.display='';
+  var h = '<thead><tr>';
+  h += '<th>微信名</th><th>会员类型</th><th>商品名称</th><th>次数</th>';
+  h += '<th>实付金额</th><th>支付时间</th><th>配送方式</th><th>状态</th><th>操作</th>';
+  h += '</tr></thead><tbody>';
+  list.forEach(function(o){
+    var sk = getStatusKey(o);
+    var stText = o.paused?'已暂停':(sk==='done'?'已完成':'进行中');
+    var stCls = o.paused?'tag-orange':(sk==='done'?'tag-gray':'tag-green');
+    h += '<tr>';
+    h += '<td>'+o.wechat+'</td>';
+    h += '<td>'+o.memberType+'</td>';
+    h += '<td title="'+o.productName+'">'+o.productName+'</td>';
+    h += '<td>'+o.totalStr+'</td>';
+    h += '<td>¥'+o.amount.toFixed(2)+'</td>';
+    h += '<td>'+o.payTime+'</td>';
+    h += '<td>'+o.deliveryMethod+'</td>';
+    h += '<td><span class="tag '+stCls+'">'+stText+'</span></td>';
+    h += '<td><div class="tbl-actions">';
+    if(o.memberType==='草莓会员'){
+      h += '<button class="btn btn-sm btn-primary" onclick="openDeduct('+o.idx+')">扣除</button>';
+    } else if(o.memberType!=='共享菜地'){
+      h += '<button class="btn btn-sm btn-outline" onclick="openAdjust('+o.idx+')">调整</button>';
+    }
+    if(getStatusKey(o)!=='done') h += '<button class="btn btn-sm btn-outline" style="border-color:var(--green);color:var(--green)" onclick="markComplete('+o.idx+')">已完成</button>';
+    h += '<button class="btn btn-sm btn-outline" onclick="openEdit('+o.idx+')">编辑</button>';
+    h += '<button class="btn btn-sm btn-danger" onclick="deleteOrder('+o.idx+')">删除</button>';
+    h += '</div></td></tr>';
+  });
+  h += '</tbody>';
+  document.getElementById('orderTable').innerHTML = h;
 }
 
 function getOrderByIdx(idx){
@@ -971,6 +1145,126 @@ function previewImg(idx, imgIdx){
   if(imgs[imgIdx]){
     document.getElementById('preview-img').src = imgs[imgIdx];
     document.getElementById('imgPreviewModal').classList.add('show');
+  }
+}
+
+/* ---- 手动录入 ---- */
+function openManualAdd(){
+  document.getElementById('m-wechat').value='';
+  document.getElementById('m-type').value='鸡蛋会员';
+  document.getElementById('m-category').value='';
+  document.getElementById('m-product').value='';
+  document.getElementById('m-count').value='';
+  document.getElementById('m-amount').value='';
+  document.getElementById('m-price').value='';
+  document.getElementById('m-discount').value='';
+  document.getElementById('m-platform').value='';
+  document.getElementById('m-paytime').value='';
+  document.getElementById('m-delivery').value='';
+  document.getElementById('m-source').value='';
+  document.getElementById('m-repurchase').value='';
+  document.getElementById('manualModal').classList.add('show');
+}
+
+function confirmManualAdd(){
+  var wechat = document.getElementById('m-wechat').value.trim();
+  if(!wechat){ showToast('请填写下单微信'); return; }
+  var mt = document.getElementById('m-type').value;
+  var count = parseFloat(document.getElementById('m-count').value)||0;
+  var amount = parseFloat(document.getElementById('m-amount').value)||0;
+  var payDate = document.getElementById('m-paytime').value;
+  var o = {
+    idx: nextIdx++,
+    yearMonth: '',
+    platform: document.getElementById('m-platform').value.trim(),
+    payTime: payDate,
+    deliveryMethod: document.getElementById('m-delivery').value.trim(),
+    category: document.getElementById('m-category').value.trim(),
+    productName: document.getElementById('m-product').value.trim(),
+    totalStr: String(count) + unitByType(mt),
+    totalNum: count,
+    price: document.getElementById('m-price').value.trim(),
+    discount: document.getElementById('m-discount').value.trim(),
+    amount: amount,
+    wechat: wechat,
+    source: document.getElementById('m-source').value.trim(),
+    repurchase: document.getElementById('m-repurchase').value.trim(),
+    memberType: mt,
+    deliveries: [],
+    doneCount: 0,
+    paused: false
+  };
+  orders.push(o);
+  closeModal('manualModal');
+  renderAll();
+  showToast('手动录入成功：'+wechat);
+  syncToBackend([o]);
+}
+
+/* ---- 标记已完成 ---- */
+function markComplete(idx){
+  var o = getOrderByIdx(idx);
+  if(!o) return;
+  if(!confirm('确定将「'+o.wechat+'」标记为已完成？')) return;
+  if(o.deliveries.indexOf('已完成')<0) o.deliveries.push('已完成');
+  o.paused = false;
+  filterCards();
+  showToast(o.wechat+' 已标记为完成');
+  if(o.backendId){
+    callZion(ZION.update_order,{order_id:o.backendId,update_json:JSON.stringify({status:'completed'})});
+  }
+}
+
+/* ---- 编辑用户信息 ---- */
+var editIdx = null;
+function openEdit(idx){
+  editIdx = idx;
+  var o = getOrderByIdx(idx);
+  document.getElementById('e-wechat').value = o.wechat;
+  document.getElementById('e-type').value = o.memberType;
+  document.getElementById('e-category').value = o.category;
+  document.getElementById('e-product').value = o.productName;
+  document.getElementById('e-count').value = o.totalNum;
+  document.getElementById('e-amount').value = o.amount;
+  document.getElementById('e-price').value = o.price;
+  document.getElementById('e-discount').value = o.discount;
+  document.getElementById('e-platform').value = o.platform;
+  document.getElementById('e-paytime').value = o.payTime;
+  document.getElementById('e-delivery').value = o.deliveryMethod;
+  document.getElementById('e-source').value = o.source;
+  document.getElementById('e-repurchase').value = o.repurchase;
+  document.getElementById('editModal').classList.add('show');
+}
+
+function confirmEdit(){
+  var o = getOrderByIdx(editIdx);
+  if(!o) return;
+  o.wechat = document.getElementById('e-wechat').value.trim();
+  o.memberType = document.getElementById('e-type').value;
+  o.category = document.getElementById('e-category').value.trim();
+  o.productName = document.getElementById('e-product').value.trim();
+  var newCount = parseFloat(document.getElementById('e-count').value)||0;
+  o.totalNum = newCount;
+  o.totalStr = String(newCount) + unitByType(o.memberType);
+  o.amount = parseFloat(document.getElementById('e-amount').value)||0;
+  o.price = document.getElementById('e-price').value.trim();
+  o.discount = document.getElementById('e-discount').value.trim();
+  o.platform = document.getElementById('e-platform').value.trim();
+  o.payTime = document.getElementById('e-paytime').value;
+  o.deliveryMethod = document.getElementById('e-delivery').value.trim();
+  o.source = document.getElementById('e-source').value.trim();
+  o.repurchase = document.getElementById('e-repurchase').value.trim();
+  closeModal('editModal');
+  renderAll();
+  showToast('信息已更新：'+o.wechat);
+  if(o.backendId){
+    callZion(ZION.update_order,{order_id:o.backendId,update_json:JSON.stringify({
+      wechat_name:o.wechat,member_type:o.memberType,category:o.category,
+      ud_product_name_d340d0:o.productName,total_count:o.totalNum,
+      amount_paid:o.amount,price:parseNum(o.price),discount:parseNum(o.discount),
+      platform:o.platform,pay_time:toISO(o.payTime),
+      delivery_method:o.deliveryMethod,source:o.source,repurchase:o.repurchase
+    })});
   }
 }
 
