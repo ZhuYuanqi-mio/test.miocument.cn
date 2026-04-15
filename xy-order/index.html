@@ -823,6 +823,9 @@ function closeTips(){document.getElementById('tipsModal').classList.remove('show
 function openForm(){
   var hasPending=myOrders.some(function(o){return o.status==='pending';});
   if(hasPending){showToast('上一单还没完成，只能修改上一单需求');return;}
+  var lastEmail='';
+  for(var i=0;i<myOrders.length;i++){if(myOrders[i].email){lastEmail=myOrders[i].email;break;}}
+  if(lastEmail) document.getElementById('email').value=lastEmail;
   document.getElementById('pageList').classList.remove('active');
   document.getElementById('pageForm').classList.add('active');
 }
