@@ -122,6 +122,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .chat-ov-input .send-btn{padding:8px 16px;border:none;border-radius:8px;background:#222;color:#fff;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;align-self:flex-end}
 .chat-ov-input .send-btn:active{opacity:.7}
 
+/* ===== Edit Deadline Modal ===== */
+.dl-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;justify-content:center;align-items:center;padding:24px}
+.dl-modal.show{display:flex}
+.dl-box{background:#fff;border-radius:12px;max-width:360px;width:100%;padding:24px 20px 18px}
+.dl-box h3{font-size:15px;font-weight:700;color:#222;margin-bottom:14px;text-align:center}
+.dl-box label{font-size:13px;font-weight:500;color:#333;margin-bottom:5px;display:block}
+.dl-box input[type=datetime-local]{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;outline:none;background:#fafafa;margin-bottom:12px;-webkit-appearance:none;appearance:none;height:42px}
+.dl-box input:focus,.dl-box textarea:focus{border-color:#555}
+.dl-box textarea{width:100%;min-height:60px;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;outline:none;background:#fafafa;margin-bottom:14px}
+.dl-box .dl-btns{display:flex;gap:8px}
+.dl-box .dl-btns button{flex:1;padding:10px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none}
+.dl-box .dl-btns .dl-cancel{background:#f2f2f2;color:#666}
+.dl-box .dl-btns .dl-ok{background:#222;color:#fff}
+.dl-box .dl-btns button:active{opacity:.75}
+
 .toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(34,34,34,.9);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.show{opacity:1}
 .viewer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;justify-content:center;align-items:center;cursor:pointer}
@@ -185,6 +200,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
     </div>
     <textarea id="adminChatInput" rows="1" placeholder="输入消息..." oninput="autoGrow(this)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();adminSendText();}"></textarea>
     <button class="send-btn" onclick="adminSendText()">发送</button>
+  </div>
+</div>
+
+<!-- Edit Deadline Modal -->
+<div class="dl-modal" id="dlModal">
+  <div class="dl-box">
+    <h3>修改截止时间</h3>
+    <label>新的截止时间</label>
+    <input type="datetime-local" id="dlNewTime">
+    <label>修改原因</label>
+    <textarea id="dlReason" placeholder="请填写修改时间的原因"></textarea>
+    <div class="dl-btns">
+      <button class="dl-cancel" onclick="closeDlModal()">取消</button>
+      <button class="dl-ok" onclick="saveDlChange()">确认修改</button>
+    </div>
   </div>
 </div>
 
@@ -332,7 +362,7 @@ function openDtl(i){
   var dot=document.getElementById('dtlChatDot');
   if(uc>0){dot.textContent=uc;dot.classList.add('show');}else{dot.classList.remove('show');}
   var g=cd(o),s='';
-  s+='<div class="d-card"><div class="lb">截止时间</div><div class="val">'+fmtDl(o.deadline)+'</div><div class="card-cd '+g.c+'" style="margin-top:4px">'+g.t+'</div></div>';
+  s+='<div class="d-card"><div class="lb">截止时间 <span style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px" onclick="editDeadline('+i+')">修改</span></div><div class="val" id="dtlDlVal">'+fmtDl(o.deadline)+'</div><div class="card-cd '+g.c+'" style="margin-top:4px">'+g.t+'</div></div>';
   s+='<div class="d-card"><div class="lb">邮箱</div><div class="val">'+(o.email||'未填写')+'</div></div>';
   s+='<div class="d-card"><div class="lb">任务类型</div><div class="tl">';
   o.task_types.forEach(function(t){s+='<span>'+t+'</span>';});
@@ -382,6 +412,40 @@ function delOrder(i){
 }
 function dlFile(oi,fi){var f=orders[oi].files[fi];if(!f)return;var href=f.url||f.data;if(!href)return;var a=document.createElement('a');a.href=href;a.download=f.name;a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);}
 function fmtSz(b){return b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';}
+
+var dlEditIdx=null;
+function editDeadline(i){
+  dlEditIdx=i;
+  document.getElementById('dlNewTime').value='';
+  document.getElementById('dlReason').value='';
+  document.getElementById('dlModal').classList.add('show');
+}
+function closeDlModal(){
+  document.getElementById('dlModal').classList.remove('show');
+  dlEditIdx=null;
+}
+function saveDlChange(){
+  if(dlEditIdx===null)return;
+  var newTime=document.getElementById('dlNewTime').value;
+  var reason=document.getElementById('dlReason').value.trim();
+  if(!newTime){toast('请选择新的截止时间');return;}
+  if(!reason){toast('请填写修改原因');return;}
+  var o=orders[dlEditIdx];
+  var newDl=newTime+':00+08:00';
+  var note='[管理员修改截止时间] '+fmtDl(o.deadline)+' → '+fmtDl(newDl)+'，原因：'+reason;
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({deadline:newDl})})})
+  .then(function(r){return r.json();})
+  .then(function(){
+    o.deadline=newDl;
+    if(ZION.append_xy_chat_note){
+      fetch(ZION.append_xy_chat_note,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({xianyu_name:o.xianyu_name,note_text:note})});
+      o.chat_notes=(o.chat_notes?(o.chat_notes+'\n'+note):note);
+    }
+    closeDlModal();
+    toast('截止时间已修改');
+    go();openDtl(orders.indexOf(o));
+  }).catch(function(e){console.error(e);toast('修改失败');});
+}
 
 function grantEdit(i){
   var o=orders[i];
