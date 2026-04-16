@@ -361,22 +361,74 @@
   </div>
 </div>
 
+<!-- 选菜弹窗 -->
+<div class="overlay" id="vegSelectModal">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="sheet-title" id="vegSelectTitle">选菜</span>
+      <button class="close" onclick="closeVegSelect()">X</button>
+    </div>
+    <div class="sheet-body" id="vegSelectBody" style="padding:12px 16px;"></div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary btn-block" onclick="confirmVegSelect()">确认选择</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
+
+<style>
+.veg-section{margin-top:12px;padding:12px 16px;background:#fafafa;border-radius:10px}
+.veg-section-title{font-size:13px;color:var(--text-3);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.veg-period-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0}
+.veg-period-row:last-child{border-bottom:none}
+.veg-period-label{font-size:14px;font-weight:500;color:var(--text-1);min-width:52px}
+.veg-period-tags{flex:1;display:flex;flex-wrap:wrap;gap:4px;margin:0 8px}
+.veg-period-tags span{font-size:11px;background:var(--green-light);color:var(--green);padding:2px 8px;border-radius:10px}
+.veg-btn{font-size:12px;padding:4px 12px;border:1px solid var(--green);color:var(--green);border-radius:14px;background:#fff;white-space:nowrap;cursor:pointer}
+.veg-btn:active{background:var(--green-light)}
+.veg-check-list{max-height:50vh;overflow-y:auto}
+.veg-check-item{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid #f5f5f5;cursor:pointer}
+.veg-check-item:last-child{border-bottom:none}
+.veg-check-box{width:22px;height:22px;border:2px solid #ccc;border-radius:6px;margin-right:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.veg-check-item.checked .veg-check-box{background:var(--green);border-color:var(--green)}
+.veg-check-item.checked .veg-check-box::after{content:'✓';color:#fff;font-size:14px;font-weight:700}
+.veg-check-name{font-size:15px;color:var(--text-1)}
+</style>
 
 <script>
 var users = {};
 var userKeys = [];
 var ZION_LIST = 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/20ac40dd-0181-43c8-beaf-6e4c9636b3ed';
+var ZION_VEG = {
+  list_farm_vegs: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/bc10346c-bbdf-4e12-84be-8c4942f08e98',
+  get_farm_settings: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/872f77f7-8942-40f4-a9f1-c9715d614005',
+  save_veg_selection: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/4460a9d0-ccf0-4a9b-9e19-01daa4736806'
+};
+var vegPool = [];
+var vegEnabled = false;
 
 var productType = 'default';
 var dateRules = { default: [0,1,2,3,4,5,6] };
 var today = new Date();
 
+async function callZionPost(url, data){
+  var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  return await res.json();
+}
+
 async function loadFromBackend(){
   try{
-    var res=await fetch(ZION_LIST,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-    var data=await res.json();
-    var list=JSON.parse(data.orders_data||'[]');
+    var [ordersRes, vegsRes, settingsRes] = await Promise.all([
+      callZionPost(ZION_LIST, {}),
+      callZionPost(ZION_VEG.list_farm_vegs, {}),
+      callZionPost(ZION_VEG.get_farm_settings, {})
+    ]);
+    vegPool = JSON.parse(vegsRes.vegs_data || '[]');
+    var settings = JSON.parse(settingsRes.settings_data || '{}');
+    vegEnabled = !!settings.veg_enabled;
+
+    var list=JSON.parse(ordersRes.orders_data||'[]');
     if(!list||!list.length){
       document.getElementById('switchList').innerHTML='<div style="text-align:center;padding:24px;color:var(--text-3);font-size:13px;">暂无用户数据，请先在管理面板导入</div>';
       return;
@@ -391,6 +443,7 @@ async function loadFromBackend(){
       var doneCount=drs.filter(function(r){return r.status==='done';}).length;
       var totalCount=o.total_count||0;
       var pname=o.ud_product_name_d340d0||o.member_type||'';
+      var deliveryVegs=o.farm_delivery_vegs||[];
       if(isPeriod){
         var used=0;
         if(isSt) drs.forEach(function(r){used+=(r.quantity||0);});
@@ -403,7 +456,7 @@ async function loadFromBackend(){
           used:isSt?used:'',remain:isSt?(totalCount-used):'',
           records:drs.map(function(r){return{date:r.delivery_date||'',amount:isSt?(r.quantity||0)+'斤':(r.note||''),note:r.note||''};}),
           notice:o.member_type+'由管理员操作，如有疑问请联系客服。',
-          status:o.status
+          status:o.status,orderId:o.id,totalCount:totalCount,deliveryVegs:deliveryVegs
         };
       }else{
         users[key]={
@@ -412,7 +465,9 @@ async function loadFromBackend(){
           frequency:o.delivery_method||'',total:totalCount,
           done:doneCount,remain:totalCount-doneCount,
           nextPeriod:doneCount+1,nextDate:'待安排',
-          address:'',mode:'count',status:o.status
+          address:'',mode:'count',status:o.status,
+          orderId:o.id,totalCount:totalCount,deliveryVegs:deliveryVegs,
+          memberType:o.member_type||''
         };
       }
     });
@@ -784,7 +839,138 @@ function switchUser(type){
     btn.onclick = function(){ togglePause(); };
   }
 
+  renderVegSection(u);
   showToast('已切换到 ' + u.name + '（' + u.product + '）');
+}
+
+/* ---- 选菜功能 ---- */
+var currentVegUser = null;
+var currentVegPeriod = null;
+var currentVegOrderId = null;
+
+function renderVegSection(u){
+  var existing = document.getElementById('vegSection');
+  if(existing) existing.remove();
+
+  if(!vegEnabled) return;
+  if(!u.deliveryVegs || !u.deliveryVegs.length) return;
+
+  var openPeriods = u.deliveryVegs.filter(function(dv){ return dv.can_select; });
+  if(!openPeriods.length) return;
+
+  var wrap = document.createElement('div');
+  wrap.id = 'vegSection';
+  wrap.className = 'veg-section';
+
+  var h = '<div class="veg-section-title"><span>选菜（管理员已开放）</span></div>';
+  openPeriods.forEach(function(dv){
+    var selVegs = [];
+    if(dv.selected_vegs){
+      try{ selVegs = JSON.parse(dv.selected_vegs); }catch(e){}
+    }
+    h += '<div class="veg-period-row">';
+    h += '<span class="veg-period-label">第 '+dv.period+' 期</span>';
+    h += '<div class="veg-period-tags">';
+    if(selVegs.length){
+      selVegs.forEach(function(v){ h += '<span>'+v+'</span>'; });
+    } else {
+      h += '<span style="background:#f5f5f5;color:var(--text-3)">未选菜</span>';
+    }
+    h += '</div>';
+    h += '<button class="veg-btn" onclick="openVegSelect(\''+u.orderId+'\','+dv.period+')">'+(selVegs.length?'修改':'选菜')+'</button>';
+    h += '</div>';
+  });
+
+  wrap.innerHTML = h;
+
+  if(u.mode === 'period'){
+    var periodSection = document.getElementById('periodSection');
+    periodSection.appendChild(wrap);
+  } else {
+    var noticeBar = document.getElementById('noticeBar');
+    noticeBar.parentNode.insertBefore(wrap, noticeBar);
+  }
+}
+
+function openVegSelect(orderId, period){
+  currentVegOrderId = orderId;
+  currentVegPeriod = period;
+
+  var selVegs = [];
+  for(var k in users){
+    var u = users[k];
+    if(u.orderId == orderId && u.deliveryVegs){
+      for(var i=0;i<u.deliveryVegs.length;i++){
+        if(Number(u.deliveryVegs[i].period)===period){
+          try{ selVegs = JSON.parse(u.deliveryVegs[i].selected_vegs||'[]'); }catch(e){}
+          break;
+        }
+      }
+      break;
+    }
+  }
+
+  document.getElementById('vegSelectTitle').textContent = '第 '+period+' 期 — 选菜';
+
+  var h = '<div class="veg-check-list">';
+  if(!vegPool.length){
+    h += '<div style="text-align:center;padding:20px;color:var(--text-3);font-size:13px">暂无可选菜品</div>';
+  } else {
+    vegPool.forEach(function(v){
+      var checked = selVegs.indexOf(v.name) >= 0;
+      h += '<div class="veg-check-item'+(checked?' checked':'')+'" onclick="toggleVegCheck(this)">';
+      h += '<div class="veg-check-box"></div>';
+      h += '<span class="veg-check-name">'+v.name+'</span>';
+      h += '</div>';
+    });
+  }
+  h += '</div>';
+  document.getElementById('vegSelectBody').innerHTML = h;
+  document.getElementById('vegSelectModal').classList.add('show');
+}
+
+function toggleVegCheck(el){
+  el.classList.toggle('checked');
+}
+
+function closeVegSelect(){
+  document.getElementById('vegSelectModal').classList.remove('show');
+}
+
+async function confirmVegSelect(){
+  var items = document.querySelectorAll('#vegSelectBody .veg-check-item.checked .veg-check-name');
+  var selected = [];
+  items.forEach(function(el){ selected.push(el.textContent); });
+
+  try{
+    var res = await callZionPost(ZION_VEG.save_veg_selection, {
+      order_id: currentVegOrderId,
+      period: currentVegPeriod,
+      vegs_json: JSON.stringify(selected)
+    });
+    if(res.result === 'saved'){
+      for(var k in users){
+        var u = users[k];
+        if(u.orderId == currentVegOrderId && u.deliveryVegs){
+          for(var i=0;i<u.deliveryVegs.length;i++){
+            if(Number(u.deliveryVegs[i].period)===currentVegPeriod){
+              u.deliveryVegs[i].selected_vegs = JSON.stringify(selected);
+              break;
+            }
+          }
+          renderVegSection(u);
+          break;
+        }
+      }
+      closeVegSelect();
+      showToast('选菜已保存（'+selected.length+'种）');
+    } else if(res.result === 'not_allowed'){
+      showToast('该期暂未开放选菜');
+    }
+  }catch(e){
+    console.error('save veg:', e);
+    showToast('保存失败，请重试');
+  }
 }
 </script>
 </body>

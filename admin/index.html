@@ -114,6 +114,28 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 .tbl-icon svg{width:18px;height:18px}
 .tbl-icon[title="删除"]:hover{background:#ffebee}
 .tbl-icon[title="已完成"]:hover{background:var(--green-light)}
+.tbl-icon[title="选菜"]:hover{background:#E8F5E9}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f0f0}
+.toggle-row .tr-label{font-size:14px;font-weight:500}
+.toggle-sw{position:relative;width:44px;height:24px;cursor:pointer}
+.toggle-sw input{display:none}
+.toggle-sw .slider{position:absolute;top:0;left:0;right:0;bottom:0;background:#ccc;border-radius:12px;transition:.2s}
+.toggle-sw .slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.toggle-sw input:checked+.slider{background:var(--green)}
+.toggle-sw input:checked+.slider::before{transform:translateX(20px)}
+.veg-list{margin:12px 0;max-height:240px;overflow-y:auto}
+.veg-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;margin-bottom:4px;background:#fafafa}
+.veg-item:hover{background:var(--green-light)}
+.veg-item .vi-name{font-size:14px;color:var(--text-1)}
+.veg-item .vi-del{font-size:12px;color:var(--red);cursor:pointer;padding:2px 8px;border-radius:4px}
+.veg-item .vi-del:hover{background:#ffebee}
+.veg-add-row{display:flex;gap:8px;margin-top:12px}
+.veg-add-row input{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:14px}
+.veg-add-row input:focus{border-color:var(--green)}
+.veg-ctrl-list{max-height:400px;overflow-y:auto}
+.veg-ctrl-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #f5f5f5}
+.veg-ctrl-row .vcr-label{font-size:14px;font-weight:500;min-width:60px}
+.veg-ctrl-row .vcr-vegs{flex:1;font-size:12px;color:var(--text-3);margin:0 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .stepper{display:inline-flex;align-items:center}
 .stepper button{width:32px;height:32px;border:1px solid #ddd;background:var(--white);font-size:16px;color:var(--text-2);display:flex;align-items:center;justify-content:center}
 .stepper button:first-child{border-radius:6px 0 0 6px}
@@ -188,6 +210,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 <div class="app-header">
   <h1>咯咯哒生态农场 <span>后台管理</span></h1>
   <div class="header-actions">
+    <button class="btn btn-outline" onclick="openVegModal()">菜品管理</button>
     <button class="btn btn-outline" onclick="openManualAdd()">手动录入</button>
     <button class="btn btn-outline" onclick="triggerImport()">导入表格</button>
     <button class="btn btn-primary" onclick="exportExcel()">导出表格</button>
@@ -453,6 +476,36 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
   </div>
 </div>
 
+<!-- 菜品管理弹窗 -->
+<div class="overlay" id="vegModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head"><h3>菜品管理</h3><button class="close" onclick="closeModal('vegModal')">X</button></div>
+    <div class="modal-body">
+      <div class="toggle-row">
+        <span class="tr-label">选菜功能</span>
+        <label class="toggle-sw"><input type="checkbox" id="veg-enabled" onchange="toggleVegEnabled(this.checked)"><span class="slider"></span></label>
+      </div>
+      <div id="vegListWrap">
+        <div class="veg-list" id="vegList"></div>
+        <div class="veg-add-row">
+          <input type="text" id="vegNameInput" placeholder="输入菜品名称" onkeydown="if(event.key==='Enter')addVeg()">
+          <button class="btn btn-primary" onclick="addVeg()">添加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 选菜控制弹窗 -->
+<div class="overlay" id="vegCtrlModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><h3 id="vegCtrlTitle">选菜控制</h3><button class="close" onclick="closeModal('vegCtrlModal')">X</button></div>
+    <div class="modal-body">
+      <div class="veg-ctrl-list" id="vegCtrlList"></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -472,7 +525,14 @@ var ZION = {
   get_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/2df7e8d5-8990-469d-b589-f0080d5e0068',
   update_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/d1ac7a26-b198-4727-aa77-19e2e7da3619',
   list_orders: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/20ac40dd-0181-43c8-beaf-6e4c9636b3ed',
-  delete_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/9402a4bf-db53-4d38-9a61-dfcda0eda2f4'
+  delete_order: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/9402a4bf-db53-4d38-9a61-dfcda0eda2f4',
+  add_farm_veg: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/36c85652-7624-4ab0-8742-21be222289d4',
+  list_farm_vegs: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/bc10346c-bbdf-4e12-84be-8c4942f08e98',
+  remove_farm_veg: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/5833b362-d245-4e37-a9df-b03d11e8cab3',
+  get_farm_settings: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/872f77f7-8942-40f4-a9f1-c9715d614005',
+  update_farm_settings: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/9f2c1d33-cd18-40a3-a9c0-3385121b42f0',
+  set_delivery_veg: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/fcec197a-44ca-4385-8991-1dec0c7baa69',
+  save_veg_selection: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/4460a9d0-ccf0-4a9b-9e19-01daa4736806'
 };
 
 var ossClient = new OSS({
@@ -554,7 +614,10 @@ async function loadFromBackend(){
         source:bo.source||'', repurchase:bo.repurchase||'',
         memberType:bo.member_type||'', deliveries:deliveries,
         doneCount:bo.delivery_records?bo.delivery_records.length:0,
-        paused:bo.status==='paused'
+        paused:bo.status==='paused',
+        deliveryVegs:bo.farm_delivery_vegs||[],
+        canChangeTime:bo.can_change_time!==false,
+        canChangeAddress:bo.can_change_address!==false
       };
     });
     renderAll();
@@ -829,6 +892,9 @@ function renderCards(list){
         h += '<button class="btn btn-sm btn-outline-gray" onclick="togglePause('+o.idx+')">暂停</button>';
       }
     }
+    if(o.memberType==='蔬菜会员'||isGarden){
+      h += '<button class="btn btn-sm btn-outline" style="border-color:#66BB6A;color:#66BB6A" onclick="openVegCtrl('+o.idx+')">选菜控制</button>';
+    }
     h += '<button class="btn btn-sm btn-outline-gray" onclick="openRemarkImg('+o.idx+')">备注图片</button>';
     h += '<button class="btn btn-sm btn-danger" onclick="deleteOrder('+o.idx+')">删除</button>';
     if(getStatusKey(o)!=='done') h += '<button class="btn btn-sm btn-outline" style="border-color:var(--green);color:var(--green)" onclick="markComplete('+o.idx+')">已完成</button>';
@@ -922,6 +988,7 @@ function renderTable(list){
     } else if(o.memberType!=='共享菜地'){
       h += '<button class="tbl-icon" title="调整" onclick="openAdjust('+o.idx+')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>';
     }
+    if(o.memberType==='蔬菜会员'||o.memberType==='共享菜地') h += '<button class="tbl-icon" title="选菜" onclick="openVegCtrl('+o.idx+')"><svg viewBox="0 0 24 24" fill="none" stroke="#66BB6A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12l3 3 5-5"/></svg></button>';
     if(getStatusKey(o)!=='done') h += '<button class="tbl-icon" title="已完成" onclick="markComplete('+o.idx+')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>';
     h += '<button class="tbl-icon" title="编辑" onclick="openEdit('+o.idx+')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
     h += '<button class="tbl-icon" title="删除" onclick="deleteOrder('+o.idx+')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>';
@@ -1318,6 +1385,123 @@ function showToast(msg){
   t.classList.add('show');
   setTimeout(function(){ t.classList.remove('show'); }, 2500);
 }
+
+/* ---- 菜品管理 ---- */
+var vegPool = [];
+var vegEnabled = false;
+
+async function openVegModal(){
+  document.getElementById('vegModal').classList.add('show');
+  try{
+    var [vegsRes, settingsRes] = await Promise.all([
+      callZion(ZION.list_farm_vegs, {}),
+      callZion(ZION.get_farm_settings, {})
+    ]);
+    vegPool = JSON.parse(vegsRes.vegs_data || '[]');
+    var settings = JSON.parse(settingsRes.settings_data || '{}');
+    vegEnabled = !!settings.veg_enabled;
+  }catch(e){ console.error('load veg data:', e); }
+  document.getElementById('veg-enabled').checked = vegEnabled;
+  renderVegList();
+}
+
+function renderVegList(){
+  var h = '';
+  if(!vegPool.length){
+    h = '<div style="text-align:center;padding:20px;color:var(--text-3);font-size:13px">暂无菜品，请添加</div>';
+  } else {
+    vegPool.forEach(function(v){
+      h += '<div class="veg-item"><span class="vi-name">'+v.name+'</span>';
+      h += '<span class="vi-del" onclick="removeVeg('+v.id+')">删除</span></div>';
+    });
+  }
+  document.getElementById('vegList').innerHTML = h;
+}
+
+async function toggleVegEnabled(val){
+  vegEnabled = val;
+  try{
+    await callZion(ZION.update_farm_settings, {settings_json: JSON.stringify({veg_enabled: val})});
+    showToast(val ? '选菜功能已开启' : '选菜功能已关闭');
+  }catch(e){ console.error('toggle veg:', e); }
+}
+
+async function addVeg(){
+  var input = document.getElementById('vegNameInput');
+  var name = input.value.trim();
+  if(!name){ showToast('请输入菜品名称'); return; }
+  try{
+    var res = await callZion(ZION.add_farm_veg, {veg_name: name});
+    if(res && res.veg_id){
+      vegPool.push({id: res.veg_id, name: name, status: 'active'});
+      renderVegList();
+      input.value = '';
+      showToast('已添加：' + name);
+    }
+  }catch(e){ console.error('add veg:', e); showToast('添加失败'); }
+}
+
+async function removeVeg(id){
+  if(!confirm('确定删除该菜品？')) return;
+  try{
+    await callZion(ZION.remove_farm_veg, {veg_id: id});
+    vegPool = vegPool.filter(function(v){ return v.id !== id; });
+    renderVegList();
+    showToast('菜品已删除');
+  }catch(e){ console.error('remove veg:', e); showToast('删除失败'); }
+}
+
+/* ---- 选菜控制（按期） ---- */
+var vegCtrlOrderId = null;
+
+async function openVegCtrl(idx){
+  var o = getOrderByIdx(idx);
+  if(!o) return;
+  vegCtrlOrderId = o.backendId;
+  document.getElementById('vegCtrlTitle').textContent = o.wechat + ' — 选菜控制';
+  document.getElementById('vegCtrlModal').classList.add('show');
+  var deliveryVegs = o.deliveryVegs || [];
+  var total = o.totalNum || 0;
+  var h = '';
+  for(var p = 1; p <= total; p++){
+    var dv = null;
+    for(var j = 0; j < deliveryVegs.length; j++){
+      if(Number(deliveryVegs[j].period) === p){ dv = deliveryVegs[j]; break; }
+    }
+    var canSelect = dv ? dv.can_select : false;
+    var selVegs = '';
+    if(dv && dv.selected_vegs){
+      try{ var arr = JSON.parse(dv.selected_vegs); selVegs = arr.join('、'); }catch(e){}
+    }
+    h += '<div class="veg-ctrl-row">';
+    h += '<span class="vcr-label">第 '+p+' 期</span>';
+    h += '<span class="vcr-vegs" title="'+selVegs+'">'+(selVegs||'<span style="color:#ccc">未选菜</span>')+'</span>';
+    h += '<label class="toggle-sw"><input type="checkbox" '+(canSelect?'checked':'')+' onchange="setDeliveryVeg('+o.backendId+','+p+',this.checked)"><span class="slider"></span></label>';
+    h += '</div>';
+  }
+  if(!total) h = '<div style="text-align:center;padding:20px;color:var(--text-3)">该订单无配送期数据</div>';
+  document.getElementById('vegCtrlList').innerHTML = h;
+}
+
+async function setDeliveryVeg(orderId, period, canSelect){
+  try{
+    var res = await callZion(ZION.set_delivery_veg, {order_id: orderId, period: period, can_select: canSelect});
+    if(res && res.result === 'ok'){
+      showToast('第 '+period+' 期 ' + (canSelect ? '已开放选菜' : '已关闭选菜'));
+      var o = null;
+      for(var i=0;i<orders.length;i++) if(orders[i].backendId===orderId){ o=orders[i]; break; }
+      if(o && o.deliveryVegs){
+        var found = false;
+        for(var j=0;j<o.deliveryVegs.length;j++){
+          if(Number(o.deliveryVegs[j].period)===period){ o.deliveryVegs[j].can_select=canSelect; found=true; break; }
+        }
+        if(!found) o.deliveryVegs.push({period:period, can_select:canSelect, selected_vegs:'[]'});
+      }
+    }
+  }catch(e){ console.error('set delivery veg:', e); showToast('设置失败'); }
+}
+
+setInterval(function(){ loadFromBackend(); }, 30000);
 </script>
 </body>
 </html>
