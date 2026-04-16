@@ -265,6 +265,7 @@ function load(){
           description:o.description||'',images:imgs,files:fls,
           status:o.status||'pending',chat_notes:o.chat_notes||'',can_edit:!!o.can_edit,assignee:o.assignee||'',created_at:o.created_at||''};
       });
+      inheritAssignees();
       go();
     }).catch(function(e){console.error(e);goLocal();});
   }else goLocal();
@@ -728,13 +729,38 @@ document.getElementById('adminChatInput').addEventListener('paste',function(e){
   }
 });
 
+function inheritAssignees(){
+  var userMap={};
+  orders.forEach(function(o){
+    if(o.assignee && !userMap[o.xianyu_name]) userMap[o.xianyu_name]=o.assignee;
+  });
+  orders.forEach(function(o){
+    if(!o.assignee && userMap[o.xianyu_name]){
+      o.assignee=userMap[o.xianyu_name];
+      if(ZION.update_xy_order&&o.id){
+        fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({assignee:o.assignee})})});
+      }
+    }
+  });
+}
+
 function setAssignee(i,name){
   var o=orders[i];
   o.assignee=(o.assignee===name)?'':name;
-  filterCards();
   if(ZION.update_xy_order&&o.id){
     fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({assignee:o.assignee})})});
   }
+  if(o.assignee){
+    orders.forEach(function(x){
+      if(x.xianyu_name===o.xianyu_name&&!x.assignee&&x.idx!==o.idx){
+        x.assignee=o.assignee;
+        if(ZION.update_xy_order&&x.id){
+          fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:x.id,update_json:JSON.stringify({assignee:x.assignee})})});
+        }
+      }
+    });
+  }
+  filterCards();
 }
 
 load();
