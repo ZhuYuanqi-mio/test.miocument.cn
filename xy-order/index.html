@@ -698,7 +698,7 @@ function buildResultCard(o,i){
     } else if(ds==='pending_approval'){
       s+='<div class="rc-title">需求已完成</div>';
       s+='<div style="font-size:14px;color:#f0a03c;font-weight:500;text-align:center;padding:20px 0">审批中，请等待</div>';
-    } else if(ds==='approved'){
+    } else if(ds==='approved'||ds==='received'){
       s+='<div class="rc-title">需求'+(i+1)+'已完成请查看结果：</div>';
       if(o.result_files&&o.result_files.length){
         s+='<div class="rc-files">';
@@ -731,11 +731,19 @@ function buildResultCard(o,i){
     } else if(ds==='pending_survey'){
       s+='<div class="rc-title">需求已完成</div>';
       s+='<div style="font-size:14px;color:#4a90d9;font-weight:500;text-align:center;padding:20px 0">问卷填写中，请等待</div>';
-    } else if(ds==='survey_done'){
-      s+='<div class="rc-title">需求已完成</div>';
-      s+='<div style="font-size:14px;color:#22c55e;font-weight:500;text-align:center;padding:20px 0">问卷已填写完成，请前往问卷星后台查看</div>';
+    } else if(ds==='survey_done'||ds==='received'){
+      s+='<div class="rc-title">需求'+(i+1)+'已完成请查看结果：</div>';
+      if(o.result_files&&o.result_files.length){
+        s+='<div class="rc-files">';
+        o.result_files.forEach(function(f){
+          s+='<div class="rc-file" onclick="event.stopPropagation();dlByName(\''+f.url+'\',\''+escHtml(f.name)+'\')">';
+          s+='<img class="rc-file-ico" src="'+fileIconUrl(f.name)+'">';
+          s+='<span class="rc-file-name">'+escHtml(f.name)+'</span></div>';
+        });
+        s+='</div>';
+      }
       s+='<div style="display:flex;justify-content:space-between;align-items:center">';
-      if(o.approved_at) s+='<span style="font-size:11px;color:#999">'+fmtDl(o.approved_at)+' 确认完成</span>';
+      if(o.approved_at) s+='<span style="font-size:11px;color:#999">'+fmtDl(o.approved_at)+(ds==='survey_done'?' 确认完成':' 审批通过')+'</span>';
       else s+='<span></span>';
       s+='<span class="card-chat-btn" onclick="event.stopPropagation();openDtl('+i+')">查看需求</span></div>';
     }
@@ -788,7 +796,7 @@ function openDtl(i){
   s+='<textarea id="ovNotesEdit">'+(o.chat_notes||'')+'</textarea></div>';
   if(o.status==='completed'&&o.result_files&&o.result_files.length){
     var hasWordDtl=(o.result_files||[]).some(function(f){return /\.docx?$/i.test(f.name);});
-    var showRf=!hasWordDtl||o.delivery_status==='approved';
+    var showRf=!hasWordDtl||o.delivery_status==='approved'||o.delivery_status==='received';
     if(showRf){
       s+='<div class="d-card"><div class="lb">结果文件</div><div class="d-files">';
       o.result_files.forEach(function(f){

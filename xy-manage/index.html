@@ -544,7 +544,7 @@ function openDtl(i){
   if(o.status==='completed'){
     s+='<div class="d-card"><div class="lb">结果交付</div>';
     if(o.after_sale_file) s+='<div style="font-size:12px;color:#c60;margin-bottom:8px">售后对象：'+escHtml(o.after_sale_file)+'</div>';
-    var dsMap={'':'等待用户确认','unreceived':'等待用户确认','pending_approval':'审批中','approved':'已审批通过','pending_survey':'问卷填写中','survey_done':'问卷已填写完成'};
+    var dsMap={'':'等待用户确认','unreceived':'等待用户确认','pending_approval':'审批中','approved':'已审批通过','received':'已收货(旧)','pending_survey':'问卷填写中','survey_done':'问卷已填写完成'};
     var dsLabel=dsMap[o.delivery_status]||'等待用户确认';
     var dsClr={'pending_approval':'#f0a03c','approved':'#22c55e','pending_survey':'#4a90d9','survey_done':'#22c55e'}[o.delivery_status]||'#999';
     s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">交付状态：</span><span style="color:'+dsClr+';font-weight:500;font-size:13px">'+dsLabel+'</span></div>';
