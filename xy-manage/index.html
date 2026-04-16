@@ -153,6 +153,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .ds-btn{padding:4px 14px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #ddd;background:#fff;color:#888;margin-right:4px;transition:all .15s}
 .ds-btn:active{transform:scale(.95)}
 .ds-btn.ds-active{border-color:#222;background:#222;color:#fff}
+.cm-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;justify-content:center;align-items:center;padding:24px}
+.cm-modal.show{display:flex}
+.cm-box{background:#fff;border-radius:12px;max-width:400px;width:100%;padding:24px 20px 18px;max-height:85vh;overflow-y:auto}
+.cm-box h3{font-size:15px;font-weight:700;color:#222;margin-bottom:14px;text-align:center}
+.cm-section{margin-bottom:14px}
+.cm-section .cm-lb{font-size:13px;font-weight:500;color:#333;margin-bottom:6px;display:flex;align-items:center}
+.cm-section .cm-hint{font-size:11px;color:#c00;margin-left:6px;font-weight:400}
+.cm-preview{margin-top:6px}
+.cm-preview video{width:100%;max-height:160px;border-radius:6px;border:1px solid #e0e0e0}
+.cm-file-item{display:flex;align-items:center;padding:6px 10px;background:#fafafa;border-radius:6px;font-size:12px;border:1px solid #e0e0e0;margin-bottom:4px}
+.cm-file-item .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cm-file-item .rm{color:#c00;margin-left:8px;cursor:pointer;font-size:11px}
+.cm-img-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cm-img-preview img{width:72px;height:72px;border-radius:6px;object-fit:cover;border:1px solid #e0e0e0}
+.cm-btns{display:flex;gap:8px;margin-top:16px}
+.cm-btns button{flex:1;padding:10px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none}
+.cm-btns .cm-cancel{background:#f2f2f2;color:#666}
+.cm-btns .cm-ok{background:#222;color:#fff}
+.cm-btns button:active{opacity:.75}
+.cm-upload-btn{display:inline-block;padding:6px 14px;border-radius:6px;border:1px solid #ddd;background:#fff;color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px}
+.cm-upload-btn:active{background:#f8f8f8}
 .toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(34,34,34,.9);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.show{opacity:1}
 .viewer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;justify-content:center;align-items:center;cursor:pointer}
@@ -179,6 +200,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
     </span>
     <span class="chip" data-f="urgent" onclick="pick(this)">紧急</span>
     <span class="chip" data-f="today" onclick="pick(this)">今天</span>
+    <span class="chip" data-f="approval" onclick="pick(this)">审批<span id="approvalBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
+    <span class="chip" data-f="survey" onclick="pick(this)">问卷填写<span id="surveyBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
     <span class="chip" data-f="completed" onclick="pick(this)">已完成<span class="chip-badge" id="completedBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
     <span class="chip" data-f="all" onclick="pick(this)">全部</span>
   </div>
@@ -241,6 +264,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
   </div>
 </div>
 
+<div class="cm-modal" id="completeModal">
+  <div class="cm-box">
+    <h3>完成交付</h3>
+    <div class="cm-section">
+      <div class="cm-lb">展示视频 <span class="cm-hint" id="cmVideoHint"></span></div>
+      <label class="cm-upload-btn">选择视频<input type="file" accept="video/*" style="display:none" onchange="cmUploadVideo(this)"></label>
+      <div class="cm-preview" id="cmVideoPreview"></div>
+    </div>
+    <div class="cm-section">
+      <div class="cm-lb">图片</div>
+      <label class="cm-upload-btn">选择图片<input type="file" accept="image/*" multiple style="display:none" onchange="cmUploadImg(this)"></label>
+      <div class="cm-img-preview" id="cmImgPreview"></div>
+    </div>
+    <div class="cm-section">
+      <div class="cm-lb">结果文件</div>
+      <label class="cm-upload-btn">选择文件<input type="file" multiple style="display:none" onchange="cmUploadFile(this)"></label>
+      <div id="cmFilePreview"></div>
+    </div>
+    <div class="cm-btns">
+      <button class="cm-cancel" onclick="closeCompleteModal()">取消</button>
+      <button class="cm-ok" onclick="submitComplete()">确认完成</button>
+    </div>
+  </div>
+</div>
+
 <div class="viewer" id="viewer" onclick="this.classList.remove('show')"><img id="vImg" src=""></div>
 <div class="toast" id="toast"></div>
 
@@ -285,6 +333,7 @@ function load(){
           status:o.status||'pending',chat_notes:o.chat_notes||'',can_edit:!!o.can_edit,assignee:o.assignee||'',
           result_files:rfs,result_video:o.result_video||'',delivery_status:o.delivery_status||'',
           receipt_screenshot:o.receipt_screenshot||'',after_sale_file:o.after_sale_file||'',
+          survey_link:o.survey_link||'',survey_province:o.survey_province||'',survey_midnight:o.survey_midnight||'',
           created_at:o.created_at||''};
       });
       inheritAssignees();
@@ -300,7 +349,7 @@ function go(){
     if(a.status!=='completed'&&b.status==='completed')return -1;
     return new Date(a.deadline)-new Date(b.deadline);
   });
-  stats();filterCards();updateCompletedBadge();
+  stats();filterCards();updateCompletedBadge();updateApprovalBadge();updateSurveyBadge();
 }
 
 function loadUnreadCounts(){
@@ -395,6 +444,8 @@ function filterCards(){
       if(pendingSub==='unassigned'&&o.assignee)return;
     }
     if(curFilter==='completed'&&o.status!=='completed')return;
+    if(curFilter==='approval'&&!(o.status==='completed'&&o.delivery_status==='pending_approval'))return;
+    if(curFilter==='survey'&&!(o.status==='completed'&&o.delivery_status==='pending_survey'))return;
     if(q&&(o.xianyu_name+' '+o.description+' '+o.task_types.join(' ')).toLowerCase().indexOf(q)<0)return;
     c++;h+=bCard(o,i);
   });
@@ -489,36 +540,50 @@ function openDtl(i){
     });
   } else s+='<span style="color:#aaa;font-size:13px">暂无</span>';
   s+='</div></div>';
-  s+='<div class="d-card"><div class="lb">结果交付</div>';
-  if(o.after_sale_file) s+='<div style="font-size:12px;color:#c60;margin-bottom:8px">售后对象：'+escHtml(o.after_sale_file)+'</div>';
-  s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666;margin-right:8px">收货状态：</span>';
-  var dsUn=o.delivery_status!=='received'?'ds-btn ds-active':'ds-btn';
-  var dsRe=o.delivery_status==='received'?'ds-btn ds-active':'ds-btn';
-  s+='<button class="'+dsUn+'" onclick="setDeliveryStatus('+i+',\'unreceived\')">未收货</button>';
-  s+='<button class="'+dsRe+'" onclick="setDeliveryStatus('+i+',\'received\')">已收货</button></div>';
-  s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">展示视频：</span>';
-  s+='<label style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px">上传<input type="file" accept="video/*" style="display:none" onchange="uploadResultVideo(this,'+i+')"></label>';
-  if(o.result_video) s+='<div style="margin-top:6px"><video src="'+o.result_video+'" controls style="width:100%;max-height:200px;border-radius:6px;border:1px solid #e0e0e0"></video></div>';
-  else s+='<div style="margin-top:4px;font-size:12px;color:#aaa">暂无</div>';
-  s+='</div>';
-  s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">结果文件 ('+(o.result_files?o.result_files.length:0)+')：</span>';
-  s+='<label style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px">上传<input type="file" multiple style="display:none" onchange="uploadResultFile(this,'+i+')"></label>';
-  if(o.result_files&&o.result_files.length){
-    s+='<div class="d-files" style="margin-top:6px">';
-    o.result_files.forEach(function(f,fi){
-      s+='<div class="fr"><span class="nm">'+escHtml(f.name)+'</span>';
-      if(f.size)s+='<span class="sz">'+fmtSz(f.size)+'</span>';
-      s+='<span class="dl" onclick="event.stopPropagation();dlFile2('+i+','+fi+')">下载</span>';
-      s+='<span style="color:#c00;margin-left:8px;cursor:pointer;font-size:12px" onclick="event.stopPropagation();removeResultFile('+i+','+fi+')">删除</span></div>';
-    });
+  if(o.status==='completed'){
+    s+='<div class="d-card"><div class="lb">结果交付</div>';
+    if(o.after_sale_file) s+='<div style="font-size:12px;color:#c60;margin-bottom:8px">售后对象：'+escHtml(o.after_sale_file)+'</div>';
+    var dsMap={'':'等待用户确认','unreceived':'等待用户确认','pending_approval':'审批中','approved':'已审批通过','pending_survey':'问卷填写中','survey_done':'问卷已填写完成'};
+    var dsLabel=dsMap[o.delivery_status]||'等待用户确认';
+    var dsClr={'pending_approval':'#f0a03c','approved':'#22c55e','pending_survey':'#4a90d9','survey_done':'#22c55e'}[o.delivery_status]||'#999';
+    s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">交付状态：</span><span style="color:'+dsClr+';font-weight:500;font-size:13px">'+dsLabel+'</span></div>';
+    if(o.result_video){
+      s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">展示视频：</span>';
+      s+='<div style="margin-top:6px"><video src="'+o.result_video+'" controls style="width:100%;max-height:200px;border-radius:6px;border:1px solid #e0e0e0"></video></div></div>';
+    }
+    if(o.result_files&&o.result_files.length){
+      s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">结果文件 ('+o.result_files.length+')：</span>';
+      s+='<div class="d-files" style="margin-top:6px">';
+      o.result_files.forEach(function(f,fi){
+        s+='<div class="fr"><span class="nm">'+escHtml(f.name)+'</span>';
+        if(f.size)s+='<span class="sz">'+fmtSz(f.size)+'</span>';
+        s+='<span class="dl" onclick="event.stopPropagation();dlFile2('+i+','+fi+')">下载</span></div>';
+      });
+      s+='</div></div>';
+    }
+    if(o.delivery_status==='pending_approval'){
+      if(o.receipt_screenshot){
+        s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">收货截图：</span>';
+        s+='<div style="margin-top:6px"><img src="'+o.receipt_screenshot+'" style="width:120px;border-radius:6px;cursor:pointer;border:1px solid #e0e0e0" onclick="viewImg(\''+o.receipt_screenshot+'\')"></div></div>';
+      }
+      s+='<div style="margin-top:8px"><button style="padding:8px 20px;border:none;border-radius:6px;background:#22c55e;color:#fff;font-size:13px;font-weight:500;cursor:pointer" onclick="approveOrder('+i+')">审批通过</button></div>';
+    } else if(o.receipt_screenshot){
+      s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">收货截图：</span>';
+      s+='<div style="margin-top:6px"><img src="'+o.receipt_screenshot+'" style="width:120px;border-radius:6px;cursor:pointer;border:1px solid #e0e0e0" onclick="viewImg(\''+o.receipt_screenshot+'\')"></div></div>';
+    }
+    if(o.delivery_status==='pending_survey'){
+      s+='<div style="margin-top:10px;padding:10px 12px;background:#f8f9ff;border-radius:6px;border:1px solid #e0e0e0">';
+      s+='<div style="font-size:12px;color:#666;margin-bottom:6px;font-weight:500">问卷信息</div>';
+      s+='<div style="font-size:13px;color:#222;margin-bottom:4px">链接：<a href="'+(o.survey_link||'#')+'" target="_blank" style="color:#4a90d9;word-break:break-all">'+escHtml(o.survey_link||'未填写')+'</a></div>';
+      s+='<div style="font-size:13px;color:#222;margin-bottom:4px">地点（省）：'+escHtml(o.survey_province||'未填写')+'</div>';
+      s+='<div style="font-size:13px;color:#222;margin-bottom:8px">凌晨填写：'+escHtml(o.survey_midnight||'未填写')+'</div>';
+      s+='<button style="padding:8px 20px;border:none;border-radius:6px;background:#4a90d9;color:#fff;font-size:13px;font-weight:500;cursor:pointer" onclick="confirmSurveyDone('+i+')">确认已填写完成</button>';
+      s+='</div>';
+    }
     s+='</div>';
-  } else s+='<div style="margin-top:4px;font-size:12px;color:#aaa">暂无</div>';
-  s+='</div>';
-  if(o.receipt_screenshot){
-    s+='<div><span style="font-size:12px;color:#666">收货截图：</span>';
-    s+='<div style="margin-top:6px"><img src="'+o.receipt_screenshot+'" style="width:120px;border-radius:6px;cursor:pointer;border:1px solid #e0e0e0" onclick="viewImg(\''+o.receipt_screenshot+'\')"></div></div>';
+  } else if(o.after_sale_file){
+    s+='<div class="d-card"><div class="lb">售后对象</div><div class="val">'+escHtml(o.after_sale_file)+'</div></div>';
   }
-  s+='</div>';
   s+='<div class="d-card"><div class="lb">聊天备注 <span style="font-size:11px;color:#aaa;margin-left:6px">双击编辑</span></div><div class="val" id="adminNotes" style="white-space:pre-wrap;cursor:text" ondblclick="enableAdminNotes('+i+')">'+(escHtml(o.chat_notes||'暂无'))+'</div>';
   s+='<textarea id="adminNotesEdit" style="display:none;width:100%;min-height:80px;border:1px solid #ddd;border-radius:6px;padding:10px 12px;font-size:14px;font-family:inherit;resize:vertical;outline:none;background:#fafafa">'+(o.chat_notes||'')+'</textarea>';
   s+='<div id="adminNotesBtns" style="display:none;margin-top:8px;text-align:right"><button style="padding:6px 16px;border:none;border-radius:6px;background:#f2f2f2;color:#666;font-size:13px;cursor:pointer;margin-right:6px" onclick="cancelAdminNotes('+i+')">取消</button><button style="padding:6px 16px;border:none;border-radius:6px;background:#222;color:#fff;font-size:13px;cursor:pointer" onclick="saveAdminNotes('+i+')">保存</button></div></div>';
@@ -535,12 +600,16 @@ function openDtl(i){
 function closeDtl(){document.getElementById('detailOv').classList.remove('show');curIdx=null;}
 function toggleSt(){
   if(curIdx===null)return;var o=orders[curIdx];
-  o.status=o.status==='completed'?'pending':'completed';
-  localStorage.setItem('xy_orders',JSON.stringify(orders));
-  if(ZION.update_xy_order&&o.id)
-    fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({status:o.status})})});
-  toast(o.status==='completed'?'已完成':'已恢复');
-  go();openDtl(orders.indexOf(o));
+  if(o.status==='completed'){
+    o.status='pending';
+    localStorage.setItem('xy_orders',JSON.stringify(orders));
+    if(ZION.update_xy_order&&o.id)
+      fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({status:'pending'})})});
+    toast('已恢复');
+    go();openDtl(orders.indexOf(o));
+  } else {
+    openCompleteModal(curIdx);
+  }
 }
 function delOrder(i){
   var o=orders[i];if(!confirm('删除「'+o.xianyu_name+'」？'))return;
@@ -984,6 +1053,159 @@ function setAssignee(i,name){
     });
   }
   filterCards();
+}
+
+var cmVideoUrl='',cmFiles=[],cmIdx=null;
+
+/**
+ * @param {number} i - 订单索引
+ */
+function openCompleteModal(i){
+  cmIdx=i;cmVideoUrl='';cmFiles=[];
+  document.getElementById('cmVideoPreview').innerHTML='';
+  document.getElementById('cmImgPreview').innerHTML='';
+  document.getElementById('cmFilePreview').innerHTML='';
+  document.getElementById('cmVideoHint').textContent='';
+  document.getElementById('completeModal').classList.add('show');
+}
+
+function closeCompleteModal(){
+  document.getElementById('completeModal').classList.remove('show');
+  cmIdx=null;
+}
+
+/**
+ * @param {HTMLInputElement} inp - 文件输入元素
+ */
+function cmUploadVideo(inp){
+  var f=inp.files[0];if(!f)return;
+  toast('视频上传中...');
+  uploadOSS(f,'result-video').then(function(url){
+    cmVideoUrl=url;
+    document.getElementById('cmVideoPreview').innerHTML='<video src="'+url+'" controls></video>';
+    toast('视频已上传');
+  }).catch(function(){toast('上传失败');});
+  inp.value='';
+}
+
+/**
+ * @param {HTMLInputElement} inp - 文件输入元素
+ */
+function cmUploadImg(inp){
+  Array.from(inp.files).forEach(function(f){
+    if(!f.type.startsWith('image/'))return;
+    toast('图片上传中...');
+    uploadOSS(f,'result').then(function(url){
+      cmFiles.push({name:f.name,size:f.size,url:url,isImg:true});
+      refreshCmImgPreview();
+      toast('图片已上传');
+    }).catch(function(){toast('上传失败');});
+  });
+  inp.value='';
+}
+
+/**
+ * @param {HTMLInputElement} inp - 文件输入元素
+ */
+function cmUploadFile(inp){
+  Array.from(inp.files).forEach(function(f){
+    toast('文件上传中...');
+    uploadOSS(f,'result').then(function(url){
+      cmFiles.push({name:f.name,size:f.size,url:url});
+      refreshCmFilePreview();
+      checkCmWordHint();
+      toast('文件已上传');
+    }).catch(function(){toast('上传失败');});
+  });
+  inp.value='';
+}
+
+function refreshCmImgPreview(){
+  var imgs=cmFiles.filter(function(f){return f.isImg;});
+  var h='';
+  imgs.forEach(function(f){h+='<img src="'+f.url+'">';});
+  document.getElementById('cmImgPreview').innerHTML=h;
+}
+
+function refreshCmFilePreview(){
+  var files=cmFiles.filter(function(f){return !f.isImg;});
+  var h='';
+  files.forEach(function(f,idx){
+    h+='<div class="cm-file-item"><span class="nm">'+escHtml(f.name)+'</span><span class="rm" onclick="cmRemoveFile('+idx+')">删除</span></div>';
+  });
+  document.getElementById('cmFilePreview').innerHTML=h;
+}
+
+/**
+ * @param {number} idx - 非图片文件在过滤后数组中的索引
+ */
+function cmRemoveFile(idx){
+  var files=cmFiles.filter(function(f){return !f.isImg;});
+  var target=files[idx];
+  cmFiles=cmFiles.filter(function(f){return f!==target;});
+  refreshCmFilePreview();
+  checkCmWordHint();
+}
+
+function checkCmWordHint(){
+  var hasWord=cmFiles.some(function(f){return !f.isImg&&/\.docx?$/i.test(f.name);});
+  document.getElementById('cmVideoHint').textContent=hasWord?'（含 Word 文件，视频必填）':'';
+}
+
+function submitComplete(){
+  if(cmIdx===null)return;
+  var hasWord=cmFiles.some(function(f){return !f.isImg&&/\.docx?$/i.test(f.name);});
+  if(hasWord&&!cmVideoUrl){toast('结果文件含 Word，请上传展示视频');return;}
+  var nonImgFiles=cmFiles.filter(function(f){return !f.isImg;});
+  if(!nonImgFiles.length&&!cmFiles.some(function(f){return f.isImg;})){toast('请至少上传一个结果文件或图片');return;}
+  var o=orders[cmIdx];
+  var rfData=cmFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};});
+  var updateObj={status:'completed',delivery_status:'unreceived',result_files:JSON.stringify(rfData)};
+  if(cmVideoUrl) updateObj.result_video=cmVideoUrl;
+  o.status='completed';
+  o.delivery_status='unreceived';
+  o.result_files=rfData;
+  if(cmVideoUrl) o.result_video=cmVideoUrl;
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify(updateObj)})});
+  closeCompleteModal();
+  toast('已完成');
+  go();openDtl(orders.indexOf(o));
+}
+
+/**
+ * @param {number} i - 订单索引
+ */
+function approveOrder(i){
+  var o=orders[i];
+  if(!confirm('确认审批通过？'))return;
+  o.delivery_status='approved';
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({delivery_status:'approved'})})});
+  toast('已审批通过');
+  go();openDtl(orders.indexOf(o));
+}
+
+/**
+ * @param {number} i - 订单索引
+ */
+function confirmSurveyDone(i){
+  var o=orders[i];
+  if(!confirm('确认问卷已填写完成？'))return;
+  o.delivery_status='survey_done';
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({delivery_status:'survey_done'})})});
+  toast('已确认完成');
+  go();openDtl(orders.indexOf(o));
+}
+
+function updateApprovalBadge(){
+  var c=0;orders.forEach(function(o){if(o.status==='completed'&&o.delivery_status==='pending_approval')c++;});
+  var b=document.getElementById('approvalBadge');
+  if(c>0){b.textContent=c;b.style.display='block';}else{b.style.display='none';}
+}
+
+function updateSurveyBadge(){
+  var c=0;orders.forEach(function(o){if(o.status==='completed'&&o.delivery_status==='pending_survey')c++;});
+  var b=document.getElementById('surveyBadge');
+  if(c>0){b.textContent=c;b.style.display='block';}else{b.style.display='none';}
 }
 
 load();
