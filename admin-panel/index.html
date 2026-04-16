@@ -136,6 +136,11 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 .veg-ctrl-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #f5f5f5}
 .veg-ctrl-row .vcr-label{font-size:14px;font-weight:500;min-width:60px}
 .veg-ctrl-row .vcr-vegs{flex:1;font-size:12px;color:var(--text-3);margin:0 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.veg-ctrl-detail{background:#f9fff9;border-left:3px solid var(--green);margin:0 0 4px 0;padding:10px 12px 8px 16px;border-radius:0 0 8px 8px}
+.veg-ctrl-detail .vchk-list{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.vchk-item{display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid #ddd;border-radius:16px;background:#fff;transition:.15s}
+.vchk-item.checked{background:var(--green-light);border-color:var(--green);color:var(--green);font-weight:500}
+.vchk-item.checked::before{content:'✓ ';font-size:11px}
 .stepper{display:inline-flex;align-items:center}
 .stepper button{width:32px;height:32px;border:1px solid #ddd;background:var(--white);font-size:16px;color:var(--text-2);display:flex;align-items:center;justify-content:center}
 .stepper button:first-child{border-radius:6px 0 0 6px}
@@ -481,16 +486,10 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
   <div class="modal" style="max-width:440px">
     <div class="modal-head"><h3>菜品管理</h3><button class="close" onclick="closeModal('vegModal')">X</button></div>
     <div class="modal-body">
-      <div class="toggle-row">
-        <span class="tr-label">选菜功能</span>
-        <label class="toggle-sw"><input type="checkbox" id="veg-enabled" onchange="toggleVegEnabled(this.checked)"><span class="slider"></span></label>
-      </div>
-      <div id="vegListWrap">
-        <div class="veg-list" id="vegList"></div>
-        <div class="veg-add-row">
-          <input type="text" id="vegNameInput" placeholder="输入菜品名称" onkeydown="if(event.key==='Enter')addVeg()">
-          <button class="btn btn-primary" onclick="addVeg()">添加</button>
-        </div>
+      <div class="veg-list" id="vegList"></div>
+      <div class="veg-add-row">
+        <input type="text" id="vegNameInput" placeholder="输入菜品名称" onkeydown="if(event.key==='Enter')addVeg()">
+        <button class="btn btn-primary" onclick="addVeg()">添加</button>
       </div>
     </div>
   </div>
@@ -1393,15 +1392,9 @@ var vegEnabled = false;
 async function openVegModal(){
   document.getElementById('vegModal').classList.add('show');
   try{
-    var [vegsRes, settingsRes] = await Promise.all([
-      callZion(ZION.list_farm_vegs, {}),
-      callZion(ZION.get_farm_settings, {})
-    ]);
+    var vegsRes = await callZion(ZION.list_farm_vegs, {});
     vegPool = JSON.parse(vegsRes.vegs_data || '[]');
-    var settings = JSON.parse(settingsRes.settings_data || '{}');
-    vegEnabled = !!settings.veg_enabled;
   }catch(e){ console.error('load veg data:', e); }
-  document.getElementById('veg-enabled').checked = vegEnabled;
   renderVegList();
 }
 
@@ -1416,14 +1409,6 @@ function renderVegList(){
     });
   }
   document.getElementById('vegList').innerHTML = h;
-}
-
-async function toggleVegEnabled(val){
-  vegEnabled = val;
-  try{
-    await callZion(ZION.update_farm_settings, {settings_json: JSON.stringify({veg_enabled: val})});
-    showToast(val ? '选菜功能已开启' : '选菜功能已关闭');
-  }catch(e){ console.error('toggle veg:', e); }
 }
 
 async function addVeg(){
@@ -1453,13 +1438,25 @@ async function removeVeg(id){
 
 /* ---- 选菜控制（按期） ---- */
 var vegCtrlOrderId = null;
+var vegCtrlIdx = null;
 
 async function openVegCtrl(idx){
   var o = getOrderByIdx(idx);
   if(!o) return;
+  vegCtrlIdx = idx;
   vegCtrlOrderId = o.backendId;
   document.getElementById('vegCtrlTitle').textContent = o.wechat + ' — 选菜控制';
   document.getElementById('vegCtrlModal').classList.add('show');
+  if(!vegPool.length){
+    try{
+      var vegsRes = await callZion(ZION.list_farm_vegs, {});
+      vegPool = JSON.parse(vegsRes.vegs_data || '[]');
+    }catch(e){}
+  }
+  renderVegCtrlList(o);
+}
+
+function renderVegCtrlList(o){
   var deliveryVegs = o.deliveryVegs || [];
   var total = o.totalNum || 0;
   var h = '';
@@ -1469,18 +1466,62 @@ async function openVegCtrl(idx){
       if(Number(deliveryVegs[j].period) === p){ dv = deliveryVegs[j]; break; }
     }
     var canSelect = dv ? dv.can_select : false;
-    var selVegs = '';
+    var selVegs = [];
     if(dv && dv.selected_vegs){
-      try{ var arr = JSON.parse(dv.selected_vegs); selVegs = arr.join('、'); }catch(e){}
+      try{ selVegs = JSON.parse(dv.selected_vegs); }catch(e){}
     }
+    var selText = selVegs.length ? selVegs.join('、') : '';
     h += '<div class="veg-ctrl-row">';
     h += '<span class="vcr-label">第 '+p+' 期</span>';
-    h += '<span class="vcr-vegs" title="'+selVegs+'">'+(selVegs||'<span style="color:#ccc">未选菜</span>')+'</span>';
+    h += '<span class="vcr-vegs">'+(selText||'<span style="color:#ccc">'+(canSelect?'未选菜':'未开放')+'</span>')+'</span>';
     h += '<label class="toggle-sw"><input type="checkbox" '+(canSelect?'checked':'')+' onchange="setDeliveryVeg('+o.backendId+','+p+',this.checked)"><span class="slider"></span></label>';
     h += '</div>';
+    if(canSelect){
+      h += '<div class="veg-ctrl-detail">';
+      h += '<div class="vchk-list" id="vchk-'+p+'">';
+      if(!vegPool.length){
+        h += '<span style="color:var(--text-3);font-size:13px">暂无菜品，请先在菜品管理里添加</span>';
+      } else {
+        vegPool.forEach(function(v){
+          var ck = selVegs.indexOf(v.name)>=0;
+          h += '<div class="vchk-item'+(ck?' checked':'')+'" onclick="toggleVchk(this)" data-name="'+v.name+'">'+v.name+'</div>';
+        });
+      }
+      h += '</div>';
+      h += '<button class="btn btn-sm btn-primary" onclick="adminSaveVegSelection('+o.backendId+','+p+')">保存选菜</button>';
+      h += '</div>';
+    }
   }
   if(!total) h = '<div style="text-align:center;padding:20px;color:var(--text-3)">该订单无配送期数据</div>';
   document.getElementById('vegCtrlList').innerHTML = h;
+}
+
+function toggleVchk(el){
+  el.classList.toggle('checked');
+}
+
+async function adminSaveVegSelection(orderId, period){
+  var listEl = document.getElementById('vchk-'+period);
+  if(!listEl) return;
+  var selected = [];
+  listEl.querySelectorAll('.vchk-item.checked').forEach(function(el){ selected.push(el.dataset.name); });
+  try{
+    var res = await callZion(ZION.save_veg_selection, {order_id: orderId, period: period, vegs_json: JSON.stringify(selected)});
+    if(res.result === 'saved'){
+      var o = null;
+      for(var i=0;i<orders.length;i++) if(orders[i].backendId===orderId){ o=orders[i]; break; }
+      if(o){
+        if(!o.deliveryVegs) o.deliveryVegs=[];
+        var found=false;
+        for(var j=0;j<o.deliveryVegs.length;j++){
+          if(Number(o.deliveryVegs[j].period)===period){ o.deliveryVegs[j].selected_vegs=JSON.stringify(selected); found=true; break; }
+        }
+        if(!found) o.deliveryVegs.push({period:period, can_select:true, selected_vegs:JSON.stringify(selected)});
+        renderVegCtrlList(o);
+      }
+      showToast('第 '+period+' 期选菜已保存（'+selected.length+'种）');
+    }
+  }catch(e){ console.error('admin save veg:', e); showToast('保存失败'); }
 }
 
 async function setDeliveryVeg(orderId, period, canSelect){
@@ -1490,12 +1531,14 @@ async function setDeliveryVeg(orderId, period, canSelect){
       showToast('第 '+period+' 期 ' + (canSelect ? '已开放选菜' : '已关闭选菜'));
       var o = null;
       for(var i=0;i<orders.length;i++) if(orders[i].backendId===orderId){ o=orders[i]; break; }
-      if(o && o.deliveryVegs){
-        var found = false;
+      if(o){
+        if(!o.deliveryVegs) o.deliveryVegs=[];
+        var found=false;
         for(var j=0;j<o.deliveryVegs.length;j++){
           if(Number(o.deliveryVegs[j].period)===period){ o.deliveryVegs[j].can_select=canSelect; found=true; break; }
         }
         if(!found) o.deliveryVegs.push({period:period, can_select:canSelect, selected_vegs:'[]'});
+        renderVegCtrlList(o);
       }
     }
   }catch(e){ console.error('set delivery veg:', e); showToast('设置失败'); }
