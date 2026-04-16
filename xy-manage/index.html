@@ -48,7 +48,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .card-thumbs{display:flex;gap:4px;margin-bottom:6px}
 .card-thumbs img{width:44px;height:44px;border-radius:4px;object-fit:cover;border:1px solid #e0e0e0}
 .card-thumbs .plus{width:44px;height:44px;border-radius:4px;background:#f2f2f2;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999}
-.card-foot{display:flex;justify-content:space-between;font-size:12px;color:#999}
+.card-foot{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#999}
+.assignee-grp{display:flex;gap:4px;flex-shrink:0}
+.assignee-btn{padding:3px 10px;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid #ddd;background:#fff;color:#bbb;transition:all .15s}
+.assignee-btn:active{transform:scale(.95)}
+.assignee-btn.sel-fm{border-color:#f0a03c;background:#fef7eb;color:#d48c00;font-weight:600}
+.assignee-btn.sel-nb{border-color:#4a90d9;background:#eef5fc;color:#2c6fad;font-weight:600}
 .card-cd{font-size:12px;font-weight:500;margin-top:3px}
 .cd-red{color:#c00}
 .cd-amber{color:#666}
@@ -258,7 +263,7 @@ function load(){
         return{id:o.id,xianyu_name:o.xianyu_name||'',email:o.email||'',deadline:o.deadline||'',
           task_types:(o.task_types||'').split(',').filter(Boolean),
           description:o.description||'',images:imgs,files:fls,
-          status:o.status||'pending',chat_notes:o.chat_notes||'',can_edit:!!o.can_edit,created_at:o.created_at||''};
+          status:o.status||'pending',chat_notes:o.chat_notes||'',can_edit:!!o.can_edit,assignee:o.assignee||'',created_at:o.created_at||''};
       });
       go();
     }).catch(function(e){console.error(e);goLocal();});
@@ -359,7 +364,13 @@ function bCard(o,i){
   }
   var dl=o.deadline?fmtDl(o.deadline):'';
   var ft=o.files&&o.files.length?o.files.length+'个文件':'';
-  s+='<div class="card-foot"><span>截止 '+dl+'</span><span>'+ft+'</span></div>';
+  var fmCls=o.assignee==='肥咪'?'assignee-btn sel-fm':'assignee-btn';
+  var nbCls=o.assignee==='努比'?'assignee-btn sel-nb':'assignee-btn';
+  s+='<div class="card-foot"><span>截止 '+dl+(ft?' · '+ft:'')+'</span>';
+  s+='<div class="assignee-grp">';
+  s+='<button class="'+fmCls+'" onclick="event.stopPropagation();setAssignee('+i+',\'肥咪\')">肥咪</button>';
+  s+='<button class="'+nbCls+'" onclick="event.stopPropagation();setAssignee('+i+',\'努比\')">努比</button>';
+  s+='</div></div>';
   s+='<div class="card-cd '+g.c+'">'+g.t+'</div></div>';
   return s;
 }
@@ -716,6 +727,15 @@ document.getElementById('adminChatInput').addEventListener('paste',function(e){
     }
   }
 });
+
+function setAssignee(i,name){
+  var o=orders[i];
+  o.assignee=(o.assignee===name)?'':name;
+  filterCards();
+  if(ZION.update_xy_order&&o.id){
+    fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({assignee:o.assignee})})});
+  }
+}
 
 load();
 setInterval(filterCards,60000);
