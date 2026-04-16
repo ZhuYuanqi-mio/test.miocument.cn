@@ -223,6 +223,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 .rc-play-btn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25)}
 .rc-receive-btn{width:100%;padding:11px;border:none;border-radius:8px;background:#222;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
 .rc-receive-btn:active{opacity:.75}
+.rc-receive-blue{background:#4a90d9}
 .rc-files{margin-bottom:10px}
 .rc-file{display:flex;align-items:center;padding:10px 12px;background:#fafafa;border-radius:6px;margin-bottom:6px;cursor:pointer;border:1px solid #e8e8e8}
 .rc-file:active{background:#f0f0f0}
@@ -657,17 +658,13 @@ function buildCard(o,i){
 function buildResultCard(o,i){
   var received=o.delivery_status==='received';
   var s='<div class="card result-card">';
-  s+='<div class="rc-title">'+(received?'需求'+(i+1)+'已完成请查看结果：':'需求'+(i+1)+'已完成')+'</div>';
+  s+='<div class="rc-title">'+(received?'需求'+(i+1)+'已完成请查看结果：':'需求已完成，上传确认收货截图后可下载结果文件')+'</div>';
 
   if(!received){
-    // 未收货：只显示视频 + 已收货按钮
     if(o.result_video){
-      s+='<div class="rc-video" onclick="event.stopPropagation();playFullscreen('+i+')">';
-      s+='<video src="'+o.result_video+'" preload="metadata" style="width:100%;border-radius:6px"></video>';
-      s+='<div class="rc-play-btn"><svg width="36" height="36" viewBox="0 0 24 24" fill="#fff"><polygon points="5,3 19,12 5,21"/></svg></div>';
-      s+='</div>';
+      s+='<div style="margin:8px 0"><video src="'+o.result_video+'" controls controlslist="nodownload nofullscreen" disablepictureinpicture playsinline oncontextmenu="return false" style="width:100%;border-radius:6px"></video></div>';
     }
-    s+='<div style="margin-top:10px"><button class="rc-receive-btn" onclick="event.stopPropagation();confirmReceive('+i+')">已收货</button></div>';
+    s+='<div style="margin-top:10px"><button class="rc-receive-btn rc-receive-blue" onclick="event.stopPropagation();confirmReceive('+i+')">我已在咸鱼确认收货</button></div>';
   } else {
     // 已收货：显示结果文件列表
     if(o.result_files&&o.result_files.length){
