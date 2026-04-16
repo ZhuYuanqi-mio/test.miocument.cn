@@ -461,7 +461,6 @@ function showList(){
 
 function loadUnreadCount(){
   if(!curUser||!ZION.unread_xy_counts) return;
-  if(myOrders.length===0){unreadCount=0;updateUnreadUI();return;}
   fetch(ZION.unread_xy_counts,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
   .then(function(r){return r.json();})
   .then(function(d){
@@ -1017,9 +1016,8 @@ function fmtChatTime(iso){
 }
 
 setInterval(function(){
-  if(document.getElementById('pageList').classList.contains('active')){
-    renderCards();
-    loadUnreadCount();
+  if(curUser){
+    loadMyOrders();
   }
 },30000);
 </script>

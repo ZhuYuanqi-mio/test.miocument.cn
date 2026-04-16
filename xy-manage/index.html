@@ -764,7 +764,7 @@ function setAssignee(i,name){
 }
 
 load();
-setInterval(filterCards,60000);
+setInterval(function(){ load(); },30000);
 </script>
 </body>
 </html>
