@@ -15,7 +15,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .search-box svg{flex-shrink:0;margin-right:6px;color:#999}
 .search-box input{flex:1;border:none;background:none;outline:none;font-size:14px;padding:9px 0;color:#222}
 .search-box input::placeholder{color:#aaa}
-.chips{display:flex;gap:6px;margin-top:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.chips{display:flex;gap:6px;margin-top:8px;overflow:visible;flex-wrap:wrap}
 .chips::-webkit-scrollbar{display:none}
 .chip{padding:5px 14px;border-radius:6px;font-size:12px;white-space:nowrap;border:1px solid #ccc;color:#666;cursor:pointer;transition:all .15s;background:#fff;position:relative}
 .chip.on{border-color:#222;background:#222;color:#fff;font-weight:500}
@@ -432,15 +432,18 @@ function bCard(o,i){
   var dl=o.deadline?fmtDl(o.deadline):'';
   var ft=o.files&&o.files.length?o.files.length+'个文件':'';
   s+='<div class="card-foot"><span>截止 '+dl+(ft?' · '+ft:'')+'</span>';
-  if(o.assignee){
+  var agExpanded=expandedSet[i];
+  if(o.assignee&&!agExpanded){
     var aCls=o.assignee==='肥咪'?'assignee-btn sel-fm':'assignee-btn sel-nb';
     s+='<div class="assignee-grp" id="ag'+i+'">';
-    s+='<button class="'+aCls+'" onclick="event.stopPropagation()" ondblclick="event.stopPropagation();expandAssignee('+i+')">'+o.assignee+'</button>';
+    s+='<button class="'+aCls+'" onclick="event.stopPropagation();expandAssignee('+i+')">'+o.assignee+'</button>';
     s+='</div>';
   } else {
+    var fmCls2=o.assignee==='肥咪'?'assignee-btn sel-fm':'assignee-btn';
+    var nbCls2=o.assignee==='努比'?'assignee-btn sel-nb':'assignee-btn';
     s+='<div class="assignee-grp" id="ag'+i+'">';
-    s+='<button class="assignee-btn" onclick="event.stopPropagation();setAssignee('+i+',\'肥咪\')">肥咪</button>';
-    s+='<button class="assignee-btn" onclick="event.stopPropagation();setAssignee('+i+',\'努比\')">努比</button>';
+    s+='<button class="'+fmCls2+'" onclick="event.stopPropagation();setAssignee('+i+',\'肥咪\')">肥咪</button>';
+    s+='<button class="'+nbCls2+'" onclick="event.stopPropagation();setAssignee('+i+',\'努比\')">努比</button>';
     s+='</div>';
   }
   s+='</div>';
@@ -816,22 +819,22 @@ function inheritAssignees(){
   });
 }
 
+var expandedSet={};
 function expandAssignee(i){
-  var grp=document.getElementById('ag'+i);
-  if(!grp)return;
-  grp.innerHTML='<button class="assignee-btn" onclick="event.stopPropagation();setAssignee('+i+',\'肥咪\')">肥咪</button>'
-    +'<button class="assignee-btn" onclick="event.stopPropagation();setAssignee('+i+',\'努比\')">努比</button>';
+  expandedSet[i]=true;
+  filterCards();
 }
 
 function setAssignee(i,name){
   var o=orders[i];
   o.assignee=(o.assignee===name)?'':name;
+  delete expandedSet[i];
   if(ZION.update_xy_order&&o.id){
     fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({assignee:o.assignee})})});
   }
   if(o.assignee){
-    orders.forEach(function(x){
-      if(x.xianyu_name===o.xianyu_name&&!x.assignee&&x.idx!==o.idx){
+    orders.forEach(function(x,xi){
+      if(x.xianyu_name===o.xianyu_name&&!x.assignee&&xi!==i){
         x.assignee=o.assignee;
         if(ZION.update_xy_order&&x.id){
           fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:x.id,update_json:JSON.stringify({assignee:x.assignee})})});
