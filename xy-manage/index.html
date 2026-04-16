@@ -519,7 +519,9 @@ function openDtl(i){
     s+='<div style="margin-top:6px"><img src="'+o.receipt_screenshot+'" style="width:120px;border-radius:6px;cursor:pointer;border:1px solid #e0e0e0" onclick="viewImg(\''+o.receipt_screenshot+'\')"></div></div>';
   }
   s+='</div>';
-  s+='<div class="d-card"><div class="lb">聊天备注</div><div class="val" style="white-space:pre-wrap">'+(escHtml(o.chat_notes||'暂无'))+'</div></div>';
+  s+='<div class="d-card"><div class="lb">聊天备注 <span style="font-size:11px;color:#aaa;margin-left:6px">双击编辑</span></div><div class="val" id="adminNotes" style="white-space:pre-wrap;cursor:text" ondblclick="enableAdminNotes('+i+')">'+(escHtml(o.chat_notes||'暂无'))+'</div>';
+  s+='<textarea id="adminNotesEdit" style="display:none;width:100%;min-height:80px;border:1px solid #ddd;border-radius:6px;padding:10px 12px;font-size:14px;font-family:inherit;resize:vertical;outline:none;background:#fafafa">'+(o.chat_notes||'')+'</textarea>';
+  s+='<div id="adminNotesBtns" style="display:none;margin-top:8px;text-align:right"><button style="padding:6px 16px;border:none;border-radius:6px;background:#f2f2f2;color:#666;font-size:13px;cursor:pointer;margin-right:6px" onclick="cancelAdminNotes('+i+')">取消</button><button style="padding:6px 16px;border:none;border-radius:6px;background:#222;color:#fff;font-size:13px;cursor:pointer" onclick="saveAdminNotes('+i+')">保存</button></div></div>';
   var editLabel = o.can_edit ? '已授权编辑' : '允许用户修改';
   var editStyle = o.can_edit ? 'opacity:.5;cursor:default' : '';
   s+='<button style="display:block;margin:12px auto 0;padding:11px 0;width:100%;border:none;border-radius:8px;background:#4a90d9;color:#fff;font-size:14px;font-weight:500;cursor:pointer;'+editStyle+'" onclick="grantEdit('+i+')" id="grantBtn">'+editLabel+'</button>';
@@ -719,6 +721,39 @@ function removeResultFile(i,fi){
  * @param {number} fi - 结果文件索引
  */
 function dlFile2(oi,fi){var f=orders[oi].result_files[fi];if(!f)return;dlByName(f.url,f.name||'文件');}
+
+/**
+ * @param {number} i - 订单索引
+ */
+function enableAdminNotes(i){
+  document.getElementById('adminNotes').style.display='none';
+  document.getElementById('adminNotesEdit').style.display='block';
+  document.getElementById('adminNotesBtns').style.display='block';
+}
+
+/**
+ * @param {number} i - 订单索引
+ */
+function cancelAdminNotes(i){
+  document.getElementById('adminNotes').style.display='';
+  document.getElementById('adminNotesEdit').style.display='none';
+  document.getElementById('adminNotesBtns').style.display='none';
+}
+
+/**
+ * @param {number} i - 订单索引
+ */
+function saveAdminNotes(i){
+  var o=orders[i];
+  var notes=document.getElementById('adminNotesEdit').value;
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({chat_notes:notes})})})
+  .then(function(r){return r.json();})
+  .then(function(){
+    o.chat_notes=notes;
+    toast('备注已保存');
+    openDtl(orders.indexOf(o));
+  }).catch(function(e){console.error(e);toast('保存失败');});
+}
 
 function appendChatNote(text){
   if(!chatUser) return;
