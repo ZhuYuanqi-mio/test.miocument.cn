@@ -150,6 +150,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .dl-box .dl-btns .dl-ok{background:#222;color:#fff}
 .dl-box .dl-btns button:active{opacity:.75}
 
+.ds-btn{padding:4px 14px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #ddd;background:#fff;color:#888;margin-right:4px;transition:all .15s}
+.ds-btn:active{transform:scale(.95)}
+.ds-btn.ds-active{border-color:#222;background:#222;color:#fff}
 .toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(34,34,34,.9);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.show{opacity:1}
 .viewer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;justify-content:center;align-items:center;cursor:pointer}
@@ -275,10 +278,14 @@ function load(){
       orders=ls.map(function(o){
         var imgs=[];try{imgs=JSON.parse(o.image_data||'[]');}catch(e){}
         var fls=[];try{fls=JSON.parse(o.file_data||'[]');}catch(e){}
+        var rfs=[];try{rfs=JSON.parse(o.result_files||'[]');}catch(e){}
         return{id:o.id,xianyu_name:o.xianyu_name||'',email:o.email||'',deadline:o.deadline||'',
           task_types:(o.task_types||'').split(',').filter(Boolean),
           description:o.description||'',images:imgs,files:fls,
-          status:o.status||'pending',chat_notes:o.chat_notes||'',can_edit:!!o.can_edit,assignee:o.assignee||'',created_at:o.created_at||''};
+          status:o.status||'pending',chat_notes:o.chat_notes||'',can_edit:!!o.can_edit,assignee:o.assignee||'',
+          result_files:rfs,result_video:o.result_video||'',delivery_status:o.delivery_status||'',
+          receipt_screenshot:o.receipt_screenshot||'',after_sale_file:o.after_sale_file||'',
+          created_at:o.created_at||''};
       });
       inheritAssignees();
       go();
@@ -482,6 +489,36 @@ function openDtl(i){
     });
   } else s+='<span style="color:#aaa;font-size:13px">暂无</span>';
   s+='</div></div>';
+  s+='<div class="d-card"><div class="lb">结果交付</div>';
+  if(o.after_sale_file) s+='<div style="font-size:12px;color:#c60;margin-bottom:8px">售后对象：'+escHtml(o.after_sale_file)+'</div>';
+  s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666;margin-right:8px">收货状态：</span>';
+  var dsUn=o.delivery_status!=='received'?'ds-btn ds-active':'ds-btn';
+  var dsRe=o.delivery_status==='received'?'ds-btn ds-active':'ds-btn';
+  s+='<button class="'+dsUn+'" onclick="setDeliveryStatus('+i+',\'unreceived\')">未收货</button>';
+  s+='<button class="'+dsRe+'" onclick="setDeliveryStatus('+i+',\'received\')">已收货</button></div>';
+  s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">展示视频：</span>';
+  s+='<label style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px">上传<input type="file" accept="video/*" style="display:none" onchange="uploadResultVideo(this,'+i+')"></label>';
+  if(o.result_video) s+='<div style="margin-top:6px"><video src="'+o.result_video+'" controls style="width:100%;max-height:200px;border-radius:6px;border:1px solid #e0e0e0"></video></div>';
+  else s+='<div style="margin-top:4px;font-size:12px;color:#aaa">暂无</div>';
+  s+='</div>';
+  s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">结果文件 ('+(o.result_files?o.result_files.length:0)+')：</span>';
+  s+='<label style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px">上传<input type="file" multiple style="display:none" onchange="uploadResultFile(this,'+i+')"></label>';
+  if(o.result_files&&o.result_files.length){
+    s+='<div class="d-files" style="margin-top:6px">';
+    o.result_files.forEach(function(f,fi){
+      s+='<div class="fr"><span class="nm">'+escHtml(f.name)+'</span>';
+      if(f.size)s+='<span class="sz">'+fmtSz(f.size)+'</span>';
+      s+='<span class="dl" onclick="event.stopPropagation();dlFile2('+i+','+fi+')">下载</span>';
+      s+='<span style="color:#c00;margin-left:8px;cursor:pointer;font-size:12px" onclick="event.stopPropagation();removeResultFile('+i+','+fi+')">删除</span></div>';
+    });
+    s+='</div>';
+  } else s+='<div style="margin-top:4px;font-size:12px;color:#aaa">暂无</div>';
+  s+='</div>';
+  if(o.receipt_screenshot){
+    s+='<div><span style="font-size:12px;color:#666">收货截图：</span>';
+    s+='<div style="margin-top:6px"><img src="'+o.receipt_screenshot+'" style="width:120px;border-radius:6px;cursor:pointer;border:1px solid #e0e0e0" onclick="viewImg(\''+o.receipt_screenshot+'\')"></div></div>';
+  }
+  s+='</div>';
   s+='<div class="d-card"><div class="lb">聊天备注</div><div class="val" style="white-space:pre-wrap">'+(escHtml(o.chat_notes||'暂无'))+'</div></div>';
   var editLabel = o.can_edit ? '已授权编辑' : '允许用户修改';
   var editStyle = o.can_edit ? 'opacity:.5;cursor:default' : '';
@@ -613,6 +650,75 @@ function grantEdit(i){
     toast('已允许 '+o.xianyu_name+' 编辑');
   }
 }
+
+/**
+ * @param {number} i - 订单在 orders 数组中的索引
+ * @param {string} status - 收货状态 "unreceived" / "received"
+ */
+function setDeliveryStatus(i,status){
+  var o=orders[i];
+  o.delivery_status=status;
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({delivery_status:status})})});
+  toast(status==='received'?'已标记为已收货':'已标记为未收货');
+  openDtl(orders.indexOf(o));
+}
+
+/**
+ * @param {HTMLInputElement} inp - 文件输入元素
+ * @param {number} i - 订单索引
+ */
+function uploadResultVideo(inp,i){
+  var f=inp.files[0];if(!f)return;
+  toast('视频上传中...');
+  uploadOSS(f,'result-video').then(function(url){
+    var o=orders[i];
+    o.result_video=url;
+    fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({result_video:url})})});
+    toast('视频已上传');
+    openDtl(orders.indexOf(o));
+  }).catch(function(){toast('上传失败');});
+  inp.value='';
+}
+
+/**
+ * @param {HTMLInputElement} inp - 文件输入元素
+ * @param {number} i - 订单索引
+ */
+function uploadResultFile(inp,i){
+  var o=orders[i];
+  if(!o.result_files) o.result_files=[];
+  Array.from(inp.files).forEach(function(f){
+    toast('文件上传中...');
+    uploadOSS(f,'result').then(function(url){
+      o.result_files.push({name:f.name,size:f.size,url:url});
+      var newData=JSON.stringify(o.result_files.map(function(rf){return{name:rf.name,size:rf.size,url:rf.url};}));
+      fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({result_files:newData})})});
+      toast('文件已上传');
+      openDtl(orders.indexOf(o));
+    }).catch(function(){toast('上传失败');});
+  });
+  inp.value='';
+}
+
+/**
+ * @param {number} i - 订单索引
+ * @param {number} fi - 结果文件在数组中的索引
+ */
+function removeResultFile(i,fi){
+  var o=orders[i];
+  if(!confirm('删除「'+o.result_files[fi].name+'」？'))return;
+  o.result_files.splice(fi,1);
+  var newData=JSON.stringify(o.result_files.map(function(rf){return{name:rf.name,size:rf.size,url:rf.url};}));
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({result_files:newData})})});
+  toast('已删除');
+  openDtl(orders.indexOf(o));
+}
+
+/**
+ * @param {number} oi - 订单索引
+ * @param {number} fi - 结果文件索引
+ */
+function dlFile2(oi,fi){var f=orders[oi].result_files[fi];if(!f)return;dlByName(f.url,f.name||'文件');}
 
 function appendChatNote(text){
   if(!chatUser) return;

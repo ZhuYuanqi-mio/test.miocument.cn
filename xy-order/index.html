@@ -215,6 +215,50 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 .note-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 18px;border-radius:6px;font-size:13px;z-index:800;opacity:0;transition:opacity .2s;pointer-events:none}
 .note-toast.show{opacity:1}
 
+.result-card{border:1px solid #e0e0e0;cursor:default}
+.result-card:active{transform:none}
+.rc-title{font-size:14px;font-weight:600;color:#222;margin-bottom:10px}
+.rc-video{position:relative;border-radius:6px;overflow:hidden;cursor:pointer}
+.rc-video video{display:block;width:100%;pointer-events:none}
+.rc-play-btn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25)}
+.rc-receive-btn{width:100%;padding:11px;border:none;border-radius:8px;background:#222;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.rc-receive-btn:active{opacity:.75}
+.rc-files{margin-bottom:10px}
+.rc-file{display:flex;align-items:center;padding:10px 12px;background:#fafafa;border-radius:6px;margin-bottom:6px;cursor:pointer;border:1px solid #e8e8e8}
+.rc-file:active{background:#f0f0f0}
+.rc-file-ico{width:32px;height:32px;flex-shrink:0;margin-right:10px}
+.rc-file-name{font-size:13px;font-weight:500;color:#333;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-actions{display:flex;justify-content:flex-end}
+
+.recv-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:700;justify-content:center;align-items:center;padding:24px}
+.recv-modal.show{display:flex}
+.recv-box{background:#fff;border-radius:12px;max-width:360px;width:100%;padding:24px 20px 18px}
+.recv-box h3{font-size:15px;font-weight:700;color:#222;margin-bottom:6px;text-align:center}
+.recv-box p{font-size:13px;color:#666;text-align:center;margin-bottom:16px;line-height:1.5}
+.recv-box .recv-upload{border:1.5px dashed #ccc;border-radius:8px;padding:28px 20px;text-align:center;cursor:pointer;background:#fafafa;margin-bottom:14px}
+.recv-box .recv-upload:active{background:#f0f0f0;border-color:#999}
+.recv-box .recv-upload .ico{font-size:14px;color:#999;margin-bottom:4px}
+.recv-box .recv-upload .txt{font-size:13px;color:#666}
+.recv-box .recv-preview{margin-bottom:14px;text-align:center}
+.recv-box .recv-preview img{max-width:100%;max-height:200px;border-radius:6px;border:1px solid #e0e0e0}
+.recv-box .recv-btns{display:flex;gap:8px}
+.recv-box .recv-btns button{flex:1;padding:10px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none}
+.recv-box .recv-cancel{background:#f2f2f2;color:#666}
+.recv-box .recv-ok{background:#222;color:#fff}
+.recv-box .recv-btns button:active{opacity:.75}
+
+.video-fs{display:none;position:fixed;inset:0;background:#000;z-index:650;justify-content:center;align-items:center;flex-direction:column}
+.video-fs.show{display:flex}
+.video-fs video{max-width:100%;max-height:85vh}
+.video-fs .vfs-close{position:absolute;top:12px;right:16px;color:#fff;font-size:28px;cursor:pointer;z-index:10;line-height:1}
+
+.as-file-group{margin-top:10px;display:none}
+.as-file-group.show{display:block}
+.as-file-group label{font-size:14px;font-weight:500;color:#333;margin-bottom:6px;display:block}
+.as-file-tags{display:flex;flex-wrap:wrap;gap:8px}
+.as-file-tags span{padding:7px 15px;border:1px solid #ccc;border-radius:6px;font-size:13px;color:#555;cursor:pointer;transition:all .15s;user-select:none;background:#fafafa}
+.as-file-tags span.on{border-color:#222;background:#222;color:#fff;font-weight:500}
+
 .toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(34,34,34,.9);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.show{opacity:1}
 .viewer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:600;justify-content:center;align-items:center;cursor:pointer}
@@ -374,6 +418,30 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
   </div>
 </div>
 
+<!-- ===== Receive Confirm Modal ===== -->
+<div class="recv-modal" id="recvModal">
+  <div class="recv-box">
+    <h3>确认收货</h3>
+    <p>请先在咸鱼上点击「确认收货」，然后截图上传</p>
+    <div class="recv-upload" id="recvUploadArea" onclick="document.getElementById('recvFileInput').click()">
+      <div class="ico">[ 截图 ]</div>
+      <div class="txt">点击上传咸鱼收货截图</div>
+    </div>
+    <div class="recv-preview" id="recvPreview" style="display:none"><img id="recvPreviewImg" src=""></div>
+    <input type="file" id="recvFileInput" accept="image/*" style="display:none" onchange="previewReceipt(this)">
+    <div class="recv-btns">
+      <button class="recv-cancel" onclick="closeRecvModal()">取消</button>
+      <button class="recv-ok" id="recvOkBtn" onclick="submitReceipt()" style="opacity:.35;cursor:not-allowed" disabled>确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Fullscreen Video ===== -->
+<div class="video-fs" id="videoFs">
+  <span class="vfs-close" onclick="closeFullscreenVideo()">&times;</span>
+  <video id="vfsVideo" controls></video>
+</div>
+
 <div class="note-toast" id="noteToast">已添加到聊天备注</div>
 <div class="toast" id="toast"></div>
 <div class="viewer" id="viewer" onclick="this.classList.remove('show')"><img id="vImg" src=""></div>
@@ -439,10 +507,14 @@ function loadMyOrders(){
     myOrders = all.filter(function(o){return o.xianyu_name === curUser;}).map(function(o){
       var imgs=[]; try{imgs=JSON.parse(o.image_data||'[]');}catch(e){}
       var fls=[]; try{fls=JSON.parse(o.file_data||'[]');}catch(e){}
+      var rfs=[]; try{rfs=JSON.parse(o.result_files||'[]');}catch(e){}
       return {id:o.id, xianyu_name:o.xianyu_name||'', email:o.email||'', deadline:o.deadline||'',
         task_types:(o.task_types||'').split(',').filter(Boolean),
         description:o.description||'', images:imgs, files:fls,
-        status:o.status||'pending', chat_notes:o.chat_notes||'', can_edit:!!o.can_edit, created_at:o.created_at||''};
+        status:o.status||'pending', chat_notes:o.chat_notes||'', can_edit:!!o.can_edit,
+        result_files:rfs, result_video:o.result_video||'', delivery_status:o.delivery_status||'',
+        receipt_screenshot:o.receipt_screenshot||'', after_sale_file:o.after_sale_file||'',
+        created_at:o.created_at||''};
     });
     myOrders.sort(function(a,b){
       if(a.status==='completed'&&b.status!=='completed') return 1;
@@ -532,7 +604,24 @@ function renderCards(){
 }
 
 function imgSrc(m){return m.url||m.data||'';}
+
+/**
+ * @param {Object} o - 订单对象
+ * @return {boolean} 该订单是否有结果交付内容（视频或结果文件）
+ */
+function hasResult(o){
+  return o.status==='completed'&&(o.result_video||(o.result_files&&o.result_files.length));
+}
+
+/**
+ * @param {Object} o - 订单对象
+ * @param {number} i - 订单索引
+ * @return {string} 卡片 HTML
+ */
 function buildCard(o,i){
+  // 已完成且有结果交付的订单，使用特殊卡片
+  if(hasResult(o)) return buildResultCard(o,i);
+
   var u=urg(o), g=cdInfo(o);
   var cc=u==='done'?'c-gray':'';
   var bc=u==='over'||u==='urg'?'b-red':(u==='soon'?'b-amber':(u==='done'?'b-gray':'b-green'));
@@ -561,6 +650,42 @@ function buildCard(o,i){
     editReq='<span class="card-chat-btn" style="color:#4a90d9;border-color:#4a90d9" onclick="event.stopPropagation();openDtl('+i+')">修改</span>';
   }
   s+='<div class="card-actions">'+editReq+'<span class="card-chat-btn" onclick="event.stopPropagation();chatFromCard('+i+')">聊一聊</span></div>';
+  s+='</div>';
+  return s;
+}
+
+/**
+ * @param {Object} o - 已完成且有结果的订单
+ * @param {number} i - 订单索引
+ * @return {string} 结果交付卡片 HTML
+ */
+function buildResultCard(o,i){
+  var received=o.delivery_status==='received';
+  var s='<div class="card result-card">';
+  s+='<div class="rc-title">'+(received?'需求'+(i+1)+'已完成请查看结果：':'需求'+(i+1)+'已完成')+'</div>';
+
+  if(!received){
+    // 未收货：只显示视频 + 已收货按钮
+    if(o.result_video){
+      s+='<div class="rc-video" onclick="event.stopPropagation();playFullscreen('+i+')">';
+      s+='<video src="'+o.result_video+'" preload="metadata" style="width:100%;border-radius:6px"></video>';
+      s+='<div class="rc-play-btn"><svg width="36" height="36" viewBox="0 0 24 24" fill="#fff"><polygon points="5,3 19,12 5,21"/></svg></div>';
+      s+='</div>';
+    }
+    s+='<div style="margin-top:10px"><button class="rc-receive-btn" onclick="event.stopPropagation();confirmReceive('+i+')">已收货</button></div>';
+  } else {
+    // 已收货：显示结果文件列表
+    if(o.result_files&&o.result_files.length){
+      s+='<div class="rc-files">';
+      o.result_files.forEach(function(f){
+        s+='<div class="rc-file" onclick="event.stopPropagation();dlByName(\''+f.url+'\',\''+escHtml(f.name)+'\')">';
+        s+='<img class="rc-file-ico" src="'+fileIconUrl(f.name)+'">';
+        s+='<span class="rc-file-name">'+escHtml(f.name)+'</span></div>';
+      });
+      s+='</div>';
+    }
+    s+='<div class="rc-actions"><span class="card-chat-btn" onclick="event.stopPropagation();openDtl('+i+')">查看需求</span></div>';
+  }
   s+='</div>';
   return s;
 }
@@ -795,6 +920,82 @@ document.getElementById('chatInput').addEventListener('paste',function(e){
     }
   }
 });
+
+/* ===== Fullscreen Video ===== */
+/**
+ * @param {number} i - 订单索引
+ */
+function playFullscreen(i){
+  var o=myOrders[i];
+  if(!o.result_video) return;
+  var v=document.getElementById('vfsVideo');
+  v.src=o.result_video;
+  document.getElementById('videoFs').classList.add('show');
+  v.play();
+}
+function closeFullscreenVideo(){
+  var v=document.getElementById('vfsVideo');
+  v.pause();v.src='';
+  document.getElementById('videoFs').classList.remove('show');
+}
+
+/* ===== Receive Confirm ===== */
+var recvIdx=null;
+var recvScreenshotUrl='';
+
+/**
+ * @param {number} i - 订单索引
+ */
+function confirmReceive(i){
+  recvIdx=i;
+  recvScreenshotUrl='';
+  document.getElementById('recvUploadArea').style.display='';
+  document.getElementById('recvPreview').style.display='none';
+  var btn=document.getElementById('recvOkBtn');
+  btn.disabled=true;btn.style.opacity='.35';btn.style.cursor='not-allowed';
+  document.getElementById('recvFileInput').value='';
+  document.getElementById('recvModal').classList.add('show');
+}
+function closeRecvModal(){
+  document.getElementById('recvModal').classList.remove('show');
+  recvIdx=null;recvScreenshotUrl='';
+}
+
+/**
+ * @param {HTMLInputElement} inp - 文件输入
+ */
+function previewReceipt(inp){
+  var f=inp.files[0];if(!f)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById('recvPreviewImg').src=e.target.result;
+    document.getElementById('recvPreview').style.display='';
+    document.getElementById('recvUploadArea').style.display='none';
+  };
+  reader.readAsDataURL(f);
+  showToast('截图上传中...');
+  uploadToOSS(f,'receipt').then(function(url){
+    recvScreenshotUrl=url;
+    var btn=document.getElementById('recvOkBtn');
+    btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';
+    showToast('截图已上传');
+  }).catch(function(){showToast('上传失败');});
+}
+
+function submitReceipt(){
+  if(!recvScreenshotUrl||recvIdx===null)return;
+  var o=myOrders[recvIdx];
+  var payload={order_id:o.id,update_json:JSON.stringify({delivery_status:'received',receipt_screenshot:recvScreenshotUrl})};
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+  .then(function(r){return r.json();})
+  .then(function(){
+    o.delivery_status='received';
+    o.receipt_screenshot=recvScreenshotUrl;
+    closeRecvModal();
+    showToast('已确认收货');
+    renderCards();
+  }).catch(function(e){console.error(e);showToast('操作失败');});
+}
 
 /* ===== Double-click to add chat note ===== */
 function appendChatNote(text){
