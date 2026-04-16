@@ -17,8 +17,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .search-box input::placeholder{color:#aaa}
 .chips{display:flex;gap:6px;margin-top:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .chips::-webkit-scrollbar{display:none}
-.chip{padding:5px 14px;border-radius:6px;font-size:12px;white-space:nowrap;border:1px solid #ccc;color:#666;cursor:pointer;transition:all .15s;background:#fff}
+.chip{padding:5px 14px;border-radius:6px;font-size:12px;white-space:nowrap;border:1px solid #ccc;color:#666;cursor:pointer;transition:all .15s;background:#fff;position:relative}
 .chip.on{border-color:#222;background:#222;color:#fff;font-weight:500}
+.chip-drop{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid #ddd;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:60;min-width:90px;overflow:hidden}
+.chip-drop.show{display:block}
+.chip-drop-item{padding:8px 14px;font-size:12px;color:#444;cursor:pointer;white-space:nowrap;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.chip-drop-item:active{background:#f5f5f5}
+.chip-drop-item.sel{font-weight:600;color:#222}
+.chip-drop-item .cd-cnt{font-size:10px;color:#fff;background:#ccc;border-radius:8px;padding:0 5px;min-width:16px;text-align:center;line-height:16px}
+.chip-drop-item.sel-fm .cd-cnt{background:#f0a03c}
+.chip-drop-item.sel-nb .cd-cnt{background:#4a90d9}
 
 .container{max-width:640px;margin:0 auto;padding:12px 16px 24px}
 .stats{display:flex;gap:8px;margin-bottom:14px}
@@ -158,12 +166,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
     <input id="searchInput" placeholder="搜索名称、描述..." oninput="filterCards()">
   </div>
   <div class="chips">
-    <span class="chip on" data-f="pending" onclick="pick(this)">未完成</span>
+    <span class="chip on" data-f="pending" onclick="togglePendingDrop(event)" id="chipPending">未完成 ▾
+      <div class="chip-drop" id="pendingDrop">
+        <div class="chip-drop-item" onclick="event.stopPropagation();pickSub('pending')">全部<span class="cd-cnt" id="cntAll">0</span></div>
+        <div class="chip-drop-item" onclick="event.stopPropagation();pickSub('unassigned')">未分配<span class="cd-cnt" id="cntUa">0</span></div>
+        <div class="chip-drop-item sel-fm" onclick="event.stopPropagation();pickSub('feimi')">肥咪<span class="cd-cnt" id="cntFm">0</span></div>
+        <div class="chip-drop-item sel-nb" onclick="event.stopPropagation();pickSub('nubi')">努比<span class="cd-cnt" id="cntNb">0</span></div>
+      </div>
+    </span>
     <span class="chip" data-f="urgent" onclick="pick(this)">紧急</span>
     <span class="chip" data-f="today" onclick="pick(this)">今天</span>
-    <span class="chip" data-f="completed" onclick="pick(this)" style="position:relative">已完成<span class="chip-badge" id="completedBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
-    <span class="chip" data-f="feimi" onclick="pick(this)" style="position:relative">肥咪<span class="chip-badge" id="feimiBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#f0a03c;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
-    <span class="chip" data-f="nubi" onclick="pick(this)" style="position:relative">努比<span class="chip-badge" id="nubiBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#4a90d9;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
+    <span class="chip" data-f="completed" onclick="pick(this)">已完成<span class="chip-badge" id="completedBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
     <span class="chip" data-f="all" onclick="pick(this)">全部</span>
   </div>
 </div>
@@ -329,7 +342,38 @@ function cd(o){
   return{t:'剩余 '+dur(d),c:d<432e5?'cd-red':(d<1296e5?'cd-amber':'cd-green')};
 }
 function dur(ms){var h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4);return h>=24?Math.floor(h/24)+'天'+h%24+'时':h+'时'+m+'分';}
-function pick(el){document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});el.classList.add('on');curFilter=el.dataset.f;filterCards();}
+var pendingSub='pending';
+function pick(el){
+  document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on');
+  curFilter=el.dataset.f;
+  closePendingDrop();
+  if(curFilter==='pending'){pendingSub='pending';updatePendingLabel();}
+  filterCards();
+}
+function togglePendingDrop(e){
+  e.stopPropagation();
+  var chip=document.getElementById('chipPending');
+  document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  chip.classList.add('on');
+  var drop=document.getElementById('pendingDrop');
+  drop.classList.toggle('show');
+}
+function closePendingDrop(){document.getElementById('pendingDrop').classList.remove('show');}
+function pickSub(sub){
+  pendingSub=sub;
+  curFilter='pending';
+  closePendingDrop();
+  updatePendingLabel();
+  filterCards();
+}
+function updatePendingLabel(){
+  var chip=document.getElementById('chipPending');
+  var labels={'pending':'未完成','unassigned':'未分配','feimi':'肥咪','nubi':'努比'};
+  var txt=(labels[pendingSub]||'未完成')+' ▾';
+  chip.childNodes[0].textContent=txt;
+}
+document.addEventListener('click',function(){closePendingDrop();});
 
 function filterCards(){
   var q=document.getElementById('searchInput').value.trim().toLowerCase(),h='',c=0;
@@ -337,26 +381,32 @@ function filterCards(){
     var u=urg(o);
     if(curFilter==='urgent'&&u!=='urg'&&u!=='over')return;
     if(curFilter==='today'&&u!=='soon')return;
-    if(curFilter==='pending'&&o.status==='completed')return;
+    if(curFilter==='pending'){
+      if(o.status==='completed')return;
+      if(pendingSub==='feimi'&&o.assignee!=='肥咪')return;
+      if(pendingSub==='nubi'&&o.assignee!=='努比')return;
+      if(pendingSub==='unassigned'&&o.assignee)return;
+    }
     if(curFilter==='completed'&&o.status!=='completed')return;
-    if(curFilter==='feimi'&&(o.assignee!=='肥咪'||o.status==='completed'))return;
-    if(curFilter==='nubi'&&(o.assignee!=='努比'||o.status==='completed'))return;
     if(q&&(o.xianyu_name+' '+o.description+' '+o.task_types.join(' ')).toLowerCase().indexOf(q)<0)return;
     c++;h+=bCard(o,i);
   });
   document.getElementById('list').innerHTML=c?h:'<div class="empty">暂无订单</div>';
-  updateAssigneeBadges();
+  updateDropCounts();
 }
-function updateAssigneeBadges(){
-  var fm=0,nb=0;
+function updateDropCounts(){
+  var all=0,ua=0,fm=0,nb=0;
   orders.forEach(function(o){
     if(o.status==='completed')return;
+    all++;
+    if(!o.assignee)ua++;
     if(o.assignee==='肥咪')fm++;
     if(o.assignee==='努比')nb++;
   });
-  var fmB=document.getElementById('feimiBadge'),nbB=document.getElementById('nubiBadge');
-  if(fm>0){fmB.textContent=fm;fmB.style.display='block';}else{fmB.style.display='none';}
-  if(nb>0){nbB.textContent=nb;nbB.style.display='block';}else{nbB.style.display='none';}
+  document.getElementById('cntAll').textContent=all;
+  document.getElementById('cntUa').textContent=ua;
+  document.getElementById('cntFm').textContent=fm;
+  document.getElementById('cntNb').textContent=nb;
 }
 function imgSrc(m){return m.url||m.data||'';}
 function bCard(o,i){
