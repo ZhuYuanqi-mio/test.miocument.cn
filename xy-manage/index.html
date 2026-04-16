@@ -162,6 +162,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
     <span class="chip" data-f="urgent" onclick="pick(this)">紧急</span>
     <span class="chip" data-f="today" onclick="pick(this)">今天</span>
     <span class="chip" data-f="completed" onclick="pick(this)" style="position:relative">已完成<span class="chip-badge" id="completedBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
+    <span class="chip" data-f="feimi" onclick="pick(this)" style="position:relative">肥咪<span class="chip-badge" id="feimiBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#f0a03c;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
+    <span class="chip" data-f="nubi" onclick="pick(this)" style="position:relative">努比<span class="chip-badge" id="nubiBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#4a90d9;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
     <span class="chip" data-f="all" onclick="pick(this)">全部</span>
   </div>
 </div>
@@ -337,10 +339,24 @@ function filterCards(){
     if(curFilter==='today'&&u!=='soon')return;
     if(curFilter==='pending'&&o.status==='completed')return;
     if(curFilter==='completed'&&o.status!=='completed')return;
+    if(curFilter==='feimi'&&(o.assignee!=='肥咪'||o.status==='completed'))return;
+    if(curFilter==='nubi'&&(o.assignee!=='努比'||o.status==='completed'))return;
     if(q&&(o.xianyu_name+' '+o.description+' '+o.task_types.join(' ')).toLowerCase().indexOf(q)<0)return;
     c++;h+=bCard(o,i);
   });
   document.getElementById('list').innerHTML=c?h:'<div class="empty">暂无订单</div>';
+  updateAssigneeBadges();
+}
+function updateAssigneeBadges(){
+  var fm=0,nb=0;
+  orders.forEach(function(o){
+    if(o.status==='completed')return;
+    if(o.assignee==='肥咪')fm++;
+    if(o.assignee==='努比')nb++;
+  });
+  var fmB=document.getElementById('feimiBadge'),nbB=document.getElementById('nubiBadge');
+  if(fm>0){fmB.textContent=fm;fmB.style.display='block';}else{fmB.style.display='none';}
+  if(nb>0){nbB.textContent=nb;nbB.style.display='block';}else{nbB.style.display='none';}
 }
 function imgSrc(m){return m.url||m.data||'';}
 function bCard(o,i){
@@ -365,13 +381,19 @@ function bCard(o,i){
   }
   var dl=o.deadline?fmtDl(o.deadline):'';
   var ft=o.files&&o.files.length?o.files.length+'个文件':'';
-  var fmCls=o.assignee==='肥咪'?'assignee-btn sel-fm':'assignee-btn';
-  var nbCls=o.assignee==='努比'?'assignee-btn sel-nb':'assignee-btn';
   s+='<div class="card-foot"><span>截止 '+dl+(ft?' · '+ft:'')+'</span>';
-  s+='<div class="assignee-grp">';
-  s+='<button class="'+fmCls+'" onclick="event.stopPropagation();setAssignee('+i+',\'肥咪\')">肥咪</button>';
-  s+='<button class="'+nbCls+'" onclick="event.stopPropagation();setAssignee('+i+',\'努比\')">努比</button>';
-  s+='</div></div>';
+  if(o.assignee){
+    var aCls=o.assignee==='肥咪'?'assignee-btn sel-fm':'assignee-btn sel-nb';
+    s+='<div class="assignee-grp" id="ag'+i+'">';
+    s+='<button class="'+aCls+'" onclick="event.stopPropagation()" ondblclick="event.stopPropagation();expandAssignee('+i+')">'+o.assignee+'</button>';
+    s+='</div>';
+  } else {
+    s+='<div class="assignee-grp" id="ag'+i+'">';
+    s+='<button class="assignee-btn" onclick="event.stopPropagation();setAssignee('+i+',\'肥咪\')">肥咪</button>';
+    s+='<button class="assignee-btn" onclick="event.stopPropagation();setAssignee('+i+',\'努比\')">努比</button>';
+    s+='</div>';
+  }
+  s+='</div>';
   s+='<div class="card-cd '+g.c+'">'+g.t+'</div></div>';
   return s;
 }
@@ -742,6 +764,13 @@ function inheritAssignees(){
       }
     }
   });
+}
+
+function expandAssignee(i){
+  var grp=document.getElementById('ag'+i);
+  if(!grp)return;
+  grp.innerHTML='<button class="assignee-btn" onclick="event.stopPropagation();setAssignee('+i+',\'肥咪\')">肥咪</button>'
+    +'<button class="assignee-btn" onclick="event.stopPropagation();setAssignee('+i+',\'努比\')">努比</button>';
 }
 
 function setAssignee(i,name){
