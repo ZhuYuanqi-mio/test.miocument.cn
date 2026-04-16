@@ -157,6 +157,9 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 .save-bar{text-align:center;margin-top:16px}
 .save-bar button{padding:11px 48px;border:none;border-radius:8px;background:#222;color:#fff;font-size:14px;font-weight:600;cursor:pointer;display:none}
 .save-bar button:active{opacity:.75}
+.ov-img-wrap{position:relative;width:80px;height:80px;border-radius:6px;overflow:hidden;border:1px solid #e0e0e0;flex-shrink:0}
+.ov-img-wrap img{width:100%;height:100%;object-fit:cover;cursor:pointer}
+.ov-img-del{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:12px;line-height:20px;text-align:center;cursor:pointer}
 
 /* ===== Chat Overlay ===== */
 .chat-ov{display:none;position:fixed;inset:0;background:#f7f7f7;z-index:250;flex-direction:column}
@@ -706,13 +709,24 @@ function openDtl(i){
   s+='</div></div>';
   s+='<div class="d-card"><div class="lb">要求描述</div><div class="val" id="ovDesc">'+escHtml(o.description||'无')+'</div>';
   s+='<textarea id="ovDescEdit">'+(o.description||'')+'</textarea></div>';
+  // 图片区域 - 只读模式 + 编辑模式
+  s+='<div class="d-card"><div class="lb">图片 (<span id="ovImgCount">'+(o.images?o.images.length:0)+'</span>) <label class="ov-edit-action" style="display:none"><span style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px">补充上传</span><input type="file" accept="image/*" multiple style="display:none" onchange="userUploadImg(this)"></label></div>';
+  s+='<div class="d-imgs" id="ovImgsView">';
+  if(o.images&&o.images.length) o.images.forEach(function(m){s+='<img src="'+imgSrc(m)+'" onclick="viewImg(\''+imgSrc(m)+'\')">';});
+  else s+='<span style="color:#aaa;font-size:13px">暂无</span>';
+  s+='</div>';
+  s+='<div class="d-imgs" id="ovImgsEdit" style="display:none">';
   if(o.images&&o.images.length){
-    s+='<div class="d-card"><div class="lb">图片 ('+o.images.length+')</div><div class="d-imgs">';
-    o.images.forEach(function(m){s+='<img src="'+imgSrc(m)+'" onclick="viewImg(\''+imgSrc(m)+'\')">';});
-    s+='</div></div>';
-  }
+    o.images.forEach(function(m,mi){
+      s+='<div class="ov-img-wrap" id="ovImgW'+mi+'"><img src="'+imgSrc(m)+'" onclick="viewImg(\''+imgSrc(m)+'\')">';
+      s+='<div class="ov-img-del" onclick="event.stopPropagation();removeEditImg('+mi+')">x</div></div>';
+    });
+  } else s+='<span style="color:#aaa;font-size:13px" id="ovImgsEmpty">暂无</span>';
+  s+='</div></div>';
+  // 文件区域 - 只读模式 + 编辑模式
+  s+='<div class="d-card"><div class="lb">文件 (<span id="ovFileCount">'+(o.files?o.files.length:0)+'</span>) <label class="ov-edit-action" style="display:none"><span style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px">补充上传</span><input type="file" multiple style="display:none" onchange="userUploadFile(this)"></label></div>';
+  s+='<div class="d-files" id="ovFilesView">';
   if(o.files&&o.files.length){
-    s+='<div class="d-card"><div class="lb">文件 ('+o.files.length+')</div><div class="d-files">';
     o.files.forEach(function(f){
       var href=f.url||f.data||'';
       s+='<div class="fr"><span class="fnm">'+escHtml(f.name||'文件')+'</span>';
@@ -720,8 +734,18 @@ function openDtl(i){
       if(href) s+='<span class="fdl" onclick="event.stopPropagation();dlByName(\''+href+'\',\''+escHtml(f.name||'文件')+'\')">下载</span>';
       s+='</div>';
     });
-    s+='</div></div>';
-  }
+  } else s+='<span style="color:#aaa;font-size:13px">暂无</span>';
+  s+='</div>';
+  s+='<div class="d-files" id="ovFilesEdit" style="display:none">';
+  if(o.files&&o.files.length){
+    o.files.forEach(function(f,fi){
+      var href=f.url||f.data||'';
+      s+='<div class="fr" id="ovFileR'+fi+'"><span class="fnm">'+escHtml(f.name||'文件')+'</span>';
+      if(f.size) s+='<span class="fsz">'+fmtSz(f.size)+'</span>';
+      s+='<span style="color:#c00;margin-left:8px;cursor:pointer;font-size:12px;font-weight:500" onclick="event.stopPropagation();removeEditFile('+fi+')">删除</span></div>';
+    });
+  } else s+='<span style="color:#aaa;font-size:13px" id="ovFilesEmpty">暂无</span>';
+  s+='</div></div>';
   s+='<div class="d-card"><div class="lb">聊天备注</div><div class="val" id="ovNotes">'+escHtml(o.chat_notes||'暂无')+'</div>';
   s+='<textarea id="ovNotesEdit">'+(o.chat_notes||'')+'</textarea></div>';
   s+='<div class="save-bar"><button id="ovSaveBtn" onclick="saveOrderEdit()">保存修改</button></div>';
@@ -741,8 +765,93 @@ function enableEdit(){
   document.getElementById('ovDescEdit').style.display='block';
   document.getElementById('ovNotes').style.display='none';
   document.getElementById('ovNotesEdit').style.display='block';
+  document.getElementById('ovImgsView').style.display='none';
+  document.getElementById('ovImgsEdit').style.display='flex';
+  document.getElementById('ovFilesView').style.display='none';
+  document.getElementById('ovFilesEdit').style.display='block';
+  document.querySelectorAll('.ov-edit-action').forEach(function(el){el.style.display='inline';});
   document.getElementById('ovSaveBtn').style.display='inline-block';
   document.getElementById('editBtn').style.display='none';
+  // 初始化编辑用的临时数组
+  if(curDtlIdx!==null){
+    var o=myOrders[curDtlIdx];
+    editImages=(o.images||[]).map(function(m){return{name:m.name,url:imgSrc(m)};});
+    editFiles=(o.files||[]).map(function(f){return{name:f.name,size:f.size,url:f.url||f.data||''};});
+  }
+}
+var editImages=[];
+var editFiles=[];
+
+/**
+ * @param {number} mi - 图片索引
+ */
+function removeEditImg(mi){
+  editImages.splice(mi,1);
+  refreshEditImgs();
+}
+
+/**
+ * @param {number} fi - 文件索引
+ */
+function removeEditFile(fi){
+  editFiles.splice(fi,1);
+  refreshEditFiles();
+}
+
+function refreshEditImgs(){
+  var el=document.getElementById('ovImgsEdit');
+  if(!editImages.length){el.innerHTML='<span style="color:#aaa;font-size:13px">暂无</span>';document.getElementById('ovImgCount').textContent='0';return;}
+  var h='';
+  editImages.forEach(function(m,mi){
+    h+='<div class="ov-img-wrap" id="ovImgW'+mi+'"><img src="'+m.url+'" onclick="viewImg(\''+m.url+'\')">';
+    h+='<div class="ov-img-del" onclick="event.stopPropagation();removeEditImg('+mi+')">x</div></div>';
+  });
+  el.innerHTML=h;
+  document.getElementById('ovImgCount').textContent=editImages.length;
+}
+
+function refreshEditFiles(){
+  var el=document.getElementById('ovFilesEdit');
+  if(!editFiles.length){el.innerHTML='<span style="color:#aaa;font-size:13px">暂无</span>';document.getElementById('ovFileCount').textContent='0';return;}
+  var h='';
+  editFiles.forEach(function(f,fi){
+    h+='<div class="fr" id="ovFileR'+fi+'"><span class="fnm">'+escHtml(f.name||'文件')+'</span>';
+    if(f.size) h+='<span class="fsz">'+fmtSz(f.size)+'</span>';
+    h+='<span style="color:#c00;margin-left:8px;cursor:pointer;font-size:12px;font-weight:500" onclick="event.stopPropagation();removeEditFile('+fi+')">删除</span></div>';
+  });
+  el.innerHTML=h;
+  document.getElementById('ovFileCount').textContent=editFiles.length;
+}
+
+/**
+ * @param {HTMLInputElement} inp - 文件输入
+ */
+function userUploadImg(inp){
+  Array.from(inp.files).forEach(function(f){
+    if(!f.type.startsWith('image/')) return;
+    showToast('图片上传中...');
+    uploadToOSS(f,'img').then(function(url){
+      editImages.push({name:f.name,url:url});
+      refreshEditImgs();
+      showToast('图片已上传');
+    }).catch(function(){showToast('上传失败');});
+  });
+  inp.value='';
+}
+
+/**
+ * @param {HTMLInputElement} inp - 文件输入
+ */
+function userUploadFile(inp){
+  Array.from(inp.files).forEach(function(f){
+    showToast('文件上传中...');
+    uploadToOSS(f,'file').then(function(url){
+      editFiles.push({name:f.name,size:f.size,url:url});
+      refreshEditFiles();
+      showToast('文件已上传');
+    }).catch(function(){showToast('上传失败');});
+  });
+  inp.value='';
 }
 
 function saveOrderEdit(){
@@ -751,12 +860,16 @@ function saveOrderEdit(){
   if(!o.id) return;
   var desc=document.getElementById('ovDescEdit').value;
   var notes=document.getElementById('ovNotesEdit').value;
-  var payload={order_id:o.id,update_json:JSON.stringify({description:desc,chat_notes:notes,can_edit:false})};
+  var imgData=JSON.stringify(editImages.map(function(m){return{name:m.name,url:m.url};}));
+  var fileData=JSON.stringify(editFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};}));
+  var payload={order_id:o.id,update_json:JSON.stringify({description:desc,chat_notes:notes,image_data:imgData,file_data:fileData,can_edit:false})};
   fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
   .then(function(r){return r.json();})
   .then(function(){
     o.description=desc;
     o.chat_notes=notes;
+    o.images=editImages.map(function(m){return{name:m.name,url:m.url};});
+    o.files=editFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};});
     o.can_edit=false;
     showToast('已保存');
     closeDtl();
