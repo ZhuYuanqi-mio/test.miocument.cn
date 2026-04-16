@@ -538,12 +538,11 @@ function loadMyOrders(){
         result_files:rfs, result_video:o.result_video||'', delivery_status:o.delivery_status||'',
         receipt_screenshot:o.receipt_screenshot||'', after_sale_file:o.after_sale_file||'',
         survey_link:o.survey_link||'',survey_province:o.survey_province||'',survey_midnight:o.survey_midnight||'',
+        approved_at:o.approved_at||'',
         created_at:o.created_at||''};
     });
     myOrders.sort(function(a,b){
-      if(a.status==='completed'&&b.status!=='completed') return 1;
-      if(a.status!=='completed'&&b.status==='completed') return -1;
-      return new Date(a.deadline)-new Date(b.deadline);
+      return new Date(b.created_at)-new Date(a.created_at);
     });
     showList();
   }).catch(function(e){console.error(e); showList();});
@@ -710,7 +709,10 @@ function buildResultCard(o,i){
         });
         s+='</div>';
       }
-      s+='<div class="rc-actions"><span class="card-chat-btn" onclick="event.stopPropagation();openDtl('+i+')">查看需求</span></div>';
+      s+='<div style="display:flex;justify-content:space-between;align-items:center">';
+      if(o.approved_at) s+='<span style="font-size:11px;color:#999">'+fmtDl(o.approved_at)+' 审批通过</span>';
+      else s+='<span></span>';
+      s+='<span class="card-chat-btn" onclick="event.stopPropagation();openDtl('+i+')">查看需求</span></div>';
     }
   } else {
     if(ds==='unreceived'||ds===''){
@@ -732,6 +734,10 @@ function buildResultCard(o,i){
     } else if(ds==='survey_done'){
       s+='<div class="rc-title">需求已完成</div>';
       s+='<div style="font-size:14px;color:#22c55e;font-weight:500;text-align:center;padding:20px 0">问卷已填写完成，请前往问卷星后台查看</div>';
+      s+='<div style="display:flex;justify-content:space-between;align-items:center">';
+      if(o.approved_at) s+='<span style="font-size:11px;color:#999">'+fmtDl(o.approved_at)+' 确认完成</span>';
+      else s+='<span></span>';
+      s+='<span class="card-chat-btn" onclick="event.stopPropagation();openDtl('+i+')">查看需求</span></div>';
     }
   }
 

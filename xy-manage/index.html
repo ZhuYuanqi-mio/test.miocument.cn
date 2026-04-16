@@ -334,6 +334,7 @@ function load(){
           result_files:rfs,result_video:o.result_video||'',delivery_status:o.delivery_status||'',
           receipt_screenshot:o.receipt_screenshot||'',after_sale_file:o.after_sale_file||'',
           survey_link:o.survey_link||'',survey_province:o.survey_province||'',survey_midnight:o.survey_midnight||'',
+          approved_at:o.approved_at||'',
           created_at:o.created_at||''};
       });
       inheritAssignees();
@@ -1178,8 +1179,10 @@ function submitComplete(){
 function approveOrder(i){
   var o=orders[i];
   if(!confirm('确认审批通过？'))return;
+  var now=new Date().toISOString();
   o.delivery_status='approved';
-  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({delivery_status:'approved'})})});
+  o.approved_at=now;
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({delivery_status:'approved',approved_at:now})})});
   toast('已审批通过');
   go();openDtl(orders.indexOf(o));
 }
@@ -1190,8 +1193,10 @@ function approveOrder(i){
 function confirmSurveyDone(i){
   var o=orders[i];
   if(!confirm('确认问卷已填写完成？'))return;
+  var now=new Date().toISOString();
   o.delivery_status='survey_done';
-  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({delivery_status:'survey_done'})})});
+  o.approved_at=now;
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({delivery_status:'survey_done',approved_at:now})})});
   toast('已确认完成');
   go();openDtl(orders.indexOf(o));
 }
