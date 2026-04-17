@@ -610,7 +610,7 @@ function openDtl(i){
   s+='</div></div>';
   s+='<div class="d-card"><div class="lb">要求描述 <span style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px;float:right" onclick="copyDesc('+i+')">复制</span></div><div class="val">'+(o.description||'无').replace(/\n/g,'<br>')+'</div></div>';
   s+='<div class="d-card"><div class="lb">图片 ('+(o.images?o.images.length:0)+') <label style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px">上传<input type="file" accept="image/*" multiple style="display:none" onchange="adminUploadImg(this,'+i+')"></label></div><div class="d-imgs" id="dtlImgs">';
-  if(o.images&&o.images.length) o.images.forEach(function(m){s+='<img src="'+imgSrc(m)+'">';});
+  if(o.images&&o.images.length) o.images.forEach(function(m,mi){s+='<div style="position:relative;display:inline-block"><img src="'+imgSrc(m)+'"><span style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:12px;line-height:18px;text-align:center;cursor:pointer" onclick="event.stopPropagation();adminDelImg('+i+','+mi+')">x</span></div>';});
   else s+='<span style="color:#aaa;font-size:13px">暂无</span>';
   s+='</div></div>';
   s+='<div class="d-card"><div class="lb">文件 ('+(o.files?o.files.length:0)+') <label style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px">上传<input type="file" multiple style="display:none" onchange="adminUploadFile(this,'+i+')"></label></div><div class="d-files" id="dtlFiles">';
@@ -618,7 +618,8 @@ function openDtl(i){
     o.files.forEach(function(f,fi){
       s+='<div class="fr"><span class="nm">'+f.name+'</span>';
       if(f.size)s+='<span class="sz">'+fmtSz(f.size)+'</span>';
-      s+='<span class="dl" onclick="event.stopPropagation();dlFile('+i+','+fi+')">下载</span></div>';
+      s+='<span class="dl" onclick="event.stopPropagation();dlFile('+i+','+fi+')">下载</span>';
+      s+='<span style="color:#c00;margin-left:6px;cursor:pointer;font-size:12px" onclick="event.stopPropagation();adminDelFile('+i+','+fi+')">删除</span></div>';
     });
   } else s+='<span style="color:#aaa;font-size:13px">暂无</span>';
   s+='</div></div>';
@@ -779,12 +780,26 @@ function adminUploadImg(inp,i){
   inp.value='';
 }
 
+/**
+ * @param {number} i - 订单索引
+ * @param {number} mi - 图片索引
+ */
+function adminDelImg(i,mi){
+  var o=orders[i];
+  if(!o.images||!o.images[mi])return;
+  if(!confirm('确认删除此图片？'))return;
+  o.images.splice(mi,1);
+  var newData=JSON.stringify(o.images.map(function(m){return{name:m.name,url:m.url||m.data||''};}));
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({image_data:newData})})});
+  toast('已删除');
+  openDtl(orders.indexOf(o));
+}
+
 function adminUploadFile(inp,i){
   var o=orders[i];
   if(!o.files) o.files=[];
   Array.from(inp.files).forEach(function(f){
     toast('文件上传中...');
-    var sz=fmtSz(f.size);
     uploadOSS(f,'file').then(function(url){
       o.files.push({name:f.name,size:f.size,url:url});
       var newData=JSON.stringify(o.files.map(function(fl){return{name:fl.name,size:fl.size,url:fl.url||fl.data||''};}));
@@ -794,6 +809,21 @@ function adminUploadFile(inp,i){
     }).catch(function(){toast('上传失败');});
   });
   inp.value='';
+}
+
+/**
+ * @param {number} i - 订单索引
+ * @param {number} fi - 文件索引
+ */
+function adminDelFile(i,fi){
+  var o=orders[i];
+  if(!o.files||!o.files[fi])return;
+  if(!confirm('确认删除文件「'+o.files[fi].name+'」？'))return;
+  o.files.splice(fi,1);
+  var newData=JSON.stringify(o.files.map(function(fl){return{name:fl.name,size:fl.size,url:fl.url||fl.data||''};}));
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({file_data:newData})})});
+  toast('已删除');
+  openDtl(orders.indexOf(o));
 }
 
 function grantEdit(i){
