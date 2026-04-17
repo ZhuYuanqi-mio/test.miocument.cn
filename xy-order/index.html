@@ -29,8 +29,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .list-top-row{display:flex;align-items:center;justify-content:space-between}
 .list-top h1{font-size:16px;font-weight:600;color:#222;letter-spacing:.3px;margin:0}
 .list-top .lt-logo{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0}
-.list-top .lt-chat{width:26px;height:26px;cursor:pointer;flex-shrink:0;color:#333}
-.list-top .lt-chat:active{opacity:.6}
+.lt-chat-wrap{position:relative;flex-shrink:0;cursor:pointer}
+.lt-chat-wrap:active{opacity:.6}
+.lt-chat-wrap svg{width:26px;height:26px;display:block}
+.lt-chat-badge{display:none;position:absolute;top:-5px;right:-7px;min-width:16px;height:16px;border-radius:8px;background:#e33;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px;font-weight:600}
 .chips{display:flex;gap:6px;margin-top:12px}
 .chip{padding:5px 14px;border-radius:6px;font-size:12px;white-space:nowrap;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.6);cursor:pointer;transition:all .15s;background:none}
 .chip.on{border-color:#fff;background:#fff;color:#222;font-weight:500}
@@ -283,7 +285,10 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
 <div class="page" id="pageList">
   <div class="list-top">
     <div class="list-top-row">
-      <svg class="lt-chat" onclick="openNavChat()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <div class="lt-chat-wrap" onclick="openNavChat()">
+        <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M817.71875 844.15625c106.3125-78.75 174-197.71875 174-330.75 0-237.09375-214.875-429.375-479.8125-429.375C246.875 84.03125 32 276.21875 32 513.3125c0 231.9375 205.6875 420.375 462.65625 428.53125 0.9375 0.375 1.875 0.65625 3 0.65625H510.125c0.5625 0 1.125 0.09375 1.6875 0.09375s1.125-0.09375 1.6875-0.09375h419.71875c9 0 12.5625-11.625 5.15625-16.6875l-120.65625-81.65625z" fill="#222"/><path d="M376.90625 513.3125m-64.40625 0a64.40625 64.40625 0 1 0 128.8125 0 64.40625 64.40625 0 1 0-128.8125 0Z" fill="#FFFFFF"/><path d="M686.375 513.3125m-64.40625 0a64.40625 64.40625 0 1 0 128.8125 0 64.40625 64.40625 0 1 0-128.8125 0Z" fill="#FFFFFF"/></svg>
+        <span class="lt-chat-badge" id="chatBadge"></span>
+      </div>
       <h1 id="listTitle"><span id="listSub"></span>的需求单<span class="title-unread" id="titleUnread" style="display:none"></span></h1>
       <img class="lt-logo" src="https://my-video-storage-shihuang.oss-cn-wuhan-lr.aliyuncs.com/xianyu/logo.jpg" alt="">
     </div>
@@ -566,8 +571,14 @@ function loadUnreadCount(){
 
 function updateUnreadUI(){
   var badge=document.getElementById('titleUnread');
-  if(unreadCount>0){badge.textContent=unreadCount;badge.style.display='inline-block';}
-  else{badge.style.display='none';}
+  var chatBadge=document.getElementById('chatBadge');
+  if(unreadCount>0){
+    badge.textContent=unreadCount;badge.style.display='inline-block';
+    chatBadge.textContent=unreadCount;chatBadge.style.display='block';
+  } else {
+    badge.style.display='none';
+    chatBadge.style.display='none';
+  }
   document.title=unreadCount>0?'('+unreadCount+'条新消息) 咸鱼接单':'咸鱼接单';
   renderCards();
 }
