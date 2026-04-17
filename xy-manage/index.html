@@ -179,7 +179,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .viewer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;justify-content:center;align-items:center;cursor:pointer}
 .viewer.show{display:flex}
 .viewer img{max-width:95%;max-height:90vh;border-radius:4px}
-.cl-date{font-size:13px;font-weight:600;color:#999;padding:10px 0 4px;border-bottom:1px solid #eee;margin-bottom:6px}
+.cl-date{font-size:13px;font-weight:600;color:#999;padding:10px 0 4px;border-bottom:1px solid #eee;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
 .cl-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #eee}
 .cl-info{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
 .cl-name{font-size:14px;font-weight:600;color:#222;white-space:nowrap}
@@ -490,7 +490,7 @@ function renderCompletedList(q){
   if(!days.length){document.getElementById('list').innerHTML='<div class="empty">暂无已完成订单</div>';return;}
   var h='';
   days.forEach(function(day){
-    h+='<div class="cl-date">'+day+'</div>';
+    h+='<div class="cl-date"><span>'+day+'</span><span style="font-weight:400;font-size:12px">合计 '+grouped[day].length+' 份</span></div>';
     grouped[day].sort(function(a,b){return b.ts-a.ts;});
     grouped[day].forEach(function(item){
       var o=item.o,i=item.idx;
