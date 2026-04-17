@@ -334,6 +334,12 @@ textarea{min-height:90px;resize:vertical;line-height:1.6}
         </div>
       </div>
     </div></div>
+    <div class="section" id="surveyLinkSection" style="display:none"><div class="section-body">
+      <div class="form-group">
+        <label>问卷链接<span class="req">*</span></label>
+        <input type="text" id="surveyLinkField" placeholder="请粘贴问卷星等平台的问卷链接">
+      </div>
+    </div></div>
     <div class="section"><div class="section-body">
       <div class="form-group">
         <label>要求描述<span class="req">*</span></label>
@@ -1381,6 +1387,8 @@ function openEditForm(i){
       }
     });
   }
+  checkSurveyLink();
+  if(o.survey_link) document.getElementById('surveyLinkField').value=o.survey_link;
   document.getElementById('desc').value=o.description||'';
   if(o.images&&o.images.length){
     images=o.images.map(function(m){return{name:m.name||'',url:imgSrc(m),localPreview:imgSrc(m),uploading:false};});
@@ -1403,8 +1411,20 @@ function closeForm(){
 
 document.getElementById('taskTags').onclick=function(e){
   var s=e.target.closest('span[data-v]');
-  if(s) s.classList.toggle('on');
+  if(s){s.classList.toggle('on');checkSurveyLink();}
 };
+
+/**
+ * @description 检查选中标签是否含"问卷"或"分析报告"，控制问卷链接输入框显隐
+ */
+function checkSurveyLink(){
+  var need=false;
+  document.querySelectorAll('#taskTags span.on').forEach(function(s){
+    var v=s.dataset.v||'';
+    if(v.indexOf('问卷')>=0||v==='分析报告') need=true;
+  });
+  document.getElementById('surveyLinkSection').style.display=need?'block':'none';
+}
 function addCustomTag(){
   var inp=document.getElementById('customTag');
   var val=inp.value.trim();
@@ -1415,6 +1435,7 @@ function addCustomTag(){
   sp.dataset.v=val; sp.textContent=val; sp.className='on custom';
   document.getElementById('taskTags').appendChild(sp);
   inp.value='';
+  checkSurveyLink();
 }
 document.getElementById('customTag').addEventListener('keydown',function(e){
   if(e.key==='Enter'){e.preventDefault();addCustomTag();}
@@ -1434,6 +1455,9 @@ function submitOrder(){
   if(!desc){showToast('请填写要求描述');return;}
   if(!dl){showToast('请选择最迟完成时间');return;}
   if(!tasks.length){showToast('请选择任务类型');return;}
+  var needSurveyLink=tasks.some(function(t){return t.indexOf('问卷')>=0||t==='分析报告';});
+  var surveyLinkVal=document.getElementById('surveyLinkField').value.trim();
+  if(needSurveyLink&&!surveyLinkVal){showToast('请填写问卷链接');return;}
   if(!isAllUploaded()){showToast('文件还在上传中，请稍候');return;}
   var validImgs=images.filter(function(m){return m.url&&m.url!=='FAILED';});
   var validFiles=files.filter(function(f){return f.url&&f.url!=='FAILED';});
@@ -1449,6 +1473,7 @@ function submitOrder(){
       task_types:tasks.join(','),
       description:desc,
       can_edit:false,
+      survey_link:needSurveyLink?surveyLinkVal:'',
       image_data:JSON.stringify(validImgs.map(function(m){return{name:m.name,url:m.url};})),
       file_data:JSON.stringify(validFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};}))
     };
@@ -1457,7 +1482,7 @@ function submitOrder(){
     .then(function(r){return r.json();})
     .then(function(){
       o.email=email;o.deadline=dl+':00+08:00';o.task_types=tasks;o.description=desc;
-      o.can_edit=false;o.images=validImgs;o.files=validFiles;
+      o.can_edit=false;o.survey_link=needSurveyLink?surveyLinkVal:'';o.images=validImgs;o.files=validFiles;
       btn.disabled=false;btn.textContent='确认修改';
       showToast('修改成功');
       editingIdx=null;
@@ -1470,7 +1495,8 @@ function submitOrder(){
       xianyu_name:curUser, email:email, deadline:dl+':00+08:00', task_types:tasks.join(','), description:desc,
       image_data:JSON.stringify(validImgs.map(function(m){return{name:m.name,url:m.url};})),
       file_data:JSON.stringify(validFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};})),
-      status:'pending'
+      status:'pending',
+      survey_link:needSurveyLink?surveyLinkVal:''
     })};
     fetch(ZION.create_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
@@ -1496,8 +1522,11 @@ function resetForm(preSelect){
   document.getElementById('imgList').innerHTML='';
   document.getElementById('fileList').innerHTML='';
   document.getElementById('customTag').value='';
+  document.getElementById('surveyLinkField').value='';
+  document.getElementById('surveyLinkSection').style.display='none';
   if(preSelect){
     document.querySelectorAll('#taskTags span[data-v]').forEach(function(s){if(s.getAttribute('data-v')===preSelect) s.classList.add('on');});
+    checkSurveyLink();
   }
 }
 

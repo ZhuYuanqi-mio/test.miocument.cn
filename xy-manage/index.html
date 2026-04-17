@@ -609,6 +609,9 @@ function openDtl(i){
   s+='<div class="d-card"><div class="lb">任务类型</div><div class="tl">';
   o.task_types.forEach(function(t){s+='<span>'+t+'</span>';});
   s+='</div></div>';
+  if(o.survey_link&&o.task_types.some(function(t){return t.indexOf('问卷')>=0||t==='分析报告';})){
+    s+='<div class="d-card"><div class="lb">问卷链接</div><div class="val"><a href="'+escHtml(o.survey_link)+'" target="_blank" style="color:#4a90d9;word-break:break-all">'+escHtml(o.survey_link)+'</a></div></div>';
+  }
   s+='<div class="d-card"><div class="lb">要求描述 <span style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px;float:right" onclick="copyDesc('+i+')">复制</span></div><div class="val">'+(o.description||'无').replace(/\n/g,'<br>')+'</div></div>';
   s+='<div class="d-card"><div class="lb">图片 ('+(o.images?o.images.length:0)+') <label style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px">上传<input type="file" accept="image/*" multiple style="display:none" onchange="adminUploadImg(this,'+i+')"></label></div><div class="d-imgs" id="dtlImgs">';
   if(o.images&&o.images.length) o.images.forEach(function(m,mi){s+='<div style="position:relative;display:inline-block"><img src="'+imgSrc(m)+'"><span style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:12px;line-height:18px;text-align:center;cursor:pointer" onclick="event.stopPropagation();adminDelImg('+i+','+mi+')">x</span></div>';});
