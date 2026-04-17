@@ -461,7 +461,7 @@ function filterCards(){
       if(pendingSub==='unassigned'&&o.assignee)return;
     }
     if(curFilter==='approval'&&!(o.status==='completed'&&o.delivery_status==='pending_approval'))return;
-    if(curFilter==='survey'&&!(o.status==='completed'&&o.delivery_status==='pending_survey'))return;
+    if(curFilter==='survey'&&!(o.status==='completed'&&(o.delivery_status==='pending_survey'||o.delivery_status==='survey_filling')))return;
     if(q&&(o.xianyu_name+' '+o.description+' '+o.task_types.join(' ')).toLowerCase().indexOf(q)<0)return;
     c++;h+=bCard(o,i);
   });
@@ -593,9 +593,9 @@ function openDtl(i){
   if(o.status==='completed'){
     s+='<div class="d-card"><div class="lb">结果交付</div>';
     if(o.after_sale_file) s+='<div style="font-size:12px;color:#c60;margin-bottom:8px">售后对象：'+escHtml(o.after_sale_file)+'</div>';
-    var dsMap={'':'等待用户确认','unreceived':'等待用户确认','pending_approval':'审批中','approved':'已审批通过','received':'已收货(旧)','pending_survey':'问卷填写中','survey_done':'问卷已填写完成'};
+    var dsMap={'':'等待用户确认','unreceived':'等待用户确认','pending_approval':'审批中','approved':'已审批通过','received':'已收货(旧)','pending_survey':'等待启动填写','survey_filling':'问卷填写中','survey_done':'问卷已填写完成'};
     var dsLabel=dsMap[o.delivery_status]||'等待用户确认';
-    var dsClr={'pending_approval':'#f0a03c','approved':'#22c55e','pending_survey':'#4a90d9','survey_done':'#22c55e'}[o.delivery_status]||'#999';
+    var dsClr={'pending_approval':'#f0a03c','approved':'#22c55e','pending_survey':'#4a90d9','survey_filling':'#f0a03c','survey_done':'#22c55e'}[o.delivery_status]||'#999';
     s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">交付状态：</span><span style="color:'+dsClr+';font-weight:500;font-size:13px">'+dsLabel+'</span></div>';
     if(o.result_video){
       s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">展示视频：</span>';
@@ -621,14 +621,20 @@ function openDtl(i){
       s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">收货截图：</span>';
       s+='<div style="margin-top:6px"><img src="'+o.receipt_screenshot+'" style="width:120px;border-radius:6px;cursor:pointer;border:1px solid #e0e0e0" onclick="viewImg(\''+o.receipt_screenshot+'\')"></div></div>';
     }
-    if(o.delivery_status==='pending_survey'){
+    if(o.delivery_status==='pending_survey'||o.delivery_status==='survey_filling'){
       s+='<div style="margin-top:10px;padding:10px 12px;background:#f8f9ff;border-radius:6px;border:1px solid #e0e0e0">';
       s+='<div style="font-size:12px;color:#666;margin-bottom:6px;font-weight:500">问卷信息</div>';
       s+='<div style="font-size:13px;color:#222;margin-bottom:4px">链接：<a href="'+(o.survey_link||'#')+'" target="_blank" style="color:#4a90d9;word-break:break-all">'+escHtml(o.survey_link||'未填写')+'</a></div>';
       s+='<div style="font-size:13px;color:#222;margin-bottom:4px">地点（省）：'+escHtml(o.survey_province||'未填写')+'</div>';
       s+='<div style="font-size:13px;color:#222;margin-bottom:8px">凌晨填写：'+escHtml(o.survey_midnight||'未填写')+'</div>';
-      s+='<button style="padding:8px 20px;border:none;border-radius:6px;background:#4a90d9;color:#fff;font-size:13px;font-weight:500;cursor:pointer" onclick="confirmSurveyDone('+i+')">确认已填写完成</button>';
-      s+='</div>';
+      s+='<div style="display:flex;gap:8px">';
+      if(o.delivery_status==='pending_survey'){
+        s+='<button style="flex:1;padding:8px 0;border:none;border-radius:6px;background:#4a90d9;color:#fff;font-size:13px;font-weight:500;cursor:pointer" onclick="startSurveyFilling('+i+')">已启动填写</button>';
+        s+='<button style="flex:1;padding:8px 0;border:none;border-radius:6px;background:#22c55e;color:#fff;font-size:13px;font-weight:500;cursor:pointer" onclick="confirmSurveyDone('+i+')">填写完毕</button>';
+      } else {
+        s+='<button style="flex:1;padding:8px 0;border:none;border-radius:6px;background:#22c55e;color:#fff;font-size:13px;font-weight:500;cursor:pointer" onclick="confirmSurveyDone('+i+')">填写完毕</button>';
+      }
+      s+='</div></div>';
     }
     s+='</div>';
   } else if(o.after_sale_file){
@@ -1256,6 +1262,20 @@ function approveOrder(i){
 }
 
 /**
+ * @description 标记问卷已启动填写
+ * @param {number} i - 订单索引
+ */
+function startSurveyFilling(i){
+  var o=orders[i];
+  if(!confirm('确认已启动问卷填写？'))return;
+  o.delivery_status='survey_filling';
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({delivery_status:'survey_filling'})})});
+  toast('已启动填写');
+  go();openDtl(orders.indexOf(o));
+}
+
+/**
+ * @description 标记问卷填写完毕
  * @param {number} i - 订单索引
  */
 function confirmSurveyDone(i){
@@ -1276,7 +1296,7 @@ function updateApprovalBadge(){
 }
 
 function updateSurveyBadge(){
-  var c=0;orders.forEach(function(o){if(o.status==='completed'&&o.delivery_status==='pending_survey')c++;});
+  var c=0;orders.forEach(function(o){if(o.status==='completed'&&(o.delivery_status==='pending_survey'||o.delivery_status==='survey_filling'))c++;});
   var b=document.getElementById('surveyBadge');
   if(c>0){b.textContent=c;b.style.display='block';}else{b.style.display='none';}
 }

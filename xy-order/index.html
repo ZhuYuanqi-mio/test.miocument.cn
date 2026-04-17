@@ -741,7 +741,10 @@ function buildResultCard(o,i){
         s+='<div style="margin-top:10px"><button class="rc-receive-btn rc-receive-blue" onclick="event.stopPropagation();confirmReceive('+i+')">我已在咸鱼确认收货，请开始填写问卷</button></div>';
       } else if(ds==='pending_survey'){
         s+='<div class="rc-title">需求已完成</div>';
-        s+='<div style="font-size:14px;color:#4a90d9;font-weight:500;text-align:center;padding:20px 0">问卷填写中，请等待</div>';
+        s+='<div style="font-size:14px;color:#4a90d9;font-weight:500;text-align:center;padding:20px 0">问卷信息已提交，等待启动填写</div>';
+      } else if(ds==='survey_filling'){
+        s+='<div class="rc-title">需求已完成</div>';
+        s+='<div style="font-size:14px;color:#f0a03c;font-weight:500;text-align:center;padding:20px 0">问卷填写中，请耐心等待</div>';
       } else if(ds==='survey_done'||ds==='received'){
         s+='<div class="rc-title">需求'+(i+1)+'已完成请查看结果：</div>';
         if(o.result_files&&o.result_files.length){
