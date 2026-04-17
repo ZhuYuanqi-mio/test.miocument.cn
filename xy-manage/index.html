@@ -11,10 +11,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 
 .top-bar{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #e0e0e0;padding:14px 16px 10px}
 .top-bar h1{font-size:16px;font-weight:600;color:#222;text-align:center;margin-bottom:10px}
-.search-box{display:flex;align-items:center;background:#f2f2f2;border-radius:6px;padding:0 10px;border:1px solid #e0e0e0}
+.search-row{display:flex;align-items:center;gap:8px}
+.search-box{display:flex;align-items:center;background:#f2f2f2;border-radius:6px;padding:0 10px;border:1px solid #e0e0e0;flex:1}
 .search-box svg{flex-shrink:0;margin-right:6px;color:#999}
-.search-box input{flex:1;border:none;background:none;outline:none;font-size:14px;padding:9px 0;color:#222}
+.search-box input{flex:1;border:none;background:none;outline:none;font-size:14px;padding:9px 0;color:#222;min-width:0}
 .search-box input::placeholder{color:#aaa}
+.dy-add-btn{width:36px;height:36px;border-radius:50%;border:none;background:#222;color:#fff;font-size:20px;line-height:36px;text-align:center;cursor:pointer;flex-shrink:0}
+.dy-add-btn:active{opacity:.7}
 .chips{display:flex;gap:6px;margin-top:8px;overflow:visible;flex-wrap:wrap}
 .chips::-webkit-scrollbar{display:none}
 .chip{padding:5px 14px;border-radius:6px;font-size:12px;white-space:nowrap;border:1px solid #ccc;color:#666;cursor:pointer;transition:all .15s;background:#fff;position:relative}
@@ -192,9 +195,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 
 <div class="top-bar">
   <h1></h1>
-  <div class="search-box">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-    <input id="searchInput" placeholder="搜索名称、描述..." oninput="filterCards()">
+  <div class="search-row">
+    <div class="search-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="searchInput" placeholder="搜索名称、描述..." oninput="filterCards()">
+    </div>
+    <button class="dy-add-btn" onclick="openDyCreate()">+</button>
   </div>
   <div class="chips">
     <span class="chip on" data-f="pending" onclick="togglePendingDrop(event)" id="chipPending">未完成 ▾
@@ -206,7 +212,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
       </div>
     </span>
     <span class="chip" data-f="urgent" onclick="pick(this)">紧急</span>
-    <span class="chip" data-f="today" onclick="pick(this)">今天</span>
+    <span class="chip" data-f="douyin" onclick="pick(this)">抖音</span>
     <span class="chip" data-f="approval" onclick="pick(this)">审批<span id="approvalBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
     <span class="chip" data-f="survey" onclick="pick(this)">问卷填写<span id="surveyBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
     <span class="chip" data-f="completed" onclick="pick(this)">已完成<span class="chip-badge" id="completedBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
@@ -303,11 +309,35 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
   </div>
 </div>
 
+<div class="cm-modal" id="dyCreateModal">
+  <div class="cm-box">
+    <h3>新建抖音订单</h3>
+    <div class="cm-section">
+      <div class="cm-lb">标题 <span style="color:#c00">*</span></div>
+      <input type="text" id="dyTitle" placeholder="输入订单标题" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;outline:none;box-sizing:border-box">
+    </div>
+    <div class="cm-section">
+      <div class="cm-lb">描述</div>
+      <textarea id="dyDesc" placeholder="输入描述（选填）" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;outline:none;min-height:60px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+    </div>
+    <div class="cm-section">
+      <div class="cm-lb">结果文件</div>
+      <label class="cm-upload-btn">选择文件<input type="file" multiple style="display:none" onchange="dyUploadFile(this)"></label>
+      <div id="dyFilePreview"></div>
+    </div>
+    <div class="cm-btns">
+      <button class="cm-cancel" onclick="closeDyCreate()">取消</button>
+      <button class="cm-ok" onclick="submitDyCreate()">提交并生成链接</button>
+    </div>
+  </div>
+</div>
+
 <div class="viewer" id="viewer" onclick="this.classList.remove('show')"><img id="vImg" src=""></div>
 <div class="toast" id="toast"></div>
 
 <script>
 var ZION={
+  create_xy_order:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/b4a14608-e61e-46b6-a748-94be7e205d0d',
   list_xy_orders:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/33fde63b-4f5e-4811-aece-cf6d4cde4dc4',
   update_xy_order:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/fac52f37-4c00-46ef-abce-9d41bf0511e4',
   delete_xy_order:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/45edfb1a-1236-4982-9c1b-5c8940e6e096',
@@ -349,6 +379,7 @@ function load(){
           receipt_screenshot:o.receipt_screenshot||'',after_sale_file:o.after_sale_file||'',
           survey_link:o.survey_link||'',survey_province:o.survey_province||'',survey_midnight:o.survey_midnight||'',
           need_survey:o.need_survey||'',approved_at:o.approved_at||'',
+          source:o.source||'xianyu',dy_seq:o.dy_seq||'',
           created_at:o.created_at||''};
       });
       inheritAssignees();
@@ -453,7 +484,8 @@ function filterCards(){
   orders.forEach(function(o,i){
     var u=urg(o);
     if(curFilter==='urgent'&&u!=='urg'&&u!=='over')return;
-    if(curFilter==='today'&&u!=='soon')return;
+    if(curFilter==='douyin'&&o.source!=='douyin')return;
+    if(curFilter!=='douyin'&&curFilter!=='all'&&o.source==='douyin')return;
     if(curFilter==='pending'){
       if(o.status==='completed')return;
       if(pendingSub==='feimi'&&o.assignee!=='肥咪')return;
@@ -476,7 +508,7 @@ function filterCards(){
 function renderCompletedList(q){
   var grouped={};
   orders.forEach(function(o,i){
-    if(o.status!=='completed')return;
+    if(o.status!=='completed'||o.source==='douyin')return;
     if(q&&(o.xianyu_name+' '+o.description+' '+o.task_types.join(' ')).toLowerCase().indexOf(q)<0)return;
     var dt=o.approved_at||o.created_at||'';
     var day=dt?new Date(dt).toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}):'未知日期';
@@ -1299,6 +1331,100 @@ function updateSurveyBadge(){
   var c=0;orders.forEach(function(o){if(o.status==='completed'&&(o.delivery_status==='pending_survey'||o.delivery_status==='survey_filling'))c++;});
   var b=document.getElementById('surveyBadge');
   if(c>0){b.textContent=c;b.style.display='block';}else{b.style.display='none';}
+}
+
+/* ===== Douyin Create Modal ===== */
+var dyFiles=[];
+
+function openDyCreate(){
+  dyFiles=[];
+  document.getElementById('dyTitle').value='';
+  document.getElementById('dyDesc').value='';
+  document.getElementById('dyFilePreview').innerHTML='';
+  document.getElementById('dyCreateModal').classList.add('show');
+}
+function closeDyCreate(){
+  document.getElementById('dyCreateModal').classList.remove('show');
+}
+
+/**
+ * @param {HTMLInputElement} inp - 文件输入
+ */
+function dyUploadFile(inp){
+  Array.from(inp.files).forEach(function(f){
+    var idx=dyFiles.length;
+    dyFiles.push({name:f.name,size:f.size,url:'',uploading:true});
+    refreshDyFilePreview();
+    uploadOSS(f,'file').then(function(url){
+      dyFiles[idx].url=url;dyFiles[idx].uploading=false;refreshDyFilePreview();
+    }).catch(function(){
+      dyFiles[idx].url='FAILED';dyFiles[idx].uploading=false;refreshDyFilePreview();
+      toast(f.name+' 上传失败');
+    });
+  });
+  inp.value='';
+}
+function refreshDyFilePreview(){
+  var h='';
+  dyFiles.forEach(function(f,i){
+    var st=f.uploading?'<span style="color:#888;font-size:12px">上传中...</span>':(f.url==='FAILED'?'<span style="color:#c00;font-size:12px">失败</span>':'');
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0">';
+    h+='<span style="font-size:13px;color:#222;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(f.name)+'</span>';
+    h+=st+'<span style="color:#c00;margin-left:8px;cursor:pointer;font-size:12px" onclick="dyFiles.splice('+i+',1);refreshDyFilePreview()">删除</span></div>';
+  });
+  document.getElementById('dyFilePreview').innerHTML=h;
+}
+
+/**
+ * @description 生成下一个抖音订单序号
+ * @return {string}
+ */
+function nextDySeq(){
+  var max=0;
+  orders.forEach(function(o){
+    if(o.source==='douyin'&&o.dy_seq){
+      var n=parseInt(o.dy_seq,10);
+      if(n>max) max=n;
+    }
+  });
+  return String(max+1);
+}
+
+function submitDyCreate(){
+  var title=document.getElementById('dyTitle').value.trim();
+  var desc=document.getElementById('dyDesc').value.trim();
+  if(!title){toast('请输入标题');return;}
+  var uploading=dyFiles.some(function(f){return f.uploading;});
+  if(uploading){toast('文件还在上传中，请稍候');return;}
+  var validFiles=dyFiles.filter(function(f){return f.url&&f.url!=='FAILED';});
+  var seq=nextDySeq();
+  var payload={order_json:JSON.stringify({
+    xianyu_name:title,
+    email:'',
+    deadline:new Date(Date.now()+7*864e5).toISOString(),
+    task_types:'抖音订单',
+    description:desc,
+    file_data:JSON.stringify(validFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};})),
+    result_files:JSON.stringify(validFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};})),
+    status:'completed',
+    delivery_status:'approved',
+    source:'douyin',
+    dy_seq:seq
+  })};
+  var okBtn=document.querySelector('#dyCreateModal .cm-ok');
+  okBtn.disabled=true;okBtn.textContent='提交中...';
+  fetch(ZION.create_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+  .then(function(r){return r.json();})
+  .then(function(){
+    okBtn.disabled=false;okBtn.textContent='提交并生成链接';
+    closeDyCreate();
+    var link='https://test.miocument.cn/dy-order/?seq='+seq;
+    prompt('订单创建成功！用户链接（已可复制）：',link);
+    load();
+  }).catch(function(e){
+    okBtn.disabled=false;okBtn.textContent='提交并生成链接';
+    toast('创建失败');console.error(e);
+  });
 }
 
 load();
