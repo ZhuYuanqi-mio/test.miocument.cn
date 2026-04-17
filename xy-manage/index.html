@@ -281,7 +281,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
   <div class="cm-box">
     <h3>完成交付</h3>
     <div class="cm-section">
-      <div class="cm-lb">展示视频 <span class="cm-hint" id="cmVideoHint"></span></div>
+      <div class="cm-lb">展示视频 <span class="cm-hint" id="cmVideoHint"></span><span id="cmVideoSkip" style="display:none;margin-left:8px;font-size:11px;color:#4a90d9;cursor:pointer;font-weight:400;text-decoration:underline" onclick="toggleVideoRequired()">关闭必填</span></div>
       <label class="cm-upload-btn">选择视频<input type="file" accept="video/*" style="display:none" onchange="cmUploadVideo(this)"></label>
       <div class="cm-preview" id="cmVideoPreview"></div>
     </div>
@@ -1186,11 +1186,12 @@ var cmVideoUrl='',cmFiles=[],cmIdx=null;
  * @param {number} i - 订单索引
  */
 function openCompleteModal(i){
-  cmIdx=i;cmVideoUrl='';cmFiles=[];
+  cmIdx=i;cmVideoUrl='';cmFiles=[];cmVideoRequired=true;
   document.getElementById('cmVideoPreview').innerHTML='';
   document.getElementById('cmImgPreview').innerHTML='';
   document.getElementById('cmFilePreview').innerHTML='';
   document.getElementById('cmVideoHint').textContent='';
+  document.getElementById('cmVideoSkip').style.display='none';
   document.getElementById('cmSurveySection').style.display='none';
   document.querySelectorAll('.cm-survey-opt').forEach(function(s){s.style.borderColor='#ccc';s.style.background='#fafafa';s.style.color='#555';s.style.fontWeight='400';});
   document.getElementById('completeModal').classList.add('show');
@@ -1274,13 +1275,22 @@ function cmRemoveFile(idx){
   checkCmWordHint();
 }
 
+var cmVideoRequired=true;
+
 function checkCmWordHint(){
   var nonImg=cmFiles.filter(function(f){return !f.isImg;});
   var hasWord=nonImg.some(function(f){return /\.docx?$/i.test(f.name);});
   var isFirst=isFirstOrder(cmIdx);
-  var needVideo=hasWord&&isFirst;
+  var needVideo=hasWord&&isFirst&&cmVideoRequired;
   document.getElementById('cmVideoHint').textContent=needVideo?'（含 Word 文件，视频必填）':'';
+  document.getElementById('cmVideoSkip').style.display=(hasWord&&isFirst)?'inline':'none';
+  document.getElementById('cmVideoSkip').textContent=cmVideoRequired?'关闭必填':'开启必填';
   document.getElementById('cmSurveySection').style.display=(nonImg.length&&!hasWord)?'block':'none';
+}
+
+function toggleVideoRequired(){
+  cmVideoRequired=!cmVideoRequired;
+  checkCmWordHint();
 }
 
 /**
@@ -1308,7 +1318,7 @@ function pickCmSurvey(el){
 function submitComplete(){
   if(cmIdx===null)return;
   var hasWord=cmFiles.some(function(f){return !f.isImg&&/\.docx?$/i.test(f.name);});
-  if(hasWord&&isFirstOrder(cmIdx)&&!cmVideoUrl){toast('结果文件含 Word，视频必填（第一单）');return;}
+  if(hasWord&&isFirstOrder(cmIdx)&&cmVideoRequired&&!cmVideoUrl){toast('结果文件含 Word，视频必填（第一单）');return;}
   var o=orders[cmIdx];
   var rfData=cmFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};});
   var needSurvey='否';
