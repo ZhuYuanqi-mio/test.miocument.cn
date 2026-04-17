@@ -449,8 +449,17 @@ function dlByName(url, name) {
  */
 function fileIconUrl(name) {
   var ext = (name || '').split('.').pop().toLowerCase();
-  var map = {doc:'word', docx:'word', xls:'excel', xlsx:'excel', ppt:'ppt', pptx:'ppt', pdf:'pdf'};
-  return ICON_BASE + (map[ext] || 'file') + '.png';
+  var map = {
+    xls:'Excel',xlsx:'Excel',csv:'Excel',
+    ppt:'PPT',pptx:'PPT',pdf:'Pdf',txt:'Txt',
+    doc:'Word',docx:'Word',
+    zip:'压缩包',rar:'压缩包','7z':'压缩包',gz:'压缩包',
+    jpg:'图片',jpeg:'图片',png:'图片',gif:'图片',webp:'图片',bmp:'图片',
+    mp4:'视频',avi:'视频',mov:'视频',mkv:'视频',wmv:'视频',
+    mp3:'音频',wav:'音频',flac:'音频',aac:'音频',ogg:'音频'
+  };
+  var t = map[ext] || '未知文件';
+  return ICON_BASE + encodeURIComponent('文件类型-' + t + '.png');
 }
 
 /**
