@@ -1263,8 +1263,6 @@ function submitComplete(){
   if(cmIdx===null)return;
   var hasWord=cmFiles.some(function(f){return !f.isImg&&/\.docx?$/i.test(f.name);});
   if(hasWord&&!cmVideoUrl){toast('结果文件含 Word，请上传展示视频');return;}
-  var nonImgFiles=cmFiles.filter(function(f){return !f.isImg;});
-  if(!nonImgFiles.length&&!cmFiles.some(function(f){return f.isImg;})){toast('请至少上传一个结果文件或图片');return;}
   var o=orders[cmIdx];
   var rfData=cmFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};});
   var needSurvey='否';
