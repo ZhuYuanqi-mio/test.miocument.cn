@@ -538,7 +538,7 @@ function loadMyOrders(){
         result_files:rfs, result_video:o.result_video||'', delivery_status:o.delivery_status||'',
         receipt_screenshot:o.receipt_screenshot||'', after_sale_file:o.after_sale_file||'',
         survey_link:o.survey_link||'',survey_province:o.survey_province||'',survey_midnight:o.survey_midnight||'',
-        approved_at:o.approved_at||'',
+        need_survey:o.need_survey||'',approved_at:o.approved_at||'',
         created_at:o.created_at||''};
     });
     myOrders.sort(function(a,b){
@@ -715,23 +715,40 @@ function buildResultCard(o,i){
       s+='<span class="card-chat-btn" onclick="event.stopPropagation();openDtl('+i+')">查看需求</span></div>';
     }
   } else {
-    if(ds==='unreceived'||ds===''){
-      s+='<div class="rc-title">需求已完成</div>';
-      s+='<div style="font-size:13px;color:#666;margin-bottom:10px;line-height:1.6">先验算结果是否符合你的要求，确认符合要求+在咸鱼确认收货后，点击按钮开启问卷填写</div>';
-      if(o.result_files&&o.result_files.length){
-        s+='<div class="rc-files">';
-        o.result_files.forEach(function(f){
-          s+='<div class="rc-file" onclick="event.stopPropagation();dlByName(\''+f.url+'\',\''+escHtml(f.name)+'\')">';
-          s+='<img class="rc-file-ico" src="'+fileIconUrl(f.name)+'">';
-          s+='<span class="rc-file-name">'+escHtml(f.name)+'</span></div>';
-        });
-        s+='</div>';
+    if(o.need_survey==='是'){
+      if(ds==='unreceived'||ds===''){
+        s+='<div class="rc-title">需求已完成</div>';
+        s+='<div style="font-size:13px;color:#666;margin-bottom:10px;line-height:1.6">先验算结果是否符合你的要求，确认符合要求+在咸鱼确认收货后，<b style="color:#f0a03c">点击按钮开启问卷填写</b></div>';
+        if(o.result_files&&o.result_files.length){
+          s+='<div class="rc-files">';
+          o.result_files.forEach(function(f){
+            s+='<div class="rc-file" onclick="event.stopPropagation();dlByName(\''+f.url+'\',\''+escHtml(f.name)+'\')">';
+            s+='<img class="rc-file-ico" src="'+fileIconUrl(f.name)+'">';
+            s+='<span class="rc-file-name">'+escHtml(f.name)+'</span></div>';
+          });
+          s+='</div>';
+        }
+        s+='<div style="margin-top:10px"><button class="rc-receive-btn rc-receive-blue" onclick="event.stopPropagation();confirmReceive('+i+')">我已在咸鱼确认收货</button></div>';
+      } else if(ds==='pending_survey'){
+        s+='<div class="rc-title">需求已完成</div>';
+        s+='<div style="font-size:14px;color:#4a90d9;font-weight:500;text-align:center;padding:20px 0">问卷填写中，请等待</div>';
+      } else if(ds==='survey_done'||ds==='received'){
+        s+='<div class="rc-title">需求'+(i+1)+'已完成请查看结果：</div>';
+        if(o.result_files&&o.result_files.length){
+          s+='<div class="rc-files">';
+          o.result_files.forEach(function(f){
+            s+='<div class="rc-file" onclick="event.stopPropagation();dlByName(\''+f.url+'\',\''+escHtml(f.name)+'\')">';
+            s+='<img class="rc-file-ico" src="'+fileIconUrl(f.name)+'">';
+            s+='<span class="rc-file-name">'+escHtml(f.name)+'</span></div>';
+          });
+          s+='</div>';
+        }
+        s+='<div style="display:flex;justify-content:space-between;align-items:center">';
+        if(o.approved_at) s+='<span style="font-size:11px;color:#999">'+fmtDl(o.approved_at)+' 确认完成</span>';
+        else s+='<span></span>';
+        s+='<span class="card-chat-btn" onclick="event.stopPropagation();openDtl('+i+')">查看需求</span></div>';
       }
-      s+='<div style="margin-top:10px"><button class="rc-receive-btn rc-receive-blue" onclick="event.stopPropagation();confirmReceive('+i+')">我已在咸鱼确认收货</button></div>';
-    } else if(ds==='pending_survey'){
-      s+='<div class="rc-title">需求已完成</div>';
-      s+='<div style="font-size:14px;color:#4a90d9;font-weight:500;text-align:center;padding:20px 0">问卷填写中，请等待</div>';
-    } else if(ds==='survey_done'||ds==='received'){
+    } else {
       s+='<div class="rc-title">需求'+(i+1)+'已完成请查看结果：</div>';
       if(o.result_files&&o.result_files.length){
         s+='<div class="rc-files">';
@@ -743,7 +760,7 @@ function buildResultCard(o,i){
         s+='</div>';
       }
       s+='<div style="display:flex;justify-content:space-between;align-items:center">';
-      if(o.approved_at) s+='<span style="font-size:11px;color:#999">'+fmtDl(o.approved_at)+(ds==='survey_done'?' 确认完成':' 审批通过')+'</span>';
+      if(o.approved_at) s+='<span style="font-size:11px;color:#999">'+fmtDl(o.approved_at)+' 审批通过</span>';
       else s+='<span></span>';
       s+='<span class="card-chat-btn" onclick="event.stopPropagation();openDtl('+i+')">查看需求</span></div>';
     }

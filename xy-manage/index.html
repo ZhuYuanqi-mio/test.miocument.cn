@@ -282,6 +282,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
       <label class="cm-upload-btn">选择文件<input type="file" multiple style="display:none" onchange="cmUploadFile(this)"></label>
       <div id="cmFilePreview"></div>
     </div>
+    <div class="cm-section" id="cmSurveySection" style="display:none">
+      <div class="cm-lb">是否有问卷填写需求</div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <span class="cm-survey-opt" data-v="是" onclick="pickCmSurvey(this)" style="padding:7px 20px;border:1px solid #ccc;border-radius:6px;font-size:13px;color:#555;cursor:pointer;background:#fafafa;transition:all .15s">是</span>
+        <span class="cm-survey-opt" data-v="否" onclick="pickCmSurvey(this)" style="padding:7px 20px;border:1px solid #ccc;border-radius:6px;font-size:13px;color:#555;cursor:pointer;background:#fafafa;transition:all .15s">否</span>
+      </div>
+    </div>
     <div class="cm-btns">
       <button class="cm-cancel" onclick="closeCompleteModal()">取消</button>
       <button class="cm-ok" onclick="submitComplete()">确认完成</button>
@@ -334,7 +341,7 @@ function load(){
           result_files:rfs,result_video:o.result_video||'',delivery_status:o.delivery_status||'',
           receipt_screenshot:o.receipt_screenshot||'',after_sale_file:o.after_sale_file||'',
           survey_link:o.survey_link||'',survey_province:o.survey_province||'',survey_midnight:o.survey_midnight||'',
-          approved_at:o.approved_at||'',
+          need_survey:o.need_survey||'',approved_at:o.approved_at||'',
           created_at:o.created_at||''};
       });
       inheritAssignees();
@@ -1067,6 +1074,8 @@ function openCompleteModal(i){
   document.getElementById('cmImgPreview').innerHTML='';
   document.getElementById('cmFilePreview').innerHTML='';
   document.getElementById('cmVideoHint').textContent='';
+  document.getElementById('cmSurveySection').style.display='none';
+  document.querySelectorAll('.cm-survey-opt').forEach(function(s){s.style.borderColor='#ccc';s.style.background='#fafafa';s.style.color='#555';s.style.fontWeight='400';});
   document.getElementById('completeModal').classList.add('show');
 }
 
@@ -1149,8 +1158,18 @@ function cmRemoveFile(idx){
 }
 
 function checkCmWordHint(){
-  var hasWord=cmFiles.some(function(f){return !f.isImg&&/\.docx?$/i.test(f.name);});
+  var nonImg=cmFiles.filter(function(f){return !f.isImg;});
+  var hasWord=nonImg.some(function(f){return /\.docx?$/i.test(f.name);});
   document.getElementById('cmVideoHint').textContent=hasWord?'（含 Word 文件，视频必填）':'';
+  document.getElementById('cmSurveySection').style.display=(nonImg.length&&!hasWord)?'block':'none';
+}
+
+/**
+ * @param {HTMLElement} el - 点击的选项
+ */
+function pickCmSurvey(el){
+  document.querySelectorAll('.cm-survey-opt').forEach(function(s){s.style.borderColor='#ccc';s.style.background='#fafafa';s.style.color='#555';s.style.fontWeight='400';});
+  el.style.borderColor='#222';el.style.background='#222';el.style.color='#fff';el.style.fontWeight='500';
 }
 
 function submitComplete(){
@@ -1161,11 +1180,18 @@ function submitComplete(){
   if(!nonImgFiles.length&&!cmFiles.some(function(f){return f.isImg;})){toast('请至少上传一个结果文件或图片');return;}
   var o=orders[cmIdx];
   var rfData=cmFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};});
-  var updateObj={status:'completed',delivery_status:'unreceived',result_files:JSON.stringify(rfData)};
+  var needSurvey='否';
+  if(!hasWord){
+    document.querySelectorAll('.cm-survey-opt').forEach(function(s){
+      if(s.style.fontWeight==='500') needSurvey=s.getAttribute('data-v');
+    });
+  }
+  var updateObj={status:'completed',delivery_status:'unreceived',result_files:JSON.stringify(rfData),need_survey:needSurvey};
   if(cmVideoUrl) updateObj.result_video=cmVideoUrl;
   o.status='completed';
   o.delivery_status='unreceived';
   o.result_files=rfData;
+  o.need_survey=needSurvey;
   if(cmVideoUrl) o.result_video=cmVideoUrl;
   fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify(updateObj)})});
   closeCompleteModal();
