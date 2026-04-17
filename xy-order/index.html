@@ -701,6 +701,16 @@ function buildResultCard(o,i){
     if(ds==='unreceived'||ds===''){
       s+='<div class="rc-title">需求已完成</div>';
       s+='<div style="font-size:13px;color:#666;margin-bottom:10px;line-height:1.6">在<b style="color:#f0a03c">咸鱼确认收货</b>后上传截图，审批通过后可看到结果文件，后续有需要修改的填写需求单即可</div>';
+      var nonWordFiles=(o.result_files||[]).filter(function(f){return !/\.docx?$/i.test(f.name);});
+      if(nonWordFiles.length){
+        s+='<div class="rc-files">';
+        nonWordFiles.forEach(function(f){
+          s+='<div class="rc-file" onclick="event.stopPropagation();dlByName(\''+f.url+'\',\''+escHtml(f.name)+'\')">';
+          s+='<img class="rc-file-ico" src="'+fileIconUrl(f.name)+'">';
+          s+='<span class="rc-file-name">'+escHtml(f.name)+'</span></div>';
+        });
+        s+='</div>';
+      }
       if(o.result_video){
         s+='<div style="margin:8px 0"><video src="'+o.result_video+'" controls controlslist="nodownload nofullscreen" disablepictureinpicture playsinline oncontextmenu="return false" style="width:100%;border-radius:6px"></video></div>';
       }
@@ -1235,15 +1245,14 @@ function previewReceipt(inp){
 function submitReceipt(){
   if(!recvScreenshotUrl||recvIdx===null)return;
   var o=myOrders[recvIdx];
-  var payload={order_id:o.id,update_json:JSON.stringify({delivery_status:'pending_approval',receipt_screenshot:recvScreenshotUrl})};
-  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+  var idx=recvIdx;
+  // 先保存截图，再打开问卷弹窗
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({receipt_screenshot:recvScreenshotUrl})})})
   .then(function(r){return r.json();})
   .then(function(){
-    o.delivery_status='pending_approval';
     o.receipt_screenshot=recvScreenshotUrl;
     closeRecvModal();
-    showToast('已提交，等待审批');
-    renderCards();
+    openSurveyModal(idx);
   }).catch(function(e){console.error(e);showToast('操作失败');});
 }
 
@@ -1290,16 +1299,19 @@ function submitSurvey(){
   if(!province){showToast('请填写地点');return;}
   if(!midnight){showToast('请选择是否支持凌晨填写');return;}
   var o=myOrders[surveyIdx];
-  var updateObj={delivery_status:'pending_survey',survey_link:link,survey_province:province,survey_midnight:midnight};
+  var hasWord=(o.result_files||[]).some(function(f){return /\.docx?$/i.test(f.name);});
+  // 含 Word 文件时走审批流程，不含 Word 时走问卷填写流程
+  var nextStatus=hasWord?'pending_approval':'pending_survey';
+  var updateObj={delivery_status:nextStatus,survey_link:link,survey_province:province,survey_midnight:midnight};
   fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify(updateObj)})})
   .then(function(r){return r.json();})
   .then(function(){
-    o.delivery_status='pending_survey';
+    o.delivery_status=nextStatus;
     o.survey_link=link;
     o.survey_province=province;
     o.survey_midnight=midnight;
     closeSurveyModal();
-    showToast('问卷信息已提交');
+    showToast(hasWord?'已提交，等待审批':'问卷信息已提交');
     renderCards();
   }).catch(function(e){console.error(e);showToast('提交失败');});
 }
