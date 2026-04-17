@@ -680,7 +680,7 @@ function buildCard(o,i){
     var requested=(o.chat_notes||'').indexOf('[申请修改]')>=0;
     editReq=requested?'<span class="card-chat-btn" style="color:#aaa;border-color:#ddd">已申请修改</span>':'<span class="card-chat-btn" onclick="event.stopPropagation();requestEdit('+i+')">申请修改</span>';
   } else if(o.status==='pending'&&o.can_edit){
-    editReq='<span class="card-chat-btn" style="color:#4a90d9;border-color:#4a90d9" onclick="event.stopPropagation();openDtl('+i+')">修改</span>';
+    editReq='<span class="card-chat-btn" style="color:#4a90d9;border-color:#4a90d9" onclick="event.stopPropagation();openEditForm('+i+')">修改</span>';
   }
   s+='<div class="card-actions">'+editReq+'<span class="card-chat-btn" onclick="event.stopPropagation();chatFromCard('+i+')">聊一聊</span></div>';
   s+='</div>';
@@ -1325,16 +1325,63 @@ function showTips(){document.getElementById('tipsModal').classList.add('show');}
 function closeTips(){document.getElementById('tipsModal').classList.remove('show');}
 
 /* ===== Form Page ===== */
+var editingIdx=null;
+
 function openForm(){
   var hasPending=myOrders.some(function(o){return o.status==='pending';});
   if(hasPending){showToast('上一单还没完成，只能修改上一单需求');return;}
+  editingIdx=null;
+  resetForm();
   var lastEmail='';
   for(var i=0;i<myOrders.length;i++){if(myOrders[i].email){lastEmail=myOrders[i].email;break;}}
   if(lastEmail) document.getElementById('email').value=lastEmail;
+  document.querySelector('#pageForm .form-top h2').textContent='提交任务';
+  document.getElementById('submitBtn').textContent='提 交';
+  document.getElementById('pageList').classList.remove('active');
+  document.getElementById('pageForm').classList.add('active');
+}
+
+/**
+ * @description 打开表单页面进行修改，回填已有数据
+ * @param {number} i - 订单索引
+ */
+function openEditForm(i){
+  var o=myOrders[i];
+  if(!o||!o.can_edit){showToast('暂无编辑权限');return;}
+  editingIdx=i;
+  resetForm();
+  document.getElementById('email').value=o.email||'';
+  if(o.deadline){
+    var dtVal=o.deadline.slice(0,16);
+    document.getElementById('deadline').value=dtVal;
+    toggleDlPh();
+  }
+  if(o.task_types&&o.task_types.length){
+    o.task_types.forEach(function(t){
+      var el=document.querySelector('#taskTags span[data-v="'+t+'"]');
+      if(el){el.classList.add('on');}else{
+        var sp=document.createElement('span');
+        sp.dataset.v=t;sp.textContent=t;sp.className='on custom';
+        document.getElementById('taskTags').appendChild(sp);
+      }
+    });
+  }
+  document.getElementById('desc').value=o.description||'';
+  if(o.images&&o.images.length){
+    images=o.images.map(function(m){return{name:m.name||'',url:imgSrc(m),localPreview:imgSrc(m),uploading:false};});
+    renderImgs();
+  }
+  if(o.files&&o.files.length){
+    files=o.files.map(function(f){return{name:f.name||'',size:f.size||0,url:f.url||f.data||'',uploading:false};});
+    renderFileList();
+  }
+  document.querySelector('#pageForm .form-top h2').textContent='修改需求';
+  document.getElementById('submitBtn').textContent='确认修改';
   document.getElementById('pageList').classList.remove('active');
   document.getElementById('pageForm').classList.add('active');
 }
 function closeForm(){
+  editingIdx=null;
   document.getElementById('pageForm').classList.remove('active');
   document.getElementById('pageList').classList.add('active');
 }
@@ -1376,23 +1423,51 @@ function submitOrder(){
   var validImgs=images.filter(function(m){return m.url&&m.url!=='FAILED';});
   var validFiles=files.filter(function(f){return f.url&&f.url!=='FAILED';});
   var btn=document.getElementById('submitBtn');
-  btn.disabled=true; btn.textContent='提交中...';
-  var payload={order_json:JSON.stringify({
-    xianyu_name:curUser, email:email, deadline:dl+':00+08:00', task_types:tasks.join(','), description:desc,
-    image_data:JSON.stringify(validImgs.map(function(m){return{name:m.name,url:m.url};})),
-    file_data:JSON.stringify(validFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};})),
-    status:'pending'
-  })};
-  fetch(ZION.create_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
-  .then(function(r){return r.json();})
-  .then(function(){
-    btn.disabled=false; btn.textContent='提 交';
-    showToast('提交成功');
-    resetForm();
-    closeForm();
-    loadMyOrders();
-  })
-  .catch(function(e){btn.disabled=false;btn.textContent='提 交';showToast('提交失败，请重试');console.error(e);});
+  var isEdit=editingIdx!==null;
+  btn.disabled=true; btn.textContent=isEdit?'修改中...':'提交中...';
+
+  if(isEdit){
+    var o=myOrders[editingIdx];
+    var updateData={
+      email:email,
+      deadline:dl+':00+08:00',
+      task_types:tasks.join(','),
+      description:desc,
+      can_edit:false,
+      image_data:JSON.stringify(validImgs.map(function(m){return{name:m.name,url:m.url};})),
+      file_data:JSON.stringify(validFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};}))
+    };
+    var payload={order_id:o.id,update_json:JSON.stringify(updateData)};
+    fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json();})
+    .then(function(){
+      o.email=email;o.deadline=dl+':00+08:00';o.task_types=tasks;o.description=desc;
+      o.can_edit=false;o.images=validImgs;o.files=validFiles;
+      btn.disabled=false;btn.textContent='确认修改';
+      showToast('修改成功');
+      editingIdx=null;
+      resetForm();
+      closeForm();
+      renderCards();
+    }).catch(function(e){btn.disabled=false;btn.textContent='确认修改';showToast('修改失败，请重试');console.error(e);});
+  } else {
+    var payload={order_json:JSON.stringify({
+      xianyu_name:curUser, email:email, deadline:dl+':00+08:00', task_types:tasks.join(','), description:desc,
+      image_data:JSON.stringify(validImgs.map(function(m){return{name:m.name,url:m.url};})),
+      file_data:JSON.stringify(validFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};})),
+      status:'pending'
+    })};
+    fetch(ZION.create_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json();})
+    .then(function(){
+      btn.disabled=false; btn.textContent='提 交';
+      showToast('提交成功');
+      resetForm();
+      closeForm();
+      loadMyOrders();
+    })
+    .catch(function(e){btn.disabled=false;btn.textContent='提 交';showToast('提交失败，请重试');console.error(e);});
+  }
 }
 
 function resetForm(preSelect){
