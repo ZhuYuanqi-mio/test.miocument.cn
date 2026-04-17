@@ -694,7 +694,7 @@ function buildResultCard(o,i){
       if(o.result_video){
         s+='<div style="margin:8px 0"><video src="'+o.result_video+'" controls controlslist="nodownload nofullscreen" disablepictureinpicture playsinline oncontextmenu="return false" style="width:100%;border-radius:6px"></video></div>';
       }
-      s+='<div style="margin-top:10px"><button class="rc-receive-btn rc-receive-blue" onclick="event.stopPropagation();confirmReceive('+i+')">我已在咸鱼确认收货</button></div>';
+      s+='<div style="margin-top:10px"><button class="rc-receive-btn rc-receive-blue" onclick="event.stopPropagation();confirmReceive('+i+')">我已在咸鱼确认收货，请给我结果文件</button></div>';
     } else if(ds==='pending_approval'){
       s+='<div class="rc-title">需求已完成</div>';
       s+='<div style="font-size:14px;color:#f0a03c;font-weight:500;text-align:center;padding:20px 0">审批中，请等待</div>';
@@ -728,7 +728,7 @@ function buildResultCard(o,i){
           });
           s+='</div>';
         }
-        s+='<div style="margin-top:10px"><button class="rc-receive-btn rc-receive-blue" onclick="event.stopPropagation();confirmReceive('+i+')">我已在咸鱼确认收货</button></div>';
+        s+='<div style="margin-top:10px"><button class="rc-receive-btn rc-receive-blue" onclick="event.stopPropagation();confirmReceive('+i+')">我已在咸鱼确认收货，请开始填写问卷</button></div>';
       } else if(ds==='pending_survey'){
         s+='<div class="rc-title">需求已完成</div>';
         s+='<div style="font-size:14px;color:#4a90d9;font-weight:500;text-align:center;padding:20px 0">问卷填写中，请等待</div>';
