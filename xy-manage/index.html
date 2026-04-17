@@ -1277,8 +1277,24 @@ function cmRemoveFile(idx){
 function checkCmWordHint(){
   var nonImg=cmFiles.filter(function(f){return !f.isImg;});
   var hasWord=nonImg.some(function(f){return /\.docx?$/i.test(f.name);});
-  document.getElementById('cmVideoHint').textContent=hasWord?'（含 Word 文件，视频必填）':'';
+  var isFirst=isFirstOrder(cmIdx);
+  var needVideo=hasWord&&isFirst;
+  document.getElementById('cmVideoHint').textContent=needVideo?'（含 Word 文件，视频必填）':'';
   document.getElementById('cmSurveySection').style.display=(nonImg.length&&!hasWord)?'block':'none';
+}
+
+/**
+ * @description 判断是否是该用户的第一个需求单（非售后）
+ * @param {number} i - 订单索引
+ * @return {boolean}
+ */
+function isFirstOrder(i){
+  if(i===null)return true;
+  var o=orders[i];
+  var hasOtherCompleted=orders.some(function(x){
+    return x!==o&&x.xianyu_name===o.xianyu_name&&x.status==='completed'&&x.source!=='douyin';
+  });
+  return !hasOtherCompleted;
 }
 
 /**
@@ -1292,7 +1308,7 @@ function pickCmSurvey(el){
 function submitComplete(){
   if(cmIdx===null)return;
   var hasWord=cmFiles.some(function(f){return !f.isImg&&/\.docx?$/i.test(f.name);});
-  if(hasWord&&!cmVideoUrl){toast('结果文件含 Word，请上传展示视频');return;}
+  if(hasWord&&isFirstOrder(cmIdx)&&!cmVideoUrl){toast('结果文件含 Word，视频必填（第一单）');return;}
   var o=orders[cmIdx];
   var rfData=cmFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};});
   var needSurvey='否';
