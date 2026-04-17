@@ -424,6 +424,7 @@ function updateCompletedBadge(){
 function stats(){
   var now=new Date(),u=0,p=0,d=0;
   orders.forEach(function(o){
+    if(o.source==='douyin')return;
     if(o.status==='completed'){d++;return;}
     var h=(new Date(o.deadline)-now)/36e5;
     if(h<12)u++;p++;
@@ -537,7 +538,7 @@ function renderCompletedList(q){
 function updateDropCounts(){
   var all=0,ua=0,fm=0,nb=0;
   orders.forEach(function(o){
-    if(o.status==='completed')return;
+    if(o.status==='completed'||o.source==='douyin')return;
     all++;
     if(!o.assignee)ua++;
     if(o.assignee==='肥咪')fm++;
