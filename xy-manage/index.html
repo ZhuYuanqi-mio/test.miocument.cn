@@ -648,22 +648,20 @@ function openDtl(i){
       });
       s+='</div></div>';
     }
-    if(o.delivery_status==='pending_approval'){
-      if(o.receipt_screenshot){
-        s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">收货截图：</span>';
-        s+='<div style="margin-top:6px"><img src="'+o.receipt_screenshot+'" style="width:120px;border-radius:6px;cursor:pointer;border:1px solid #e0e0e0" onclick="viewImg(\''+o.receipt_screenshot+'\')"></div></div>';
-      }
-      if(o.survey_link){
-        s+='<div style="margin:10px 0;padding:10px 12px;background:#f8f9ff;border-radius:6px;border:1px solid #e0e0e0">';
-        s+='<div style="font-size:12px;color:#666;margin-bottom:6px;font-weight:500">问卷信息</div>';
-        s+='<div style="font-size:13px;color:#222;margin-bottom:4px">链接：<a href="'+(o.survey_link||'#')+'" target="_blank" style="color:#4a90d9;word-break:break-all">'+escHtml(o.survey_link||'未填写')+'</a></div>';
-        s+='<div style="font-size:13px;color:#222;margin-bottom:4px">地点（省）：'+escHtml(o.survey_province||'未填写')+'</div>';
-        s+='<div style="font-size:13px;color:#222">凌晨填写：'+escHtml(o.survey_midnight||'未填写')+'</div></div>';
-      }
-      s+='<div style="margin-top:8px"><button style="padding:8px 20px;border:none;border-radius:6px;background:#22c55e;color:#fff;font-size:13px;font-weight:500;cursor:pointer" onclick="approveOrder('+i+')">审批通过</button></div>';
-    } else if(o.receipt_screenshot){
+    if(o.receipt_screenshot){
       s+='<div style="margin-bottom:10px"><span style="font-size:12px;color:#666">收货截图：</span>';
       s+='<div style="margin-top:6px"><img src="'+o.receipt_screenshot+'" style="width:120px;border-radius:6px;cursor:pointer;border:1px solid #e0e0e0" onclick="viewImg(\''+o.receipt_screenshot+'\')"></div></div>';
+    }
+    if(o.delivery_status==='pending_approval'&&o.survey_link){
+      s+='<div style="margin:10px 0;padding:10px 12px;background:#f8f9ff;border-radius:6px;border:1px solid #e0e0e0">';
+      s+='<div style="font-size:12px;color:#666;margin-bottom:6px;font-weight:500">问卷信息</div>';
+      s+='<div style="font-size:13px;color:#222;margin-bottom:4px">链接：<a href="'+(o.survey_link||'#')+'" target="_blank" style="color:#4a90d9;word-break:break-all">'+escHtml(o.survey_link||'未填写')+'</a></div>';
+      s+='<div style="font-size:13px;color:#222;margin-bottom:4px">地点（省）：'+escHtml(o.survey_province||'未填写')+'</div>';
+      s+='<div style="font-size:13px;color:#222">凌晨填写：'+escHtml(o.survey_midnight||'未填写')+'</div></div>';
+    }
+    var notApproved=!o.delivery_status||o.delivery_status==='unreceived'||o.delivery_status==='pending_approval';
+    if(notApproved){
+      s+='<div style="margin-top:8px"><button style="padding:8px 20px;border:none;border-radius:6px;background:#22c55e;color:#fff;font-size:13px;font-weight:500;cursor:pointer" onclick="approveOrder('+i+')">审批通过</button></div>';
     }
     if(o.delivery_status==='pending_survey'||o.delivery_status==='survey_filling'){
       s+='<div style="margin-top:10px;padding:10px 12px;background:#f8f9ff;border-radius:6px;border:1px solid #e0e0e0">';
