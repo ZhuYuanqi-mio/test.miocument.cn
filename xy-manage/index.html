@@ -527,8 +527,10 @@ function renderCompletedList(q){
     grouped[day].sort(function(a,b){return b.ts-a.ts;});
     grouped[day].forEach(function(item){
       var o=item.o,i=item.idx;
+      var uc=unreadMap[o.xianyu_name]||0;
+      var dot=uc>0?'<span style="display:inline-block;min-width:18px;height:18px;border-radius:9px;background:#c00;color:#fff;font-size:10px;line-height:18px;text-align:center;padding:0 5px;font-weight:600;margin-left:6px">'+uc+'</span>':'';
       h+='<div class="cl-row">';
-      h+='<div class="cl-info"><span class="cl-name">'+escHtml(o.xianyu_name)+'</span><span class="cl-type">'+escHtml(o.task_types.join(', '))+'</span></div>';
+      h+='<div class="cl-info"><span class="cl-name">'+escHtml(o.xianyu_name)+'</span>'+dot+'<span class="cl-type">'+escHtml(o.task_types.join(', '))+'</span></div>';
       h+='<span class="cl-view" onclick="openDtl('+i+')">查看详情</span>';
       h+='</div>';
     });
