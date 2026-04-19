@@ -604,6 +604,60 @@ function bCard(o,i){
 }
 function fmtDl(d){var t=new Date(d);return(t.getMonth()+1)+'/'+t.getDate()+' '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2);}
 
+/**
+ * @description 构建同一用户历史需求列表（按时间倒序），显示需求描述和已交付结果文件（排除视频）
+ * @param {Object} curOrder - 当前订单
+ * @param {number} curIdxArg - 当前订单索引
+ * @return {string} HTML 片段
+ */
+function buildUserHistory(curOrder,curIdxArg){
+  var VIDEO_EXTS={mp4:1,avi:1,mov:1,mkv:1,webm:1,flv:1,wmv:1,m4v:1};
+  var list=[];
+  orders.forEach(function(o,i){
+    if(i===curIdxArg)return;
+    if(o.xianyu_name!==curOrder.xianyu_name)return;
+    if(o.source==='douyin'&&curOrder.source!=='douyin')return;
+    var ts=o.approved_at||o.created_at||o.deadline||'';
+    list.push({o:o,idx:i,ts:ts?new Date(ts).getTime():0});
+  });
+  if(!list.length)return '';
+  list.sort(function(a,b){return b.ts-a.ts;});
+  var h='<div class="d-card"><div class="lb">该用户历史需求 ('+list.length+')</div>';
+  list.forEach(function(item){
+    var o=item.o,i=item.idx;
+    var dateTxt=item.ts?new Date(item.ts).toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'时间未知';
+    var types=(o.task_types||[]).join('、')||'未分类';
+    var desc=(o.description||'').replace(/\n/g,' ');
+    if(desc.length>60) desc=desc.slice(0,60)+'...';
+    var stTxt=o.status==='completed'?'已完成':'进行中';
+    var stClr=o.status==='completed'?'#22c55e':'#f0a03c';
+    h+='<div style="padding:10px 0;border-bottom:1px solid #f0f0f0">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+    h+='<span style="font-size:12px;color:#888">'+dateTxt+'</span>';
+    h+='<span style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:'+stClr+';font-weight:500">'+stTxt+'</span><span style="font-size:11px;color:#4a90d9;cursor:pointer" onclick="openDtl('+i+')">查看详情</span></span>';
+    h+='</div>';
+    h+='<div style="font-size:13px;color:#222;margin-bottom:2px">'+escHtml(types)+'</div>';
+    if(desc) h+='<div style="font-size:12px;color:#666;margin-bottom:4px">'+escHtml(desc)+'</div>';
+    var rfs=(o.result_files||[]).filter(function(f){
+      var ext=((f.name||'').split('.').pop()||'').toLowerCase();
+      return !VIDEO_EXTS[ext];
+    });
+    if(rfs.length){
+      h+='<div style="margin-top:4px"><div style="font-size:11px;color:#888;margin-bottom:4px">结果文件：</div><div class="d-files">';
+      rfs.forEach(function(f,fi){
+        var realIdx=(o.result_files||[]).indexOf(f);
+        h+='<div class="fr" style="padding:6px 10px"><span class="nm" style="font-size:12px">'+escHtml(f.name)+'</span>';
+        if(f.size)h+='<span class="sz">'+fmtSz(f.size)+'</span>';
+        h+='<span class="dl" onclick="event.stopPropagation();dlFile2('+i+','+realIdx+')">下载</span></div>';
+      });
+      h+='</div></div>';
+    }
+    h+='</div>';
+  });
+  h+='</div>';
+  return h;
+}
+
 /* ===== Detail ===== */
 function openDtl(i){
   curIdx=i;var o=orders[i];
@@ -693,6 +747,7 @@ function openDtl(i){
   } else if(o.after_sale_file){
     s+='<div class="d-card"><div class="lb">售后对象</div><div class="val">'+escHtml(o.after_sale_file)+'</div></div>';
   }
+  s+=buildUserHistory(o,i);
   s+='<div class="d-card"><div class="lb">聊天备注 <span style="font-size:11px;color:#aaa;margin-left:6px">双击编辑</span></div><div class="val" id="adminNotes" style="white-space:pre-wrap;cursor:text" ondblclick="enableAdminNotes('+i+')">'+(escHtml(o.chat_notes||'暂无'))+'</div>';
   s+='<textarea id="adminNotesEdit" style="display:none;width:100%;min-height:80px;border:1px solid #ddd;border-radius:6px;padding:10px 12px;font-size:14px;font-family:inherit;resize:vertical;outline:none;background:#fafafa">'+(o.chat_notes||'')+'</textarea>';
   s+='<div id="adminNotesBtns" style="display:none;margin-top:8px;text-align:right"><button style="padding:6px 16px;border:none;border-radius:6px;background:#f2f2f2;color:#666;font-size:13px;cursor:pointer;margin-right:6px" onclick="cancelAdminNotes('+i+')">取消</button><button style="padding:6px 16px;border:none;border-radius:6px;background:#222;color:#fff;font-size:13px;cursor:pointer" onclick="saveAdminNotes('+i+')">保存</button></div></div>';
