@@ -30,6 +30,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .chip-drop-item .cd-cnt{font-size:10px;color:#fff;background:#ccc;border-radius:8px;padding:0 5px;min-width:16px;text-align:center;line-height:16px}
 .chip-drop-item.sel-fm .cd-cnt{background:#f0a03c}
 .chip-drop-item.sel-nb .cd-cnt{background:#4a90d9}
+.chip-drop-item.sel-em .cd-cnt{background:#8b5cf6}
 
 .container{max-width:640px;margin:0 auto;padding:12px 16px 24px}
 .stats{display:flex;gap:8px;margin-bottom:14px}
@@ -65,6 +66,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .assignee-btn:active{transform:scale(.95)}
 .assignee-btn.sel-fm{border-color:#f0a03c;background:#fef7eb;color:#d48c00;font-weight:600}
 .assignee-btn.sel-nb{border-color:#4a90d9;background:#eef5fc;color:#2c6fad;font-weight:600}
+.assignee-btn.sel-em{border-color:#8b5cf6;background:#f3eefc;color:#6b3fb8;font-weight:600}
 .card-cd{font-size:12px;font-weight:500;margin-top:3px}
 .cd-red{color:#c00}
 .cd-amber{color:#666}
@@ -209,6 +211,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
         <div class="chip-drop-item" onclick="event.stopPropagation();pickSub('unassigned')">未分配<span class="cd-cnt" id="cntUa">0</span></div>
         <div class="chip-drop-item sel-fm" onclick="event.stopPropagation();pickSub('feimi')">肥咪<span class="cd-cnt" id="cntFm">0</span></div>
         <div class="chip-drop-item sel-nb" onclick="event.stopPropagation();pickSub('nubi')">努比<span class="cd-cnt" id="cntNb">0</span></div>
+        <div class="chip-drop-item sel-em" onclick="event.stopPropagation();pickSub('ermao')">二猫<span class="cd-cnt" id="cntEm">0</span></div>
       </div>
     </span>
     <span class="chip" data-f="urgent" onclick="pick(this)">紧急</span>
@@ -472,7 +475,7 @@ function pickSub(sub){
 }
 function updatePendingLabel(){
   var chip=document.getElementById('chipPending');
-  var labels={'pending':'未完成','unassigned':'未分配','feimi':'肥咪','nubi':'努比'};
+  var labels={'pending':'未完成','unassigned':'未分配','feimi':'肥咪','nubi':'努比','ermao':'二猫'};
   var txt=(labels[pendingSub]||'未完成')+' ▾';
   chip.childNodes[0].textContent=txt;
 }
@@ -491,6 +494,7 @@ function filterCards(){
       if(o.status==='completed')return;
       if(pendingSub==='feimi'&&o.assignee!=='肥咪')return;
       if(pendingSub==='nubi'&&o.assignee!=='努比')return;
+      if(pendingSub==='ermao'&&o.assignee!=='二猫')return;
       if(pendingSub==='unassigned'&&o.assignee)return;
     }
     if(curFilter==='approval'&&!(o.status==='completed'&&o.delivery_status==='pending_approval'))return;
@@ -538,18 +542,20 @@ function renderCompletedList(q){
   document.getElementById('list').innerHTML=h;
 }
 function updateDropCounts(){
-  var all=0,ua=0,fm=0,nb=0;
+  var all=0,ua=0,fm=0,nb=0,em=0;
   orders.forEach(function(o){
     if(o.status==='completed'||o.source==='douyin')return;
     all++;
     if(!o.assignee)ua++;
     if(o.assignee==='肥咪')fm++;
     if(o.assignee==='努比')nb++;
+    if(o.assignee==='二猫')em++;
   });
   document.getElementById('cntAll').textContent=all;
   document.getElementById('cntUa').textContent=ua;
   document.getElementById('cntFm').textContent=fm;
   document.getElementById('cntNb').textContent=nb;
+  document.getElementById('cntEm').textContent=em;
 }
 function imgSrc(m){return m.url||m.data||'';}
 function bCard(o,i){
@@ -577,16 +583,19 @@ function bCard(o,i){
   s+='<div class="card-foot"><span>截止 '+dl+(ft?' · '+ft:'')+'</span>';
   var agExpanded=expandedSet[i];
   if(o.assignee&&!agExpanded){
-    var aCls=o.assignee==='肥咪'?'assignee-btn sel-fm':'assignee-btn sel-nb';
+    var aClsMap={'肥咪':'assignee-btn sel-fm','努比':'assignee-btn sel-nb','二猫':'assignee-btn sel-em'};
+    var aCls=aClsMap[o.assignee]||'assignee-btn';
     s+='<div class="assignee-grp" id="ag'+i+'">';
     s+='<button class="'+aCls+'" onclick="event.stopPropagation();expandAssignee('+i+')">'+o.assignee+'</button>';
     s+='</div>';
   } else {
     var fmCls2=o.assignee==='肥咪'?'assignee-btn sel-fm':'assignee-btn';
     var nbCls2=o.assignee==='努比'?'assignee-btn sel-nb':'assignee-btn';
+    var emCls2=o.assignee==='二猫'?'assignee-btn sel-em':'assignee-btn';
     s+='<div class="assignee-grp" id="ag'+i+'">';
     s+='<button class="'+fmCls2+'" onclick="event.stopPropagation();setAssignee('+i+',\'肥咪\')">肥咪</button>';
     s+='<button class="'+nbCls2+'" onclick="event.stopPropagation();setAssignee('+i+',\'努比\')">努比</button>';
+    s+='<button class="'+emCls2+'" onclick="event.stopPropagation();setAssignee('+i+',\'二猫\')">二猫</button>';
     s+='</div>';
   }
   s+='</div>';
