@@ -622,36 +622,51 @@ function buildUserHistory(curOrder,curIdxArg){
   });
   if(!list.length)return '';
   list.sort(function(a,b){return b.ts-a.ts;});
-  var h='<div class="d-card"><div class="lb">该用户历史需求 ('+list.length+')</div>';
-  list.forEach(function(item){
+  var h='<div class="d-card" style="background:#fafafa"><div class="lb" style="margin-bottom:10px">该用户历史需求 ('+list.length+')</div>';
+  list.forEach(function(item,hi){
     var o=item.o,i=item.idx;
     var dateTxt=item.ts?new Date(item.ts).toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'时间未知';
     var types=(o.task_types||[]).join('、')||'未分类';
-    var desc=(o.description||'').replace(/\n/g,' ');
-    if(desc.length>60) desc=desc.slice(0,60)+'...';
+    var desc=(o.description||'').replace(/\n/g,'<br>');
     var stTxt=o.status==='completed'?'已完成':'进行中';
     var stClr=o.status==='completed'?'#22c55e':'#f0a03c';
-    h+='<div style="padding:10px 0;border-bottom:1px solid #f0f0f0">';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
-    h+='<span style="font-size:12px;color:#888">'+dateTxt+'</span>';
-    h+='<span style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:'+stClr+';font-weight:500">'+stTxt+'</span><span style="font-size:11px;color:#4a90d9;cursor:pointer" onclick="openDtl('+i+')">查看详情</span></span>';
+    h+='<div style="background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:12px;margin-bottom:10px">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px dashed #eee;margin-bottom:10px">';
+    h+='<span style="font-size:13px;color:#222;font-weight:600">第 '+(list.length-hi)+' 次 · '+dateTxt+'</span>';
+    h+='<span style="display:flex;gap:8px;align-items:center"><span style="font-size:11px;padding:2px 8px;border-radius:10px;background:'+stClr+'1a;color:'+stClr+';font-weight:500">'+stTxt+'</span><span style="font-size:11px;color:#4a90d9;cursor:pointer" onclick="openDtl('+i+')">查看详情</span></span>';
     h+='</div>';
-    h+='<div style="font-size:13px;color:#222;margin-bottom:2px">'+escHtml(types)+'</div>';
-    if(desc) h+='<div style="font-size:12px;color:#666;margin-bottom:4px">'+escHtml(desc)+'</div>';
+    h+='<div style="margin-bottom:10px"><div style="font-size:11px;color:#888;font-weight:500;margin-bottom:6px">【需求】</div>';
+    h+='<div style="font-size:12px;color:#666;margin-bottom:4px">类型：'+escHtml(types)+'</div>';
+    if(desc) h+='<div style="font-size:13px;color:#222;line-height:1.5">'+desc+'</div>';
+    var userFiles=(o.files||[]);
+    if(userFiles.length){
+      h+='<div style="margin-top:6px"><div class="d-files">';
+      userFiles.forEach(function(f,fi){
+        h+='<div class="fr" style="padding:6px 10px"><span class="nm" style="font-size:12px">'+escHtml(f.name)+'</span>';
+        if(f.size)h+='<span class="sz">'+fmtSz(f.size)+'</span>';
+        h+='<span class="dl" onclick="event.stopPropagation();dlFile('+i+','+fi+')">下载</span></div>';
+      });
+      h+='</div></div>';
+    }
+    h+='</div>';
     var rfs=(o.result_files||[]).filter(function(f){
       var ext=((f.name||'').split('.').pop()||'').toLowerCase();
       return !VIDEO_EXTS[ext];
     });
+    h+='<div style="padding-top:8px;border-top:1px dashed #eee"><div style="font-size:11px;color:#888;font-weight:500;margin-bottom:6px">【交付结果】</div>';
     if(rfs.length){
-      h+='<div style="margin-top:4px"><div style="font-size:11px;color:#888;margin-bottom:4px">结果文件：</div><div class="d-files">';
-      rfs.forEach(function(f,fi){
+      h+='<div class="d-files">';
+      rfs.forEach(function(f){
         var realIdx=(o.result_files||[]).indexOf(f);
         h+='<div class="fr" style="padding:6px 10px"><span class="nm" style="font-size:12px">'+escHtml(f.name)+'</span>';
         if(f.size)h+='<span class="sz">'+fmtSz(f.size)+'</span>';
         h+='<span class="dl" onclick="event.stopPropagation();dlFile2('+i+','+realIdx+')">下载</span></div>';
       });
-      h+='</div></div>';
+      h+='</div>';
+    } else {
+      h+='<div style="font-size:12px;color:#bbb">暂无结果文件</div>';
     }
+    h+='</div>';
     h+='</div>';
   });
   h+='</div>';
