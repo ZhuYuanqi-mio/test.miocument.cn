@@ -61,6 +61,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .card-thumbs img{width:44px;height:44px;border-radius:4px;object-fit:cover;border:1px solid #e0e0e0}
 .card-thumbs .plus{width:44px;height:44px;border-radius:4px;background:#f2f2f2;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999}
 .card-foot{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#999}
+.foot-left{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden}
+.sort-arrows{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
+.sort-arrows button{width:22px;height:18px;border:1px solid #ddd;background:#fff;border-radius:3px;font-size:10px;color:#666;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;justify-content:center}
+.sort-arrows button:active{background:#f0f0f0;transform:scale(.95)}
+.sort-arrows button:disabled{opacity:.3;cursor:default}
 .assignee-grp{display:flex;gap:4px;flex-shrink:0}
 .assignee-btn{padding:3px 10px;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid #ddd;background:#fff;color:#bbb;transition:all .15s}
 .assignee-btn:active{transform:scale(.95)}
@@ -383,6 +388,7 @@ function load(){
           survey_link:o.survey_link||'',survey_province:o.survey_province||'',survey_midnight:o.survey_midnight||'',
           need_survey:o.need_survey||'',approved_at:o.approved_at||'',
           source:o.source||'xianyu',dy_seq:o.dy_seq||'',
+          sort_order:(o.sort_order==null?null:Number(o.sort_order)),
           created_at:o.created_at||''};
       });
       inheritAssignees();
@@ -396,6 +402,9 @@ function go(){
   orders.sort(function(a,b){
     if(a.status==='completed'&&b.status!=='completed')return 1;
     if(a.status!=='completed'&&b.status==='completed')return -1;
+    var ao=(a.sort_order==null?Infinity:a.sort_order);
+    var bo=(b.sort_order==null?Infinity:b.sort_order);
+    if(ao!==bo)return ao-bo;
     return new Date(a.deadline)-new Date(b.deadline);
   });
   stats();filterCards();updateCompletedBadge();updateApprovalBadge();updateSurveyBadge();
@@ -580,7 +589,12 @@ function bCard(o,i){
   }
   var dl=o.deadline?fmtDl(o.deadline):'';
   var ft=o.files&&o.files.length?o.files.length+'个文件':'';
-  s+='<div class="card-foot"><span>截止 '+dl+(ft?' · '+ft:'')+'</span>';
+  var canSort=o.status!=='completed'&&o.source!=='douyin'&&(curFilter==='pending'||curFilter==='urgent'||curFilter==='all');
+  var arrowsHtml='';
+  if(canSort){
+    arrowsHtml='<span class="sort-arrows"><button onclick="event.stopPropagation();moveOrder('+i+',-1)" title="上移">↑</button><button onclick="event.stopPropagation();moveOrder('+i+',1)" title="下移">↓</button></span>';
+  }
+  s+='<div class="card-foot"><span class="foot-left">'+arrowsHtml+'<span>截止 '+dl+(ft?' · '+ft:'')+'</span></span>';
   var agExpanded=expandedSet[i];
   if(o.assignee&&!agExpanded){
     var aClsMap={'肥咪':'assignee-btn sel-fm','努比':'assignee-btn sel-nb','二猫':'assignee-btn sel-em'};
@@ -1261,6 +1275,61 @@ function setAssignee(i,name){
     });
   }
   filterCards();
+}
+
+/**
+ * @description 获取当前筛选视图下可排序的待办订单列表（已按 sort_order+截止时间排序）
+ * @return {Array} 含 {o, i} 的数组
+ */
+function getVisiblePendingList(){
+  var q=document.getElementById('searchInput').value.trim().toLowerCase();
+  var list=[];
+  orders.forEach(function(o,i){
+    if(o.status==='completed'||o.source==='douyin')return;
+    var u=urg(o);
+    if(curFilter==='urgent'&&u!=='urg'&&u!=='over')return;
+    if(curFilter==='pending'){
+      if(pendingSub==='feimi'&&o.assignee!=='肥咪')return;
+      if(pendingSub==='nubi'&&o.assignee!=='努比')return;
+      if(pendingSub==='ermao'&&o.assignee!=='二猫')return;
+      if(pendingSub==='unassigned'&&o.assignee)return;
+    }
+    if(q&&(o.xianyu_name+' '+o.description+' '+o.task_types.join(' ')).toLowerCase().indexOf(q)<0)return;
+    list.push({o:o,i:i});
+  });
+  list.sort(function(a,b){
+    var ao=(a.o.sort_order==null?Infinity:a.o.sort_order);
+    var bo=(b.o.sort_order==null?Infinity:b.o.sort_order);
+    if(ao!==bo)return ao-bo;
+    return new Date(a.o.deadline)-new Date(b.o.deadline);
+  });
+  return list;
+}
+
+/**
+ * @description 上下移动订单在当前视图中的位置
+ * @param {number} idx - orders 数组中的订单索引
+ * @param {number} dir - -1 上移 / 1 下移
+ */
+function moveOrder(idx,dir){
+  var visible=getVisiblePendingList();
+  var pos=-1;
+  for(var j=0;j<visible.length;j++){if(visible[j].i===idx){pos=j;break;}}
+  if(pos<0)return;
+  var newPos=pos+dir;
+  if(newPos<0||newPos>=visible.length)return;
+  var needInit=visible.some(function(v){return v.o.sort_order==null;});
+  if(needInit){visible.forEach(function(v,p){v.o.sort_order=p;});}
+  var a=visible[pos].o,b=visible[newPos].o;
+  var tmp=a.sort_order;a.sort_order=b.sort_order;b.sort_order=tmp;
+  var toPersist=needInit?visible.map(function(v){return v.o;}):[a,b];
+  if(ZION.update_xy_order){
+    toPersist.forEach(function(o){
+      if(!o.id)return;
+      fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({sort_order:o.sort_order})})});
+    });
+  }
+  go();
 }
 
 var cmVideoUrl='',cmFiles=[],cmIdx=null;
