@@ -223,6 +223,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
     <span class="chip" data-f="douyin" onclick="pick(this)">抖音</span>
     <span class="chip" data-f="approval" onclick="pick(this)">审批<span id="approvalBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
     <span class="chip" data-f="survey" onclick="pick(this)">问卷填写<span id="surveyBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
+    <span class="chip" data-f="unread" onclick="pick(this)">未读<span id="unreadBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
     <span class="chip" data-f="completed" onclick="pick(this)">已完成<span class="chip-badge" id="completedBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c00;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px"></span></span>
     <span class="chip" data-f="all" onclick="pick(this)">全部</span>
   </div>
@@ -407,7 +408,7 @@ function go(){
     if(ao!==bo)return ao-bo;
     return new Date(a.deadline)-new Date(b.deadline);
   });
-  stats();filterCards();updateCompletedBadge();updateApprovalBadge();updateSurveyBadge();
+  stats();filterCards();updateCompletedBadge();updateApprovalBadge();updateSurveyBadge();updateUnreadBadge();
 }
 
 function loadUnreadCounts(){
@@ -418,7 +419,19 @@ function loadUnreadCounts(){
     unreadMap=JSON.parse(d.counts_data||'{}');
     filterCards();
     updateCompletedBadge();
+    updateUnreadBadge();
   }).catch(function(e){console.error('Unread counts error:',e);});
+}
+
+/**
+ * @description 更新"未读"chip 上的总计未读消息数徽标
+ */
+function updateUnreadBadge(){
+  var total=0;
+  Object.keys(unreadMap).forEach(function(name){total+=(unreadMap[name]||0);});
+  var badge=document.getElementById('unreadBadge');
+  if(total>0){badge.textContent=total;badge.style.display='block';}
+  else{badge.style.display='none';}
 }
 
 function updateCompletedBadge(){
@@ -493,6 +506,7 @@ document.addEventListener('click',function(){closePendingDrop();});
 function filterCards(){
   var q=document.getElementById('searchInput').value.trim().toLowerCase();
   if(curFilter==='completed'){renderCompletedList(q);updateDropCounts();return;}
+  if(curFilter==='unread'){renderUnreadList(q);updateDropCounts();return;}
   var h='',c=0;
   orders.forEach(function(o,i){
     var u=urg(o);
@@ -513,6 +527,44 @@ function filterCards(){
   });
   document.getElementById('list').innerHTML=c?h:'<div class="empty">暂无订单</div>';
   updateDropCounts();
+}
+
+/**
+ * @description 渲染未读消息列表，按未读数从高到低显示
+ * @param {string} q - 搜索关键词
+ */
+function renderUnreadList(q){
+  var rows=[];
+  Object.keys(unreadMap).forEach(function(name){
+    var cnt=unreadMap[name]||0;
+    if(cnt<=0)return;
+    if(q&&name.toLowerCase().indexOf(q)<0)return;
+    rows.push({name:name,cnt:cnt});
+  });
+  if(!rows.length){document.getElementById('list').innerHTML='<div class="empty">暂无未读消息</div>';return;}
+  rows.sort(function(a,b){return b.cnt-a.cnt;});
+  var h='<div class="cl-date"><span>未读消息</span><span style="font-weight:400;font-size:12px">合计 '+rows.length+' 人</span></div>';
+  rows.forEach(function(r){
+    h+='<div class="cl-row" data-name="'+escHtml(r.name)+'" onclick="openChatByName(this.dataset.name)" style="cursor:pointer">';
+    h+='<div class="cl-info"><span class="cl-name">'+escHtml(r.name)+'</span>';
+    h+='<span style="display:inline-block;min-width:20px;height:20px;border-radius:10px;background:#c00;color:#fff;font-size:11px;line-height:20px;text-align:center;padding:0 6px;font-weight:600;margin-left:8px">'+r.cnt+'</span>';
+    h+='</div>';
+    h+='<span class="cl-view">查看消息</span>';
+    h+='</div>';
+  });
+  document.getElementById('list').innerHTML=h;
+}
+
+/**
+ * @description 按用户名打开聊天窗口（脱离订单详情上下文）
+ * @param {string} name - 用户名
+ */
+function openChatByName(name){
+  chatUser=name;
+  document.getElementById('chatOvTitle').textContent=name;
+  document.getElementById('chatOv').classList.add('show');
+  loadChatMsgs();
+  markRead();
 }
 
 /**
