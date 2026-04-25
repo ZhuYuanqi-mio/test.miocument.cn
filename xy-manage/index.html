@@ -244,6 +244,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
     <span class="bk" onclick="closeDtl()">< 返回</span>
     <h2 id="dtlTitle"></h2>
     <div class="hd-actions">
+      <button class="chat-btn" id="dtlCopyDyBtn" onclick="copyDyLink()" style="display:none">复制</button>
       <button class="chat-btn" id="dtlChatBtn" onclick="openChat()">消息<span class="cb-dot" id="dtlChatDot"></span></button>
       <button class="st-btn" id="dtlBtn" onclick="toggleSt()">完成</button>
     </div>
@@ -749,6 +750,7 @@ function openDtl(i){
   var uc=unreadMap[o.xianyu_name]||0;
   var dot=document.getElementById('dtlChatDot');
   if(uc>0){dot.textContent=uc;dot.classList.add('show');}else{dot.classList.remove('show');}
+  document.getElementById('dtlCopyDyBtn').style.display=(o.source==='douyin'&&o.dy_seq)?'inline-flex':'none';
   var g=cd(o),s='';
   s+='<div class="d-card"><div class="lb">截止时间 <span style="color:#4a90d9;font-size:12px;cursor:pointer;margin-left:8px" onclick="editDeadline('+i+')">修改</span></div><div class="val" id="dtlDlVal">'+fmtDl(o.deadline)+'</div><div class="card-cd '+g.c+'" style="margin-top:4px">'+g.t+'</div></div>';
   s+='<div class="d-card"><div class="lb">邮箱</div><div class="val">'+(o.email||'未填写')+'</div></div>';
@@ -872,6 +874,19 @@ function copyDesc(i){
   if(navigator.clipboard){
     navigator.clipboard.writeText(text).then(function(){toast('已复制');}).catch(function(){fallbackCopy(text);});
   } else { fallbackCopy(text); }
+}
+
+/**
+ * @description 复制当前抖音订单的售后链接到剪贴板
+ */
+function copyDyLink(){
+  if(curIdx===null)return;
+  var o=orders[curIdx];
+  if(o.source!=='douyin'||!o.dy_seq){toast('当前订单非抖音订单');return;}
+  var link='https://test.miocument.cn/dy-order/?seq='+o.dy_seq;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(link).then(function(){toast('链接已复制');}).catch(function(){fallbackCopy(link);});
+  } else { fallbackCopy(link); }
 }
 function fallbackCopy(text){
   var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
