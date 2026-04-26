@@ -7,15 +7,19 @@
 <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<script>
+var urlMemberId = new URLSearchParams(location.search).get('member_id');
+var qs = urlMemberId ? '?member_id='+encodeURIComponent(urlMemberId) : '';
+</script>
 
 <!-- 个人信息 -->
 <div class="panel">
   <div style="padding:20px 16px;">
     <div class="profile-row">
-      <div class="profile-avatar">王</div>
+      <div class="profile-avatar" id="avatarChar">-</div>
       <div>
-        <div class="profile-name">王女士</div>
-        <div class="profile-phone">138****6688</div>
+        <div class="profile-name" id="profileName">加载中...</div>
+        <div class="profile-phone" id="profilePhone"></div>
       </div>
     </div>
   </div>
@@ -25,48 +29,48 @@
 <div class="panel" style="margin-top:10px;">
   <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
     <span style="font-size:15px;font-weight:600;color:var(--text-1);">我的配送服务</span>
-    <span class="tag tag-green">正常配送中</span>
+    <span class="tag tag-green" id="myStatusTag">加载中</span>
   </div>
   <div style="border-top:1px solid #f0f0f0;">
     <div class="stat-row">
       <div class="stat-item">
-        <div class="stat-num">24</div>
-        <div class="stat-label">总次数</div>
+        <div class="stat-num" id="myTotal">-</div>
+        <div class="stat-label" id="myTotalLabel">总次数</div>
       </div>
       <div class="stat-item">
-        <div class="stat-num text-green">5</div>
-        <div class="stat-label">已配送</div>
+        <div class="stat-num text-green" id="myDone">-</div>
+        <div class="stat-label" id="myDoneLabel">已配送</div>
       </div>
       <div class="stat-item">
-        <div class="stat-num">19</div>
-        <div class="stat-label">剩余</div>
+        <div class="stat-num" id="myRemain">-</div>
+        <div class="stat-label" id="myRemainLabel">剩余</div>
       </div>
     </div>
   </div>
   <div style="padding:0 16px 14px;">
-    <a href="/service/" class="btn btn-primary btn-block" style="text-decoration:none;">查看配送详情</a>
+    <a id="linkService" href="/service/" class="btn btn-primary btn-block" style="text-decoration:none;">查看配送详情</a>
   </div>
 </div>
 
 <!-- 续费提醒 -->
-<div style="margin-top:10px;background:#FFF8E1;padding:14px 16px;display:flex;align-items:center;gap:10px;">
+<div id="renewNotice" style="display:none;margin-top:10px;background:#FFF8E1;padding:14px 16px;display:flex;align-items:center;gap:10px;">
   <div style="width:36px;height:36px;border-radius:50%;background:#FFE082;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">!</div>
   <div style="flex:1;min-width:0;">
     <div style="font-size:14px;font-weight:600;color:#8B6914;">续费提醒</div>
-    <div style="font-size:12px;color:#A68B2D;margin-top:2px;">您的配送服务剩余 <b style="color:#E6A700;">19次</b>，建议提前续费以确保服务不中断</div>
+    <div style="font-size:12px;color:#A68B2D;margin-top:2px;">您的配送服务剩余 <b style="color:#E6A700;" id="renewCount">-</b>，建议提前续费以确保服务不中断</div>
   </div>
-  </div>
+</div>
 
 <!-- 菜单 -->
 <div class="panel" style="margin-top:10px;">
-  <a class="cell" href="/service/">
+  <a class="cell" id="linkService2" href="/service/">
     <div class="cell-body"><span class="cell-label">配送服务管理</span></div>
-    <span class="cell-value">第6期即将配送</span>
+    <span class="cell-value" id="menuNextInfo">-</span>
     <span class="cell-arrow"></span>
   </a>
   <a class="cell" href="/records/">
     <div class="cell-body"><span class="cell-label">配送记录</span></div>
-    <span class="cell-value">共5条</span>
+    <span class="cell-value" id="menuRecordCount">-</span>
     <span class="cell-arrow"></span>
   </a>
 </div>
@@ -74,7 +78,7 @@
 <div class="panel" style="margin-top:10px;">
   <div class="cell" onclick="openAddrPage()" style="cursor:pointer;">
     <div class="cell-body"><span class="cell-label">收货地址</span></div>
-    <span class="cell-value" id="addrSummary">2个地址</span>
+    <span class="cell-value" id="addrSummary">-</span>
     <span class="cell-arrow"></span>
   </div>
   <div class="cell">
@@ -154,13 +158,86 @@
   </a>
 </div>
 
+<!-- member_id 模式：给所有导航链接带上参数 -->
 <script>
-var addresses = [
-  { id: 1, name: '王女士', phone: '138****6688', region: '北京市东城区', detail: '幸福大街88号阳光花园小区6号楼2单元301', isDefault: true },
-  { id: 2, name: '王女士', phone: '138****6688', region: '北京市丰台区', detail: '绿洲路12号翠微园3栋1602', isDefault: false }
-];
-var nextId = 3;
+if(qs){
+  document.querySelectorAll('.tab-bar a, a[href="/service/"], a[href="/my/"], a[href="/records/"]').forEach(function(a){
+    var h=a.getAttribute('href');
+    if(h && h.indexOf('member_id')<0) a.setAttribute('href', h+qs);
+  });
+}
+</script>
+
+<script>
+var ZION_LIST = 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/20ac40dd-0181-43c8-beaf-6e4c9636b3ed';
+
+var addresses = [];
+var nextId = 1;
 var editingIdx = -1;
+
+async function callZionPost(url, data){
+  var res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  return await res.json();
+}
+
+async function loadMyData(){
+  try{
+    var res = await callZionPost(ZION_LIST, {});
+    var list = JSON.parse(res.orders_data || '[]');
+
+    if(urlMemberId){
+      var mid = Number(urlMemberId);
+      list = list.filter(function(o){ return o.member_id === mid; });
+    }
+
+    if(!list.length){
+      document.getElementById('profileName').textContent = '暂无数据';
+      document.getElementById('myStatusTag').textContent = '无订单';
+      document.getElementById('myStatusTag').className = 'tag tag-gray';
+      return;
+    }
+
+    var first = list[0];
+    var memberName = (first.member && first.member.wechat_name) || first.wechat_name || '未知';
+    var memberPhone = (first.member && first.member.phone) || first.phone || '';
+
+    document.getElementById('avatarChar').textContent = memberName.charAt(0);
+    document.getElementById('profileName').textContent = memberName;
+    document.getElementById('profilePhone').textContent = memberPhone ? memberPhone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '';
+
+    var totalOrders = list.length;
+    var totalCount = 0;
+    var totalDone = 0;
+    list.forEach(function(o){
+      var tc = o.total_count || 0;
+      var drs = o.delivery_records || [];
+      var dc = drs.filter(function(r){ return r.status === 'done'; }).length;
+      totalCount += tc;
+      totalDone += dc;
+    });
+    var totalRemain = totalCount - totalDone;
+
+    document.getElementById('myTotal').textContent = totalCount;
+    document.getElementById('myDone').textContent = totalDone;
+    document.getElementById('myRemain').textContent = totalRemain;
+    document.getElementById('myStatusTag').textContent = '正常配送中';
+    document.getElementById('myStatusTag').className = 'tag tag-green';
+
+    document.getElementById('menuNextInfo').textContent = '共' + totalOrders + '个订单';
+    document.getElementById('menuRecordCount').textContent = '共' + totalDone + '条';
+
+    if(totalRemain > 0 && totalRemain <= totalCount * 0.3){
+      document.getElementById('renewNotice').style.display = 'flex';
+      document.getElementById('renewCount').textContent = totalRemain + '次';
+    }
+
+  }catch(e){
+    console.error('loadMyData:', e);
+    document.getElementById('profileName').textContent = '加载失败';
+  }
+}
+
+loadMyData();
 
 function openAddrPage(){
   renderAddrList();
@@ -169,8 +246,9 @@ function openAddrPage(){
 function closeAddrPage(){ document.getElementById('addrPage').classList.remove('show'); updateSummary(); }
 
 function updateSummary(){
-  document.getElementById('addrSummary').textContent = addresses.length + '个地址';
+  document.getElementById('addrSummary').textContent = addresses.length ? addresses.length + '个地址' : '暂无';
 }
+updateSummary();
 
 function renderAddrList(){
   var c = document.getElementById('addrList');
