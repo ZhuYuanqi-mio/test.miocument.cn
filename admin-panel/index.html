@@ -238,6 +238,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 <div class="app-header">
   <h1>咯咯哒生态农场 <span>后台管理</span></h1>
   <div class="header-actions">
+    <button class="btn btn-outline" onclick="openBindModal()">绑定用户</button>
     <button class="btn btn-outline-gray" onclick="openSiteSettings()" title="站点设置">设置</button>
     <button class="btn btn-outline" onclick="openVegModal()">菜品管理</button>
     <button class="btn btn-outline" onclick="openManualAdd()">手动录入</button>
@@ -593,6 +594,35 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
   </div>
 </div>
 
+<!-- 绑定用户弹窗 -->
+<div class="overlay" id="bindModal">
+  <div class="modal" style="max-width:560px;max-height:85vh">
+    <div class="modal-head"><h3>绑定用户</h3><button class="close" onclick="closeModal('bindModal')">X</button></div>
+    <div class="modal-body" style="padding:12px 20px;">
+      <input type="text" class="search-input" style="width:100%;margin-bottom:12px" placeholder="搜索微信名、手机号、商品名..." id="bindSearchInput" oninput="filterBindList()">
+      <div id="bindList" style="max-height:50vh;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 输入 member_id 弹窗 -->
+<div class="overlay" id="bindInputModal" style="z-index:210">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head"><h3>绑定会员</h3><button class="close" onclick="closeModal('bindInputModal')">X</button></div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--text-3);margin-bottom:12px" id="bindInputDesc"></div>
+      <div class="form-group">
+        <label>会员 ID（member_id）</label>
+        <input type="number" id="bindMemberIdInput" placeholder="输入会员ID数字">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline-gray" onclick="closeModal('bindInputModal')">取消</button>
+      <button class="btn btn-primary" onclick="confirmBind()">确认绑定</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -784,7 +814,7 @@ async function loadFromBackend(){
       var totalNum=bo.total_count||0;
       var unit=bo.total_unit||unitByType(bo.member_type);
       return {
-        idx:nextIdx++, backendId:bo.id,
+        idx:nextIdx++, backendId:bo.id, memberId:bo.member_id||null,
         yearMonth:'', platform:bo.platform||'',
         payTime:bo.pay_time?bo.pay_time.split('T')[0]:'',
         deliveryMethod:bo.delivery_method||'',
@@ -1802,6 +1832,78 @@ async function saveSiteSettings(){
   }catch(e){
     console.error('save settings:', e);
     showToast('保存失败');
+  }
+}
+
+// ===== 绑定用户功能 =====
+var bindOrderTarget = null;
+
+async function openBindModal(){
+  document.getElementById('bindSearchInput').value = '';
+  document.getElementById('bindList').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-3)">加载中...</div>';
+  document.getElementById('bindModal').classList.add('show');
+  await renderBindList();
+}
+
+async function renderBindList(){
+  var unboundOrders = orders.filter(function(o){ return !o.memberId; });
+  var el = document.getElementById('bindList');
+  if(!unboundOrders.length){
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-3)">所有订单都已绑定会员 ✓</div>';
+    return;
+  }
+  var h = '';
+  unboundOrders.forEach(function(o){
+    h += '<div class="bind-card" data-idx="'+o.idx+'" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;">';
+    h += '<div>';
+    h += '<div style="font-weight:600;font-size:14px;color:var(--text-1);">'+(o.wechat||'未知用户')+' <span style="font-size:12px;color:var(--text-3);font-weight:400">#'+o.backendId+'</span></div>';
+    h += '<div style="font-size:13px;color:var(--text-2);margin-top:4px">'+(o.phone||'无手机号')+' · '+o.memberType+' · '+o.productName+'</div>';
+    h += '<div style="font-size:12px;color:var(--text-3);margin-top:2px">'+o.category+' · '+o.totalStr+' · ¥'+o.amount.toFixed(2)+'</div>';
+    h += '</div>';
+    h += '<button class="btn btn-sm btn-primary" onclick="startBind('+o.idx+')">绑定</button>';
+    h += '</div></div>';
+  });
+  el.innerHTML = h;
+}
+
+function filterBindList(){
+  var kw = document.getElementById('bindSearchInput').value.toLowerCase();
+  var cards = document.querySelectorAll('#bindList .bind-card');
+  cards.forEach(function(card){
+    var idx = parseInt(card.getAttribute('data-idx'));
+    var o = orders.find(function(x){ return x.idx === idx; });
+    if(!o){ card.style.display='none'; return; }
+    var haystack = ((o.wechat||'')+(o.phone||'')+o.productName+o.memberType+o.category).toLowerCase();
+    card.style.display = (!kw || haystack.indexOf(kw)>=0) ? '' : 'none';
+  });
+}
+
+function startBind(idx){
+  var o = orders.find(function(x){ return x.idx === idx; });
+  if(!o) return;
+  bindOrderTarget = o;
+  document.getElementById('bindInputDesc').textContent = '订单 #'+o.backendId+'：'+(o.wechat||'未知')+' · '+o.productName;
+  document.getElementById('bindMemberIdInput').value = '';
+  document.getElementById('bindInputModal').classList.add('show');
+}
+
+async function confirmBind(){
+  var mid = parseInt(document.getElementById('bindMemberIdInput').value);
+  if(!mid || isNaN(mid)){ showToast('请输入有效的会员ID'); return; }
+  if(!bindOrderTarget){ showToast('未选择订单'); return; }
+  try{
+    await callZion(ZION.update_order, {
+      order_id: bindOrderTarget.backendId,
+      update_json: JSON.stringify({ member_id: mid })
+    });
+    bindOrderTarget.memberId = mid;
+    showToast('绑定成功：订单 #'+bindOrderTarget.backendId+' → 会员 #'+mid);
+    closeModal('bindInputModal');
+    await renderBindList();
+  }catch(e){
+    console.error('bind error:', e);
+    showToast('绑定失败，请重试');
   }
 }
 </script>
