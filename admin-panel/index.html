@@ -2014,42 +2014,34 @@ var NOTIFY_BACKEND = 'https://miou-gegeda.cn-wuhan-lr.fcapp.run';
 var WX_TEMPLATE_ID = 'wbPyPJJ7JxqQGGXB06IjwrrKJ5GA2l4CIUaexkHu7hg';
 var notifySelectedMember = null;
 
-function getUniqueMembers(){
-  var map = {};
-  orders.forEach(function(o){
-    if(!o.memberId) return;
-    if(!map[o.memberId]){
-      map[o.memberId] = {
-        id: o.memberId,
-        wechat: o.memberWechat || o.wechat || '',
-        phone: o.memberPhone || o.phone || '',
-        openid: o.memberOpenid || '',
-        orders: []
-      };
-    }
-    map[o.memberId].orders.push(o);
-    if(o.memberOpenid && !map[o.memberId].openid) map[o.memberId].openid = o.memberOpenid;
+function getNotifyMembers(){
+  var withOpenid = allMembers.filter(function(m){ return m.openid; });
+  withOpenid.forEach(function(m){
+    m._orders = orders.filter(function(o){ return o.memberId === m.id; });
   });
-  return Object.values(map);
+  return withOpenid;
 }
 
-function openNotifyModal(){
+async function openNotifyModal(){
   notifySelectedMember = null;
   var sel = document.getElementById('notifyMemberSelect');
-  var members = getUniqueMembers();
-  var h = '<option value="">-- 请选择会员（共'+members.length+'人） --</option>';
-  members.forEach(function(m){
-    var label = (m.wechat||'未知') + (m.phone ? '（'+m.phone+'）' : '') + ' #'+m.id;
-    if(!m.openid) label += ' [未绑微信]';
-    h += '<option value="'+m.id+'">'+label+'</option>';
-  });
-  sel.innerHTML = h;
+  sel.innerHTML = '<option value="">加载中...</option>';
   document.getElementById('notifyMemberInfo').style.display = 'none';
   document.getElementById('notifyOrderArea').style.display = 'none';
   document.getElementById('notifyFormArea').style.display = 'none';
   document.getElementById('notifyNoOpenid').style.display = 'none';
   document.getElementById('notifySendBtn').disabled = true;
   document.getElementById('notifyModal').classList.add('show');
+
+  if(!allMembers.length) await loadMemberList();
+
+  var members = getNotifyMembers();
+  var h = '<option value="">-- 请选择会员（共'+members.length+'人，仅显示已绑微信） --</option>';
+  members.forEach(function(m){
+    var label = (m.wechat_name||'未知') + (m.phone ? '（'+m.phone+'）' : '') + ' #'+m.id;
+    h += '<option value="'+m.id+'">'+label+'</option>';
+  });
+  sel.innerHTML = h;
 }
 
 function onNotifyMemberChange(){
@@ -2063,44 +2055,44 @@ function onNotifyMemberChange(){
     notifySelectedMember = null;
     return;
   }
-  var members = getUniqueMembers();
+  var members = getNotifyMembers();
   var m = members.find(function(x){ return x.id === mid; });
   if(!m) return;
   notifySelectedMember = m;
 
   document.getElementById('notifyMemberDetail').innerHTML =
-    '<b>'+( m.wechat||'未知')+'</b> · ID: '+m.id+(m.phone?' · '+m.phone:'')+(m.openid?' · <span style="color:var(--green)">已绑微信</span>':' · <span style="color:#e53935">未绑微信</span>');
+    '<b>'+(m.wechat_name||'未知')+'</b> · ID: '+m.id+(m.phone?' · '+m.phone:'')+' · <span style="color:var(--green)">已绑微信</span>';
   document.getElementById('notifyMemberInfo').style.display = '';
 
+  var memberOrders = m._orders || [];
   var oh = '';
-  m.orders.forEach(function(o){
-    var statusTag = o.paused?'<span style="color:#ff9800;font-size:11px">暂停</span>':'<span style="color:var(--green);font-size:11px">活跃</span>';
-    oh += '<div style="background:var(--white);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:6px;">';
-    oh += '<div style="display:flex;justify-content:space-between;align-items:center;">';
-    oh += '<span style="font-size:13px;font-weight:500;">'+o.productName+' '+statusTag+'</span>';
-    oh += '<span style="font-size:11px;color:var(--text-3)">#'+o.backendId+'</span>';
-    oh += '</div>';
-    oh += '<div style="font-size:12px;color:var(--text-3);margin-top:3px;">'+o.category+' · '+o.totalStr+' · 已配'+o.doneCount+'次</div>';
-    oh += '</div>';
-  });
+  if(memberOrders.length){
+    memberOrders.forEach(function(o){
+      var statusTag = o.paused?'<span style="color:#ff9800;font-size:11px">暂停</span>':'<span style="color:var(--green);font-size:11px">活跃</span>';
+      oh += '<div style="background:var(--white);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:6px;">';
+      oh += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+      oh += '<span style="font-size:13px;font-weight:500;">'+o.productName+' '+statusTag+'</span>';
+      oh += '<span style="font-size:11px;color:var(--text-3)">#'+o.backendId+'</span>';
+      oh += '</div>';
+      oh += '<div style="font-size:12px;color:var(--text-3);margin-top:3px;">'+o.category+' · '+o.totalStr+' · 已配'+o.doneCount+'次</div>';
+      oh += '</div>';
+    });
+  } else {
+    oh = '<div style="text-align:center;padding:12px;color:var(--text-3);font-size:13px;">该会员暂无订单</div>';
+  }
   document.getElementById('notifyOrderList').innerHTML = oh;
   document.getElementById('notifyOrderArea').style.display = '';
 
-  if(!m.openid){
-    document.getElementById('notifyFormArea').style.display = 'none';
-    document.getElementById('notifyNoOpenid').style.display = '';
-    document.getElementById('notifySendBtn').disabled = true;
-  } else {
-    document.getElementById('notifyNoOpenid').style.display = 'none';
-    document.getElementById('notifyFormArea').style.display = '';
-    document.getElementById('notifySendBtn').disabled = false;
-    prefillNotifyForm(m);
-  }
+  document.getElementById('notifyNoOpenid').style.display = 'none';
+  document.getElementById('notifyFormArea').style.display = '';
+  document.getElementById('notifySendBtn').disabled = false;
+  prefillNotifyForm(m);
 }
 
 function prefillNotifyForm(m){
-  var firstOrder = m.orders[0] || {};
-  var products = m.orders.map(function(o){ return o.category||o.productName; }).filter(Boolean);
+  var memberOrders = m._orders || [];
+  var firstOrder = memberOrders[0] || {};
+  var products = memberOrders.map(function(o){ return o.category||o.productName; }).filter(Boolean);
   var productStr = products.join('、');
   if(productStr.length>20) productStr = productStr.slice(0,18)+'..';
 
@@ -2112,8 +2104,8 @@ function prefillNotifyForm(m){
   var tip = remaining ? '您的订单'+remaining : '您有新的配送通知';
   if(tip.length>20) tip = tip.slice(0,20);
 
-  document.getElementById('nf_thing1').value = productStr || '';
-  document.getElementById('nf_name2').value = (m.wechat||'').slice(0,10) || '会员';
+  document.getElementById('nf_thing1').value = productStr || '咯咯哒生态农场';
+  document.getElementById('nf_name2').value = (m.wechat_name||'').slice(0,10) || '会员';
   document.getElementById('nf_thing5').value = tip;
   document.getElementById('nf_thing10').value = '请确认地址';
   document.getElementById('nf_phone3').value = m.phone || '';
@@ -2182,15 +2174,14 @@ async function loadMemberList(){
   document.getElementById('memberLoading').style.display = '';
   document.getElementById('memberTableBody').innerHTML = '';
   document.getElementById('memberEmpty').style.display = 'none';
+  allMembers = [];
 
-  if(ZION.list_members !== 'PLACEHOLDER'){
-    try{
-      var res = await callZion(ZION.list_members, {});
-      if(res && res.members_data){
-        allMembers = JSON.parse(res.members_data);
-      }
-    }catch(e){ console.error('loadMemberList:', e); }
-  }
+  try{
+    var res = await callZion(ZION.list_members, {});
+    if(res && res.members_data){
+      allMembers = JSON.parse(res.members_data);
+    }
+  }catch(e){ console.error('loadMemberList:', e); }
 
   if(!allMembers.length){
     var map = {};
