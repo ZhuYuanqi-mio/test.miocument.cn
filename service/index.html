@@ -4,9 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>配送服务 - 咯咯哒生态农场</title>
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="style.css">
+<script src="js/auth.js"></script>
 </head>
 <body>
+<script>
+var urlMemberId = new URLSearchParams(location.search).get('member_id');
+if(!urlMemberId && !Auth.requireLogin()){ /* 未登录且无 member_id 参数，跳转登录 */ }
+</script>
 
 <!-- 加载中提示 -->
 <div id="loadingState" style="text-align:center;padding:60px 0;">
@@ -347,6 +352,7 @@
 
 <!-- 切换用户按钮 -->
 <div id="switchBtn" onclick="openSwitchModal()" style="position:fixed;top:10px;right:12px;z-index:90;background:var(--green);color:#fff;font-size:12px;padding:6px 12px;border-radius:14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);">切换用户</div>
+<script>if(urlMemberId) document.getElementById('switchBtn').style.display='none';</script>
 
 <!-- 切换用户弹窗 -->
 <div class="overlay" id="switchModal">
@@ -419,16 +425,35 @@ async function callZionPost(url, data){
 
 async function loadFromBackend(){
   try{
-    var [ordersRes, vegsRes, settingsRes] = await Promise.all([
-      callZionPost(ZION_LIST, {}),
-      callZionPost(ZION_VEG.list_farm_vegs, {}),
-      callZionPost(ZION_VEG.get_farm_settings, {})
-    ]);
+    var list;
+    var vegsRes, settingsRes;
+
+    if(urlMemberId){
+      var [zionRes, vegsRes2, settingsRes2] = await Promise.all([
+        callZionPost(ZION_LIST, {}),
+        callZionPost(ZION_VEG.list_farm_vegs, {}),
+        callZionPost(ZION_VEG.get_farm_settings, {})
+      ]);
+      vegsRes = vegsRes2; settingsRes = settingsRes2;
+      var allOrders = JSON.parse(zionRes.orders_data || '[]');
+      var mid = Number(urlMemberId);
+      list = allOrders.filter(function(o){ return o.member_id === mid; });
+    } else {
+      var [ordersRes, vegsRes2, settingsRes2] = await Promise.all([
+        Auth.apiGet('/api/orders'),
+        callZionPost(ZION_VEG.list_farm_vegs, {}),
+        callZionPost(ZION_VEG.get_farm_settings, {})
+      ]);
+      vegsRes = vegsRes2; settingsRes = settingsRes2;
+      if(!ordersRes.ok){
+        throw new Error(ordersRes.msg || '订单获取失败');
+      }
+      list = ordersRes.orders || [];
+    }
+
     vegPool = JSON.parse(vegsRes.vegs_data || '[]');
     var settings = JSON.parse(settingsRes.settings_data || '{}');
     vegEnabled = !!settings.veg_enabled;
-
-    var list=JSON.parse(ordersRes.orders_data||'[]');
     if(!list||!list.length){
       document.getElementById('switchList').innerHTML='<div style="text-align:center;padding:24px;color:var(--text-3);font-size:13px;">暂无用户数据，请先在管理面板导入</div>';
       return;
