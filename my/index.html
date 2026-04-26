@@ -25,7 +25,7 @@ var qs = urlMemberId ? '?member_id='+encodeURIComponent(urlMemberId) : '';
           <div class="profile-phone" id="profilePhone"></div>
         </div>
       </div>
-      <a id="bindPhoneBtn" href="https://pet.miocument.cn/signinf" style="display:none;" class="btn btn-outline btn-sm">绑定手机号</a>
+      <a id="bindPhoneBtn" href="#" style="display:none;" class="btn btn-outline btn-sm">绑定手机号</a>
     </div>
   </div>
 </div>
@@ -215,7 +215,9 @@ async function loadMyData(){
     document.getElementById('profilePhone').textContent = memberPhone ? memberPhone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '';
 
     if(!memberPhone && urlMemberId){
-      document.getElementById('bindPhoneBtn').style.display = '';
+      var btn = document.getElementById('bindPhoneBtn');
+      btn.href = 'https://pet.miocument.cn/signinf?member=' + encodeURIComponent(urlMemberId);
+      btn.style.display = '';
     }
 
     var totalOrders = list.length;
