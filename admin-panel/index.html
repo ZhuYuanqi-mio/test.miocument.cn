@@ -231,6 +231,14 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
   .oc-name{font-size:13px}
   .oc-row{font-size:11px}
 }
+
+#memberTable td.editable{cursor:pointer;position:relative}
+#memberTable td.editable:hover{background:#f0f7ee}
+#memberTable td.editing{padding:0}
+#memberTable td.editing input{width:100%;height:100%;border:2px solid var(--green);border-radius:0;padding:6px 8px;font-size:13px;outline:none;box-sizing:border-box;min-height:36px}
+#memberTable .tag-openid{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px}
+#memberTable .tag-openid.yes{background:#e8f5e9;color:#2e7d32}
+#memberTable .tag-openid.no{background:#fce4ec;color:#c62828}
 </style>
 </head>
 <body>
@@ -238,6 +246,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 <div class="app-header">
   <h1>咯咯哒生态农场 <span>后台管理</span></h1>
   <div class="header-actions">
+    <button class="btn btn-outline" onclick="openMemberModal()">客户管理</button>
     <button class="btn btn-outline" onclick="openNotifyModal()">消息通知</button>
     <button class="btn btn-outline" onclick="openBindModal()">绑定用户</button>
     <button class="btn btn-outline-gray" onclick="openSiteSettings()" title="站点设置">设置</button>
@@ -595,6 +604,55 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
   </div>
 </div>
 
+<!-- 客户管理弹窗 -->
+<div class="overlay" id="memberModal">
+  <div class="modal" style="max-width:900px;max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-head"><h3>客户管理</h3><button class="close" onclick="closeModal('memberModal')">X</button></div>
+    <div style="padding:12px 20px 0;display:flex;gap:8px;flex-wrap:wrap;">
+      <input type="text" id="memberSearchInput" class="search-input" style="flex:1;min-width:180px" placeholder="搜索 ID、微信名、手机号、来源..." oninput="filterMemberTable()">
+      <select id="memberFilterOpenid" onchange="filterMemberTable()" style="height:36px;border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:13px;background:var(--white);">
+        <option value="">全部状态</option>
+        <option value="bound">已绑微信</option>
+        <option value="unbound">未绑微信</option>
+      </select>
+      <button class="btn btn-sm btn-outline" onclick="loadMemberList()" style="height:36px">刷新</button>
+    </div>
+    <div class="modal-body" style="padding:12px 20px;flex:1;overflow:auto;min-height:0;">
+      <div id="memberTableWrap" style="overflow-x:auto;">
+        <table class="order-table" id="memberTable" style="width:100%">
+          <thead><tr>
+            <th style="width:50px">ID</th>
+            <th>微信名</th>
+            <th>手机号</th>
+            <th>来源</th>
+            <th>复购</th>
+            <th style="width:70px">openid</th>
+            <th style="width:90px">订单数</th>
+            <th style="width:130px">创建时间</th>
+          </tr></thead>
+          <tbody id="memberTableBody"></tbody>
+        </table>
+      </div>
+      <div id="memberEmpty" style="display:none;text-align:center;padding:40px;color:var(--text-3);">暂无会员数据</div>
+      <div id="memberLoading" style="text-align:center;padding:40px;color:var(--text-3);">加载中...</div>
+    </div>
+    <div style="padding:10px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:12px;color:var(--text-3);" id="memberPageInfo">共 0 条</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <select id="memberPageSize" onchange="memberPage=1;renderMemberPage()" style="height:30px;border:1px solid var(--border);border-radius:4px;padding:0 6px;font-size:12px;background:var(--white);">
+          <option value="10">10条/页</option>
+          <option value="20" selected>20条/页</option>
+          <option value="50">50条/页</option>
+          <option value="100">100条/页</option>
+        </select>
+        <button class="btn btn-sm btn-outline-gray" id="memberPrevBtn" onclick="memberPagePrev()">上一页</button>
+        <span style="font-size:13px;color:var(--text-2);" id="memberPageNum">1</span>
+        <button class="btn btn-sm btn-outline-gray" id="memberNextBtn" onclick="memberPageNext()">下一页</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 消息通知弹窗 -->
 <div class="overlay" id="notifyModal">
   <div class="modal" style="max-width:580px;max-height:90vh">
@@ -690,7 +748,9 @@ var ZION = {
   update_farm_settings: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/9f2c1d33-cd18-40a3-a9c0-3385121b42f0',
   set_delivery_veg: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/fcec197a-44ca-4385-8991-1dec0c7baa69',
   save_veg_selection: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/4460a9d0-ccf0-4a9b-9e19-01daa4736806',
-  find_or_create_member: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/201d51be-f600-4ba6-bd6b-50b304774354'
+  find_or_create_member: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/201d51be-f600-4ba6-bd6b-50b304774354',
+  list_members: 'PLACEHOLDER',
+  update_member: 'PLACEHOLDER'
 };
 
 var ossClient = new OSS({
@@ -2110,6 +2170,191 @@ async function sendNotify(){
   }finally{
     document.getElementById('notifySendBtn').disabled = false;
     document.getElementById('notifySendBtn').textContent = '发送通知';
+  }
+}
+
+// ===== 客户管理功能 =====
+var allMembers = [];
+var filteredMembers = [];
+var memberPage = 1;
+
+async function loadMemberList(){
+  document.getElementById('memberLoading').style.display = '';
+  document.getElementById('memberTableBody').innerHTML = '';
+  document.getElementById('memberEmpty').style.display = 'none';
+
+  if(ZION.list_members !== 'PLACEHOLDER'){
+    try{
+      var res = await callZion(ZION.list_members, {});
+      if(res && res.members_data){
+        allMembers = JSON.parse(res.members_data);
+      }
+    }catch(e){ console.error('loadMemberList:', e); }
+  }
+
+  if(!allMembers.length){
+    var map = {};
+    orders.forEach(function(o){
+      if(!o.memberId) return;
+      if(!map[o.memberId]){
+        map[o.memberId] = {
+          id: o.memberId,
+          wechat_name: o.memberWechat || o.wechat || '',
+          phone: o.memberPhone || o.phone || '',
+          openid: o.memberOpenid || '',
+          source: o.source || '',
+          repurchase: o.repurchase || '',
+          created_at: '',
+          orderCount: 0
+        };
+      }
+      map[o.memberId].orderCount++;
+    });
+    allMembers = Object.values(map);
+  } else {
+    var orderCountMap = {};
+    orders.forEach(function(o){
+      if(!o.memberId) return;
+      orderCountMap[o.memberId] = (orderCountMap[o.memberId]||0) + 1;
+    });
+    allMembers.forEach(function(m){
+      m.orderCount = orderCountMap[m.id] || 0;
+    });
+  }
+
+  document.getElementById('memberLoading').style.display = 'none';
+  memberPage = 1;
+  filterMemberTable();
+}
+
+function filterMemberTable(){
+  var kw = document.getElementById('memberSearchInput').value.toLowerCase();
+  var openidFilter = document.getElementById('memberFilterOpenid').value;
+
+  filteredMembers = allMembers.filter(function(m){
+    if(kw){
+      var hay = (String(m.id)+' '+(m.wechat_name||'')+' '+(m.phone||'')+' '+(m.source||'')+' '+(m.repurchase||'')).toLowerCase();
+      if(hay.indexOf(kw) < 0) return false;
+    }
+    if(openidFilter === 'bound' && !m.openid) return false;
+    if(openidFilter === 'unbound' && m.openid) return false;
+    return true;
+  });
+  memberPage = 1;
+  renderMemberPage();
+}
+
+function getMemberPageSize(){ return parseInt(document.getElementById('memberPageSize').value) || 20; }
+
+function renderMemberPage(){
+  var ps = getMemberPageSize();
+  var total = filteredMembers.length;
+  var totalPages = Math.max(1, Math.ceil(total / ps));
+  if(memberPage > totalPages) memberPage = totalPages;
+  if(memberPage < 1) memberPage = 1;
+
+  var start = (memberPage - 1) * ps;
+  var pageData = filteredMembers.slice(start, start + ps);
+
+  var tbody = document.getElementById('memberTableBody');
+  if(!total){
+    tbody.innerHTML = '';
+    document.getElementById('memberEmpty').style.display = '';
+  } else {
+    document.getElementById('memberEmpty').style.display = 'none';
+    var h = '';
+    pageData.forEach(function(m){
+      var created = m.created_at ? String(m.created_at).split('T')[0] : '-';
+      h += '<tr data-mid="'+m.id+'">';
+      h += '<td style="font-size:12px;color:var(--text-3)">'+m.id+'</td>';
+      h += '<td class="editable" data-field="wechat_name" ondblclick="startEditCell(this)">'+esc(m.wechat_name||'')+'</td>';
+      h += '<td class="editable" data-field="phone" ondblclick="startEditCell(this)">'+esc(m.phone||'')+'</td>';
+      h += '<td class="editable" data-field="source" ondblclick="startEditCell(this)">'+esc(m.source||'')+'</td>';
+      h += '<td class="editable" data-field="repurchase" ondblclick="startEditCell(this)">'+esc(m.repurchase||'')+'</td>';
+      h += '<td><span class="tag-openid '+(m.openid?'yes':'no')+'">'+(m.openid?'已绑':'未绑')+'</span></td>';
+      h += '<td style="text-align:center">'+(m.orderCount||0)+'</td>';
+      h += '<td style="font-size:12px;color:var(--text-3)">'+created+'</td>';
+      h += '</tr>';
+    });
+    tbody.innerHTML = h;
+  }
+
+  document.getElementById('memberPageInfo').textContent = '共 '+total+' 条' + (total !== allMembers.length ? '（筛选自 '+allMembers.length+' 条）' : '');
+  document.getElementById('memberPageNum').textContent = memberPage + ' / ' + totalPages;
+  document.getElementById('memberPrevBtn').disabled = (memberPage <= 1);
+  document.getElementById('memberNextBtn').disabled = (memberPage >= totalPages);
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function memberPagePrev(){ if(memberPage>1){memberPage--;renderMemberPage();} }
+function memberPageNext(){
+  var ps = getMemberPageSize();
+  var totalPages = Math.ceil(filteredMembers.length / ps);
+  if(memberPage<totalPages){memberPage++;renderMemberPage();}
+}
+
+function openMemberModal(){
+  document.getElementById('memberSearchInput').value = '';
+  document.getElementById('memberFilterOpenid').value = '';
+  document.getElementById('memberModal').classList.add('show');
+  loadMemberList();
+}
+
+function startEditCell(td){
+  if(td.classList.contains('editing')) return;
+  var field = td.getAttribute('data-field');
+  var tr = td.closest('tr');
+  var mid = parseInt(tr.getAttribute('data-mid'));
+  var oldVal = td.textContent;
+
+  td.classList.add('editing');
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.value = oldVal;
+  td.textContent = '';
+  td.appendChild(input);
+  input.focus();
+  input.select();
+
+  function finish(){
+    var newVal = input.value.trim();
+    td.classList.remove('editing');
+    td.textContent = newVal;
+    if(newVal !== oldVal){
+      saveMemberField(mid, field, newVal, td);
+    }
+  }
+
+  input.addEventListener('blur', finish);
+  input.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); input.blur(); }
+    if(e.key === 'Escape'){ input.value = oldVal; input.blur(); }
+  });
+}
+
+async function saveMemberField(mid, field, value, td){
+  var m = allMembers.find(function(x){ return x.id === mid; });
+  if(m) m[field] = value;
+
+  if(ZION.update_member !== 'PLACEHOLDER'){
+    try{
+      await callZion(ZION.update_member, {
+        member_id: mid,
+        update_json: JSON.stringify({[field]: value})
+      });
+      td.style.background = '#e8f5e9';
+      setTimeout(function(){ td.style.background = ''; }, 1200);
+    }catch(e){
+      console.error('saveMemberField:', e);
+      showToast('保存失败：'+e.message);
+      td.style.background = '#ffebee';
+      setTimeout(function(){ td.style.background = ''; }, 2000);
+    }
+  } else {
+    showToast('已修改本地数据（list_members / update_member 行为流尚未配置）');
+    td.style.background = '#fff3e0';
+    setTimeout(function(){ td.style.background = ''; }, 1500);
   }
 }
 </script>
