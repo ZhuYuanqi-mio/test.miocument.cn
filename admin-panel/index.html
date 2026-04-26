@@ -233,7 +233,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
   </div>
 
   <div class="toolbar" id="toolbar" style="display:none">
-    <input type="text" class="search-input" placeholder="搜索微信名、商品、会员类型..." oninput="filterCards()" id="searchInput">
+    <input type="text" class="search-input" placeholder="搜索微信名、手机号、商品、会员类型..." oninput="filterCards()" id="searchInput">
     <select class="filter-select" id="filterType" onchange="filterCards()">
       <option value="">全部类型</option>
       <option value="鸡蛋会员">鸡蛋会员</option>
@@ -423,6 +423,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
     <div class="modal-head"><h3>手动录入会员</h3><button class="close" onclick="closeModal('manualModal')">X</button></div>
     <div class="modal-body">
       <div class="form-group"><label>下单微信 *</label><input type="text" id="m-wechat" placeholder="必填"></div>
+      <div class="form-group"><label>客户电话 *</label><input type="tel" id="m-phone" placeholder="手机号，用于绑定用户"></div>
       <div class="form-group"><label>会员类型 *</label>
         <select id="m-type"><option value="鸡蛋会员">鸡蛋会员</option><option value="蔬菜会员">蔬菜会员</option><option value="鸡会员">鸡会员</option><option value="草莓会员">草莓会员</option><option value="共享菜地">共享菜地</option></select>
       </div>
@@ -451,6 +452,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
     <div class="modal-head"><h3>编辑用户信息</h3><button class="close" onclick="closeModal('editModal')">X</button></div>
     <div class="modal-body">
       <div class="form-group"><label>下单微信</label><input type="text" id="e-wechat"></div>
+      <div class="form-group"><label>客户电话</label><input type="tel" id="e-phone"></div>
       <div class="form-group"><label>会员类型</label>
         <select id="e-type"><option value="鸡蛋会员">鸡蛋会员</option><option value="蔬菜会员">蔬菜会员</option><option value="鸡会员">鸡会员</option><option value="草莓会员">草莓会员</option><option value="共享菜地">共享菜地</option></select>
       </div>
@@ -531,7 +533,8 @@ var ZION = {
   get_farm_settings: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/872f77f7-8942-40f4-a9f1-c9715d614005',
   update_farm_settings: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/9f2c1d33-cd18-40a3-a9c0-3385121b42f0',
   set_delivery_veg: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/fcec197a-44ca-4385-8991-1dec0c7baa69',
-  save_veg_selection: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/4460a9d0-ccf0-4a9b-9e19-01daa4736806'
+  save_veg_selection: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/4460a9d0-ccf0-4a9b-9e19-01daa4736806',
+  find_or_create_member: 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/201d51be-f600-4ba6-bd6b-50b304774354'
 };
 
 var ossClient = new OSS({
@@ -563,7 +566,14 @@ async function syncToBackend(list){
   for(var i=0;i<list.length;i++){
     var o=list[i];
     try{
-      var payload={phone:'',wechat_name:o.wechat,source:o.source,repurchase:o.repurchase,
+      var memberId=null;
+      var phone=o.phone||'';
+      if(phone){
+        var memberPayload={phone:phone,wechat_name:o.wechat,source:o.source,repurchase:o.repurchase};
+        var mr=await callZion(ZION.find_or_create_member,{member_json:JSON.stringify(memberPayload)});
+        if(mr&&mr.member_id&&mr.member_id>0) memberId=mr.member_id;
+      }
+      var payload={member_id:memberId,phone:phone,wechat_name:o.wechat,source:o.source,repurchase:o.repurchase,
         member_type:o.memberType,category:o.category,product_name:o.productName,
         total_count:o.totalNum,total_unit:unitByType(o.memberType),
         price:parseNum(o.price),discount:parseNum(o.discount),amount_paid:o.amount,
@@ -610,6 +620,7 @@ async function loadFromBackend(){
         totalStr:String(totalNum)+unit, totalNum:totalNum,
         price:String(bo.price||''), discount:String(bo.discount||''),
         amount:bo.amount_paid||0, wechat:bo.wechat_name||'',
+        phone:bo.phone||'',
         source:bo.source||'', repurchase:bo.repurchase||'',
         memberType:bo.member_type||'', deliveries:deliveries,
         doneCount:bo.delivery_records?bo.delivery_records.length:0,
@@ -681,14 +692,14 @@ function buildOrderKey(o){
 
 function parseRow(r){
   var deliveries = [];
-  for(var j = 14; j < r.length; j++){
+  for(var j = 15; j < r.length; j++){
     if(r[j] !== '' && r[j] !== null && r[j] !== undefined){
       deliveries.push(String(r[j]) === '完' ? '已完成' : fmtDate(r[j]) || String(r[j]));
     }
   }
   var totalStr = String(r[6] || '');
   var totalNum = parseNum(totalStr);
-  var memberType = String(r[13] || '');
+  var memberType = String(r[14] || '');
   var category = String(r[4] || '');
   var doneCount = 0;
   var isStrawberry = memberType === '草莓会员';
@@ -713,8 +724,9 @@ function parseRow(r){
     discount: String(r[8] || ''),
     amount: amount,
     wechat: String(r[10] || ''),
-    source: String(r[11] || ''),
-    repurchase: String(r[12] || ''),
+    phone: String(r[11] || ''),
+    source: String(r[12] || ''),
+    repurchase: String(r[13] || ''),
     memberType: memberType,
     deliveries: deliveries,
     doneCount: doneCount,
@@ -840,7 +852,7 @@ function renderCards(list){
     h += '<div class="oc-info"><div class="oc-name">'+o.wechat+' '+getStatusTag(o);
     if(o.repurchase) h += ' <span class="tag tag-blue" style="font-size:10px;">复购</span>';
     h += '</div>';
-    h += '<div class="oc-sub">'+o.memberType+' · '+o.productName.substring(0,30)+'</div></div></div>';
+    h += '<div class="oc-sub">'+(o.phone?o.phone+' · ':'')+o.memberType+' · '+o.productName.substring(0,30)+'</div></div></div>';
     h += '<div class="oc-body">';
     h += '<div class="oc-row"><span class="rl">商品分类</span><span class="rv">'+o.category+'</span></div>';
     h += '<div class="oc-row"><span class="rl">次数/有效期</span><span class="rv">'+o.totalStr+'</span></div>';
@@ -917,7 +929,7 @@ function applyFilter(){
     if(type && o.memberType !== type) return false;
     if(status && getStatusKey(o) !== status) return false;
     if(kw){
-      var haystack = (o.wechat + o.productName + o.memberType + o.category + o.totalStr).toLowerCase();
+      var haystack = (o.wechat + (o.phone||'') + o.productName + o.memberType + o.category + o.totalStr).toLowerCase();
       if(haystack.indexOf(kw) < 0) return false;
     }
     if(dateFrom && o.payTime && o.payTime < dateFrom) return false;
@@ -965,7 +977,7 @@ function renderTable(list){
   empty.style.display='none';
   tWrap.style.display='';
   var h = '<thead><tr>';
-  h += '<th>微信名</th><th>会员类型</th><th>商品名称</th><th>次数</th>';
+  h += '<th>微信名</th><th>客户电话</th><th>会员类型</th><th>商品名称</th><th>次数</th>';
   h += '<th>实付金额</th><th>支付时间</th><th>配送方式</th><th>状态</th><th>操作</th>';
   h += '</tr></thead><tbody>';
   list.forEach(function(o){
@@ -974,6 +986,7 @@ function renderTable(list){
     var stCls = o.paused?'tag-orange':(sk==='done'?'tag-gray':'tag-green');
     h += '<tr>';
     h += '<td>'+o.wechat+'</td>';
+    h += '<td>'+(o.phone||'')+'</td>';
     h += '<td>'+o.memberType+'</td>';
     h += '<td title="'+o.productName+'">'+o.productName+'</td>';
     h += '<td>'+o.totalStr+'</td>';
@@ -1221,6 +1234,7 @@ function previewImg(idx, imgIdx){
 /* ---- 手动录入 ---- */
 function openManualAdd(){
   document.getElementById('m-wechat').value='';
+  document.getElementById('m-phone').value='';
   document.getElementById('m-type').value='鸡蛋会员';
   document.getElementById('m-category').value='';
   document.getElementById('m-product').value='';
@@ -1239,6 +1253,8 @@ function openManualAdd(){
 function confirmManualAdd(){
   var wechat = document.getElementById('m-wechat').value.trim();
   if(!wechat){ showToast('请填写下单微信'); return; }
+  var phone = document.getElementById('m-phone').value.trim();
+  if(!phone){ showToast('请填写客户电话'); return; }
   var mt = document.getElementById('m-type').value;
   var count = parseFloat(document.getElementById('m-count').value)||0;
   var amount = parseFloat(document.getElementById('m-amount').value)||0;
@@ -1257,6 +1273,7 @@ function confirmManualAdd(){
     discount: document.getElementById('m-discount').value.trim(),
     amount: amount,
     wechat: wechat,
+    phone: phone,
     source: document.getElementById('m-source').value.trim(),
     repurchase: document.getElementById('m-repurchase').value.trim(),
     memberType: mt,
@@ -1291,6 +1308,7 @@ function openEdit(idx){
   editIdx = idx;
   var o = getOrderByIdx(idx);
   document.getElementById('e-wechat').value = o.wechat;
+  document.getElementById('e-phone').value = o.phone || '';
   document.getElementById('e-type').value = o.memberType;
   document.getElementById('e-category').value = o.category;
   document.getElementById('e-product').value = o.productName;
@@ -1310,6 +1328,7 @@ function confirmEdit(){
   var o = getOrderByIdx(editIdx);
   if(!o) return;
   o.wechat = document.getElementById('e-wechat').value.trim();
+  o.phone = document.getElementById('e-phone').value.trim();
   o.memberType = document.getElementById('e-type').value;
   o.category = document.getElementById('e-category').value.trim();
   o.productName = document.getElementById('e-product').value.trim();
@@ -1329,7 +1348,7 @@ function confirmEdit(){
   showToast('信息已更新：'+o.wechat);
   if(o.backendId){
     callZion(ZION.update_order,{order_id:o.backendId,update_json:JSON.stringify({
-      wechat_name:o.wechat,member_type:o.memberType,category:o.category,
+      wechat_name:o.wechat,phone:o.phone,member_type:o.memberType,category:o.category,
       ud_product_name_d340d0:o.productName,total_count:o.totalNum,
       amount_paid:o.amount,price:parseNum(o.price),discount:parseNum(o.discount),
       platform:o.platform,pay_time:toISO(o.payTime),
@@ -1341,7 +1360,7 @@ function confirmEdit(){
 function exportExcel(){
   if(!orders.length){ showToast('暂无数据可导出'); return; }
   var header = ['年月','付款平台','支付时间','配送方式','商品分类','商品名称',
-    '次数/有效期','原价','折扣','实付金额','下单微信','客户来源','复购标签',
+    '次数/有效期','原价','折扣','实付金额','下单微信','客户电话','客户来源','复购标签',
     '包年会员','状态'];
   var maxDel = 0;
   orders.forEach(function(o){ if(o.deliveries.length > maxDel) maxDel = o.deliveries.length; });
@@ -1352,7 +1371,7 @@ function exportExcel(){
     var statusText = o.paused ? '已暂停' : (getStatusKey(o) === 'done' ? '已完成' : '进行中');
     var row = [o.yearMonth, o.platform, o.payTime, o.deliveryMethod, o.category,
       o.productName, o.totalStr, o.price, o.discount, o.amount, o.wechat,
-      o.source, o.repurchase, o.memberType, statusText];
+      o.phone||'', o.source, o.repurchase, o.memberType, statusText];
     o.deliveries.forEach(function(dd){ row.push(dd); });
     rows.push(row);
   });
