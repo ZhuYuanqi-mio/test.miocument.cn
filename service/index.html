@@ -443,6 +443,7 @@ async function loadFromBackend(){
     list.forEach(function(o){
       var key='order_'+o.id;
       userKeys.push(key);
+      var memberName=(o.member&&o.member.wechat_name)||o.wechat_name||'未知';
       var isSt=o.member_type==='草莓会员',isGd=o.member_type==='共享菜地';
       var isPeriod=isSt||isGd;
       var drs=o.delivery_records||[];
@@ -454,7 +455,7 @@ async function loadFromBackend(){
         var used=0;
         if(isSt) drs.forEach(function(r){used+=(r.quantity||0);});
         users[key]={
-          name:o.wechat_name||'未知',phone:o.phone||'',
+          name:memberName,phone:o.phone||'',
           product:pname,spec:o.category||'',
           mode:'period',memberType:o.member_type,
           validity:(o.validity_start||'')+' - '+(o.validity_end||''),
@@ -466,7 +467,7 @@ async function loadFromBackend(){
         };
       }else{
         users[key]={
-          name:o.wechat_name||'未知',phone:o.phone||'',
+          name:memberName,phone:o.phone||'',
           product:pname,spec:o.category||'',
           frequency:o.delivery_method||'',total:totalCount,
           done:doneCount,remain:totalCount-doneCount,
