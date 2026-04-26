@@ -2010,7 +2010,7 @@ async function confirmBind(){
 }
 
 // ===== 消息通知功能 =====
-var NOTIFY_BACKEND = '';
+var NOTIFY_BACKEND = 'https://miou-auth-ahjygpjmkl.cn-hangzhou.fcapp.run';
 var WX_TEMPLATE_ID = 'wbPyPJJ7JxqQGGXB06IjwrrKJ5GA2l4CIUaexkHu7hg';
 var notifySelectedMember = null;
 
@@ -2144,10 +2144,6 @@ async function sendNotify(){
     };
     if(page) body.page = page;
 
-    if(!NOTIFY_BACKEND){
-      showToast('请先配置后端地址：在管理面板代码中设置 NOTIFY_BACKEND 变量');
-      return;
-    }
     var res = await fetch(NOTIFY_BACKEND + '/wx/send-notify', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
