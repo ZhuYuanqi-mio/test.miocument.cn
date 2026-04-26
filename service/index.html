@@ -4,14 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>配送服务 - 咯咯哒生态农场</title>
-<link rel="stylesheet" href="style.css">
-<script src="js/auth.js"></script>
+<link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<script>
-var urlMemberId = new URLSearchParams(location.search).get('member_id');
-if(!urlMemberId && !Auth.requireLogin()){ /* 未登录且无 member_id 参数，跳转登录 */ }
-</script>
 
 <!-- 加载中提示 -->
 <div id="loadingState" style="text-align:center;padding:60px 0;">
@@ -403,6 +398,7 @@ if(!urlMemberId && !Auth.requireLogin()){ /* 未登录且无 member_id 参数，
 </style>
 
 <script>
+var urlMemberId = new URLSearchParams(location.search).get('member_id');
 var users = {};
 var userKeys = [];
 var ZION_LIST = 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/20ac40dd-0181-43c8-beaf-6e4c9636b3ed';
@@ -425,35 +421,20 @@ async function callZionPost(url, data){
 
 async function loadFromBackend(){
   try{
-    var list;
-    var vegsRes, settingsRes;
-
-    if(urlMemberId){
-      var [zionRes, vegsRes2, settingsRes2] = await Promise.all([
-        callZionPost(ZION_LIST, {}),
-        callZionPost(ZION_VEG.list_farm_vegs, {}),
-        callZionPost(ZION_VEG.get_farm_settings, {})
-      ]);
-      vegsRes = vegsRes2; settingsRes = settingsRes2;
-      var allOrders = JSON.parse(zionRes.orders_data || '[]');
-      var mid = Number(urlMemberId);
-      list = allOrders.filter(function(o){ return o.member_id === mid; });
-    } else {
-      var [ordersRes, vegsRes2, settingsRes2] = await Promise.all([
-        Auth.apiGet('/api/orders'),
-        callZionPost(ZION_VEG.list_farm_vegs, {}),
-        callZionPost(ZION_VEG.get_farm_settings, {})
-      ]);
-      vegsRes = vegsRes2; settingsRes = settingsRes2;
-      if(!ordersRes.ok){
-        throw new Error(ordersRes.msg || '订单获取失败');
-      }
-      list = ordersRes.orders || [];
-    }
-
+    var [ordersRes, vegsRes, settingsRes] = await Promise.all([
+      callZionPost(ZION_LIST, {}),
+      callZionPost(ZION_VEG.list_farm_vegs, {}),
+      callZionPost(ZION_VEG.get_farm_settings, {})
+    ]);
     vegPool = JSON.parse(vegsRes.vegs_data || '[]');
     var settings = JSON.parse(settingsRes.settings_data || '{}');
     vegEnabled = !!settings.veg_enabled;
+
+    var list=JSON.parse(ordersRes.orders_data||'[]');
+    if(urlMemberId){
+      var mid=Number(urlMemberId);
+      list=list.filter(function(o){return o.member_id===mid;});
+    }
     if(!list||!list.length){
       document.getElementById('switchList').innerHTML='<div style="text-align:center;padding:24px;color:var(--text-3);font-size:13px;">暂无用户数据，请先在管理面板导入</div>';
       return;
