@@ -860,7 +860,7 @@ function switchUser(type){
   }
 
   renderVegSection(u);
-  showToast('已切换到 ' + u.name + '（' + u.product + '）');
+  if(!urlMemberId) showToast('已切换到 ' + u.name + '（' + u.product + '）');
 }
 
 /* ---- 选菜功能 ---- */
