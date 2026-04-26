@@ -238,7 +238,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 <div class="app-header">
   <h1>咯咯哒生态农场 <span>后台管理</span></h1>
   <div class="header-actions">
-    <button class="btn btn-outline-gray" onclick="openSiteSettings()" title="站点设置">⚙</button>
+    <button class="btn btn-outline-gray" onclick="openSiteSettings()" title="站点设置">设置</button>
     <button class="btn btn-outline" onclick="openVegModal()">菜品管理</button>
     <button class="btn btn-outline" onclick="openManualAdd()">手动录入</button>
     <button class="btn btn-outline" onclick="triggerImport()">导入表格</button>
@@ -1747,14 +1747,14 @@ var siteSettings = { admin_qrcode_url: '', mp_link: '' };
 
 async function openSiteSettings(){
   try{
-    var res = await callZionPost(ZION.get_farm_settings, {});
+    var res = await callZion(ZION.get_farm_settings, {});
     var s = JSON.parse(res.settings_data || '{}');
     siteSettings.admin_qrcode_url = s.admin_qrcode_url || '';
     siteSettings.mp_link = s.mp_link || '';
   }catch(e){}
   document.getElementById('ss-mp-link').value = siteSettings.mp_link;
   renderQrPreview();
-  openModal('siteSettingsModal');
+  document.getElementById('siteSettingsModal').classList.add('show');
 }
 
 function renderQrPreview(){
@@ -1790,7 +1790,7 @@ function clearQrcode(){
 async function saveSiteSettings(){
   var mpLink = document.getElementById('ss-mp-link').value.trim();
   try{
-    await callZionPost(ZION.update_farm_settings, {
+    await callZion(ZION.update_farm_settings, {
       settings_json: JSON.stringify({
         admin_qrcode_url: siteSettings.admin_qrcode_url,
         mp_link: mpLink
