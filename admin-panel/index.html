@@ -238,6 +238,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 <div class="app-header">
   <h1>咯咯哒生态农场 <span>后台管理</span></h1>
   <div class="header-actions">
+    <button class="btn btn-outline" onclick="openNotifyModal()">消息通知</button>
     <button class="btn btn-outline" onclick="openBindModal()">绑定用户</button>
     <button class="btn btn-outline-gray" onclick="openSiteSettings()" title="站点设置">设置</button>
     <button class="btn btn-outline" onclick="openVegModal()">菜品管理</button>
@@ -594,6 +595,45 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
   </div>
 </div>
 
+<!-- 消息通知弹窗 -->
+<div class="overlay" id="notifyModal">
+  <div class="modal" style="max-width:580px;max-height:90vh">
+    <div class="modal-head"><h3>消息通知</h3><button class="close" onclick="closeModal('notifyModal')">X</button></div>
+    <div class="modal-body" style="padding:16px 20px;">
+      <div class="form-group">
+        <label>选择会员</label>
+        <select id="notifyMemberSelect" onchange="onNotifyMemberChange()" style="width:100%;height:38px;border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:13px;background:var(--white);">
+          <option value="">-- 请选择会员 --</option>
+        </select>
+      </div>
+      <div id="notifyMemberInfo" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:12px;">
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:4px;">会员信息</div>
+        <div id="notifyMemberDetail" style="font-size:13px;color:var(--text-1);"></div>
+      </div>
+      <div id="notifyOrderArea" style="display:none;">
+        <div style="font-size:13px;font-weight:600;color:var(--text-1);margin-bottom:8px;">该会员的订单</div>
+        <div id="notifyOrderList" style="max-height:160px;overflow-y:auto;margin-bottom:12px;"></div>
+      </div>
+      <div id="notifyFormArea" style="display:none;">
+        <div style="font-size:13px;font-weight:600;color:var(--text-1);margin-bottom:8px;">通知内容（可编辑）</div>
+        <div class="form-group"><label>商品信息（thing1，≤20字）</label><input type="text" id="nf_thing1" maxlength="20"></div>
+        <div class="form-group"><label>会员姓名（name2，≤10字）</label><input type="text" id="nf_name2" maxlength="10"></div>
+        <div class="form-group"><label>提示信息（thing5，≤20字）</label><input type="text" id="nf_thing5" maxlength="20"></div>
+        <div class="form-group"><label>地址（thing10，≤20字）</label><input type="text" id="nf_thing10" maxlength="20"></div>
+        <div class="form-group"><label>电话（phone_number3）</label><input type="text" id="nf_phone3"></div>
+        <div class="form-group"><label>点击跳转页面（page，可选）</label><input type="text" id="nf_page" placeholder="https://test.miocument.cn/service/"></div>
+      </div>
+      <div id="notifyNoOpenid" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:12px;">
+        <div style="font-size:13px;color:#856404;">该会员尚未绑定微信 openid，无法发送消息通知。请先让用户完成微信授权绑定。</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline-gray" onclick="closeModal('notifyModal')">取消</button>
+      <button class="btn btn-primary" id="notifySendBtn" onclick="sendNotify()" disabled>发送通知</button>
+    </div>
+  </div>
+</div>
+
 <!-- 绑定用户弹窗 -->
 <div class="overlay" id="bindModal">
   <div class="modal" style="max-width:560px;max-height:85vh">
@@ -813,8 +853,10 @@ async function loadFromBackend(){
       if(bo.status==='completed'&&!isStrawberry&&bo.member_type!=='共享菜地') deliveries.push('已完成');
       var totalNum=bo.total_count||0;
       var unit=bo.total_unit||unitByType(bo.member_type);
+      var memberObj = bo.member || {};
       return {
         idx:nextIdx++, backendId:bo.id, memberId:bo.member_id||null,
+        memberOpenid:memberObj.openid||'', memberWechat:memberObj.wechat_name||'', memberPhone:memberObj.phone||'',
         yearMonth:'', platform:bo.platform||'',
         payTime:bo.pay_time?bo.pay_time.split('T')[0]:'',
         deliveryMethod:bo.delivery_method||'',
@@ -1904,6 +1946,170 @@ async function confirmBind(){
   }catch(e){
     console.error('bind error:', e);
     showToast('绑定失败，请重试');
+  }
+}
+
+// ===== 消息通知功能 =====
+var NOTIFY_BACKEND = 'https://miou-gegeda.cn-wuhan-lr.fcapp.run';
+var WX_TEMPLATE_ID = 'wbPyPJJ7JxqQGGXB06IjwrrKJ5GA2l4CIUaexkHu7hg';
+var notifySelectedMember = null;
+
+function getUniqueMembers(){
+  var map = {};
+  orders.forEach(function(o){
+    if(!o.memberId) return;
+    if(!map[o.memberId]){
+      map[o.memberId] = {
+        id: o.memberId,
+        wechat: o.memberWechat || o.wechat || '',
+        phone: o.memberPhone || o.phone || '',
+        openid: o.memberOpenid || '',
+        orders: []
+      };
+    }
+    map[o.memberId].orders.push(o);
+    if(o.memberOpenid && !map[o.memberId].openid) map[o.memberId].openid = o.memberOpenid;
+  });
+  return Object.values(map);
+}
+
+function openNotifyModal(){
+  notifySelectedMember = null;
+  var sel = document.getElementById('notifyMemberSelect');
+  var members = getUniqueMembers();
+  var h = '<option value="">-- 请选择会员（共'+members.length+'人） --</option>';
+  members.forEach(function(m){
+    var label = (m.wechat||'未知') + (m.phone ? '（'+m.phone+'）' : '') + ' #'+m.id;
+    if(!m.openid) label += ' [未绑微信]';
+    h += '<option value="'+m.id+'">'+label+'</option>';
+  });
+  sel.innerHTML = h;
+  document.getElementById('notifyMemberInfo').style.display = 'none';
+  document.getElementById('notifyOrderArea').style.display = 'none';
+  document.getElementById('notifyFormArea').style.display = 'none';
+  document.getElementById('notifyNoOpenid').style.display = 'none';
+  document.getElementById('notifySendBtn').disabled = true;
+  document.getElementById('notifyModal').classList.add('show');
+}
+
+function onNotifyMemberChange(){
+  var mid = parseInt(document.getElementById('notifyMemberSelect').value);
+  if(!mid){
+    document.getElementById('notifyMemberInfo').style.display = 'none';
+    document.getElementById('notifyOrderArea').style.display = 'none';
+    document.getElementById('notifyFormArea').style.display = 'none';
+    document.getElementById('notifyNoOpenid').style.display = 'none';
+    document.getElementById('notifySendBtn').disabled = true;
+    notifySelectedMember = null;
+    return;
+  }
+  var members = getUniqueMembers();
+  var m = members.find(function(x){ return x.id === mid; });
+  if(!m) return;
+  notifySelectedMember = m;
+
+  document.getElementById('notifyMemberDetail').innerHTML =
+    '<b>'+( m.wechat||'未知')+'</b> · ID: '+m.id+(m.phone?' · '+m.phone:'')+(m.openid?' · <span style="color:var(--green)">已绑微信</span>':' · <span style="color:#e53935">未绑微信</span>');
+  document.getElementById('notifyMemberInfo').style.display = '';
+
+  var oh = '';
+  m.orders.forEach(function(o){
+    var statusTag = o.paused?'<span style="color:#ff9800;font-size:11px">暂停</span>':'<span style="color:var(--green);font-size:11px">活跃</span>';
+    oh += '<div style="background:var(--white);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:6px;">';
+    oh += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+    oh += '<span style="font-size:13px;font-weight:500;">'+o.productName+' '+statusTag+'</span>';
+    oh += '<span style="font-size:11px;color:var(--text-3)">#'+o.backendId+'</span>';
+    oh += '</div>';
+    oh += '<div style="font-size:12px;color:var(--text-3);margin-top:3px;">'+o.category+' · '+o.totalStr+' · 已配'+o.doneCount+'次</div>';
+    oh += '</div>';
+  });
+  document.getElementById('notifyOrderList').innerHTML = oh;
+  document.getElementById('notifyOrderArea').style.display = '';
+
+  if(!m.openid){
+    document.getElementById('notifyFormArea').style.display = 'none';
+    document.getElementById('notifyNoOpenid').style.display = '';
+    document.getElementById('notifySendBtn').disabled = true;
+  } else {
+    document.getElementById('notifyNoOpenid').style.display = 'none';
+    document.getElementById('notifyFormArea').style.display = '';
+    document.getElementById('notifySendBtn').disabled = false;
+    prefillNotifyForm(m);
+  }
+}
+
+function prefillNotifyForm(m){
+  var firstOrder = m.orders[0] || {};
+  var products = m.orders.map(function(o){ return o.category||o.productName; }).filter(Boolean);
+  var productStr = products.join('、');
+  if(productStr.length>20) productStr = productStr.slice(0,18)+'..';
+
+  var remaining = '';
+  if(firstOrder.totalNum && firstOrder.doneCount !== undefined){
+    var left = firstOrder.totalNum - firstOrder.doneCount;
+    remaining = '剩余'+left+(firstOrder.totalStr.replace(/\d+/,'')||'次');
+  }
+  var tip = remaining ? '您的订单'+remaining : '您有新的配送通知';
+  if(tip.length>20) tip = tip.slice(0,20);
+
+  document.getElementById('nf_thing1').value = productStr || '';
+  document.getElementById('nf_name2').value = (m.wechat||'').slice(0,10) || '会员';
+  document.getElementById('nf_thing5').value = tip;
+  document.getElementById('nf_thing10').value = '请确认地址';
+  document.getElementById('nf_phone3').value = m.phone || '';
+  document.getElementById('nf_page').value = 'https://test.miocument.cn/service/';
+}
+
+async function sendNotify(){
+  if(!notifySelectedMember || !notifySelectedMember.openid){
+    showToast('该会员未绑定微信，无法发送'); return;
+  }
+  var thing1 = document.getElementById('nf_thing1').value.trim();
+  var name2 = document.getElementById('nf_name2').value.trim();
+  var thing5 = document.getElementById('nf_thing5').value.trim();
+  var thing10 = document.getElementById('nf_thing10').value.trim();
+  var phone3 = document.getElementById('nf_phone3').value.trim();
+  var page = document.getElementById('nf_page').value.trim();
+
+  if(!thing1||!name2||!thing5){
+    showToast('商品信息、姓名、提示信息不能为空'); return;
+  }
+
+  document.getElementById('notifySendBtn').disabled = true;
+  document.getElementById('notifySendBtn').textContent = '发送中...';
+
+  try{
+    var body = {
+      openid: notifySelectedMember.openid,
+      templateId: WX_TEMPLATE_ID,
+      data: {
+        thing1: {value: thing1},
+        name2: {value: name2},
+        thing5: {value: thing5},
+        thing10: {value: thing10},
+        phone_number3: {value: phone3}
+      }
+    };
+    if(page) body.page = page;
+
+    var res = await fetch(NOTIFY_BACKEND + '/wx/send-notify', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    var data = await res.json();
+    if(data.ok){
+      showToast('通知发送成功！');
+      closeModal('notifyModal');
+    } else {
+      showToast('发送失败：'+(data.msg||'未知错误'));
+    }
+  }catch(e){
+    console.error('sendNotify error:', e);
+    showToast('发送异常：'+e.message);
+  }finally{
+    document.getElementById('notifySendBtn').disabled = false;
+    document.getElementById('notifySendBtn').textContent = '发送通知';
   }
 }
 </script>
