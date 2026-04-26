@@ -7,6 +7,10 @@
 <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<script>
+var urlMemberId = new URLSearchParams(location.search).get('member_id');
+var qs = urlMemberId ? '?member_id='+encodeURIComponent(urlMemberId) : '';
+</script>
 
 <!-- 加载中提示 -->
 <div id="loadingState" style="text-align:center;padding:60px 0;">
@@ -348,7 +352,6 @@
 <!-- member_id 模式：给所有导航链接带上参数 -->
 <script>
 if(urlMemberId){
-  var qs='?member_id='+encodeURIComponent(urlMemberId);
   document.querySelectorAll('.tab-bar a, a[href="/service/"], a[href="/my/"], a[href="/records/"]').forEach(function(a){
     var h=a.getAttribute('href');
     if(h && h.indexOf('member_id')<0) a.setAttribute('href', h+qs);
@@ -409,7 +412,6 @@ if(urlMemberId){
 </style>
 
 <script>
-var urlMemberId = new URLSearchParams(location.search).get('member_id');
 var users = {};
 var userKeys = [];
 var ZION_LIST = 'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/20ac40dd-0181-43c8-beaf-6e4c9636b3ed';
