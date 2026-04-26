@@ -614,7 +614,9 @@ function showEmptyState(settings){
 
   h += '<div style="background:#fff;border-radius:12px;border:1px solid #eee;padding:24px;margin-bottom:16px;text-align:left;">';
   h += '<div style="font-size:14px;font-weight:600;color:#333;margin-bottom:12px;">如果您已下单</div>';
-  h += '<div style="font-size:13px;color:#666;margin-bottom:16px;">请联系管理员为您绑定订单</div>';
+  h += '<div style="font-size:13px;color:#666;margin-bottom:16px;">绑定手机号后可自动获取订单</div>';
+  h += '<a href="https://pet.miocument.cn/signinf" style="display:block;text-align:center;background:#4B9E3F;color:#fff;font-size:14px;font-weight:500;padding:12px;border-radius:8px;text-decoration:none;margin-bottom:16px;">绑定手机号</a>';
+  h += '<div style="font-size:13px;color:#999;margin-bottom:12px;text-align:center;">或联系管理员为您绑定订单</div>';
   if(qrUrl){
     h += '<div style="text-align:center;"><img src="'+qrUrl+'" style="width:160px;height:160px;border-radius:8px;border:1px solid #f0f0f0;"></div>';
   } else {
