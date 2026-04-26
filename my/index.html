@@ -8,19 +8,24 @@
 </head>
 <body>
 <script>
-var urlMemberId = new URLSearchParams(location.search).get('member_id');
+var _params = new URLSearchParams(location.search);
+var urlMemberId = _params.get('member_id');
+var bindSuccess = _params.get('bind_success');
 var qs = urlMemberId ? '?member_id='+encodeURIComponent(urlMemberId) : '';
 </script>
 
 <!-- 个人信息 -->
 <div class="panel">
   <div style="padding:20px 16px;">
-    <div class="profile-row">
-      <div class="profile-avatar" id="avatarChar">-</div>
-      <div>
-        <div class="profile-name" id="profileName">加载中...</div>
-        <div class="profile-phone" id="profilePhone"></div>
+    <div class="profile-row" style="justify-content:space-between;">
+      <div style="display:flex;align-items:center;">
+        <div class="profile-avatar" id="avatarChar">-</div>
+        <div>
+          <div class="profile-name" id="profileName">加载中...</div>
+          <div class="profile-phone" id="profilePhone"></div>
+        </div>
       </div>
+      <a id="bindPhoneBtn" href="https://pet.miocument.cn/signinf" style="display:none;" class="btn btn-outline btn-sm">绑定手机号</a>
     </div>
   </div>
 </div>
@@ -209,6 +214,10 @@ async function loadMyData(){
     document.getElementById('profileName').textContent = memberName;
     document.getElementById('profilePhone').textContent = memberPhone ? memberPhone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '';
 
+    if(!memberPhone && urlMemberId){
+      document.getElementById('bindPhoneBtn').style.display = '';
+    }
+
     var totalOrders = list.length;
     var totalCount = 0;
     var totalDone = 0;
@@ -346,6 +355,14 @@ function showToast(msg){
 document.querySelectorAll('.overlay').forEach(function(m){
   m.addEventListener('click', function(e){ if(e.target === this) this.classList.remove('show'); });
 });
+
+if(bindSuccess === '1'){
+  setTimeout(function(){ showToast('已成功绑定手机号'); }, 500);
+  if(window.history.replaceState){
+    var cleanUrl = location.pathname + (urlMemberId ? '?member_id=' + encodeURIComponent(urlMemberId) : '');
+    window.history.replaceState(null, '', cleanUrl);
+  }
+}
 </script>
 </body>
 </html>

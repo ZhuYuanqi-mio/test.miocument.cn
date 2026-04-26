@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>绑定成功 - 咯咯哒生态农场</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.cb-wrap{padding:100px 24px 40px;text-align:center;}
+.cb-icon{width:64px;height:64px;border-radius:50%;background:var(--green-light);color:var(--green);display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:20px;}
+.cb-title{font-size:18px;font-weight:600;color:var(--text-1);margin-bottom:8px;}
+.cb-desc{font-size:14px;color:var(--text-3);line-height:1.6;}
+.cb-actions{margin-top:32px;}
+</style>
+</head>
+<body>
+<div class="cb-wrap">
+  <div class="cb-icon">✓</div>
+  <div class="cb-title">手机号绑定成功</div>
+  <div class="cb-desc" id="desc">正在返回个人中心...</div>
+  <div class="cb-actions">
+    <button class="btn btn-primary btn-block" onclick="goBack()">返回我的页面</button>
+  </div>
+</div>
+
+<script>
+var params = new URLSearchParams(location.search);
+var memberId = params.get('member_id');
+
+function goBack(){
+  var url = '/my/';
+  if(memberId) url += '?member_id=' + encodeURIComponent(memberId) + '&bind_success=1';
+  else url += '?bind_success=1';
+  location.href = url;
+}
+
+setTimeout(goBack, 1500);
+</script>
+</body>
+</html>
