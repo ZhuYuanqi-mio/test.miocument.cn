@@ -238,6 +238,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 <div class="app-header">
   <h1>咯咯哒生态农场 <span>后台管理</span></h1>
   <div class="header-actions">
+    <button class="btn btn-outline-gray" onclick="openSiteSettings()" title="站点设置">⚙</button>
     <button class="btn btn-outline" onclick="openVegModal()">菜品管理</button>
     <button class="btn btn-outline" onclick="openManualAdd()">手动录入</button>
     <button class="btn btn-outline" onclick="triggerImport()">导入表格</button>
@@ -557,6 +558,37 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
     <div class="modal-foot" id="sync-foot" style="display:none">
       <button class="btn btn-outline-gray" onclick="closeModal('syncModal')">关闭</button>
       <button class="btn btn-primary" id="sync-retry-btn" style="display:none" onclick="retrySyncFailed()">重试失败项</button>
+    </div>
+  </div>
+</div>
+
+<!-- 站点设置弹窗 -->
+<div class="overlay" id="siteSettingsModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head"><h3>站点设置</h3><button class="close" onclick="closeModal('siteSettingsModal')">X</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>管理员微信二维码</label>
+        <div id="ss-qr-preview" style="margin:8px 0;text-align:center;min-height:40px;">
+          <span style="color:var(--text-3);font-size:13px;">未上传</span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('ss-qr-file').click()">上传图片</button>
+          <button class="btn btn-outline-gray btn-sm" onclick="clearQrcode()">清除</button>
+        </div>
+        <input type="file" id="ss-qr-file" accept="image/*" style="display:none" onchange="handleQrUpload(this)">
+      </div>
+      <div class="form-group" style="margin-top:16px;">
+        <label>公众号 / 小程序链接</label>
+        <input type="url" id="ss-mp-link" placeholder="https://mp.weixin.qq.com/..." style="width:100%;height:38px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-size:14px;margin-top:6px;">
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text-3);line-height:1.6;">
+        以上信息将展示在用户端「无订单」页面，引导用户联系管理员或前往下单。
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline-gray" onclick="closeModal('siteSettingsModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveSiteSettings()">保存</button>
     </div>
   </div>
 </div>
@@ -1709,6 +1741,69 @@ async function setDeliveryVeg(orderId, period, canSelect){
 }
 
 setInterval(function(){ loadFromBackend(); }, 30000);
+
+/* ---- 站点设置 ---- */
+var siteSettings = { admin_qrcode_url: '', mp_link: '' };
+
+async function openSiteSettings(){
+  try{
+    var res = await callZionPost(ZION.get_farm_settings, {});
+    var s = JSON.parse(res.settings_data || '{}');
+    siteSettings.admin_qrcode_url = s.admin_qrcode_url || '';
+    siteSettings.mp_link = s.mp_link || '';
+  }catch(e){}
+  document.getElementById('ss-mp-link').value = siteSettings.mp_link;
+  renderQrPreview();
+  openModal('siteSettingsModal');
+}
+
+function renderQrPreview(){
+  var el = document.getElementById('ss-qr-preview');
+  if(siteSettings.admin_qrcode_url){
+    el.innerHTML = '<img src="'+siteSettings.admin_qrcode_url+'" style="max-width:160px;max-height:160px;border-radius:8px;border:1px solid #eee;">';
+  } else {
+    el.innerHTML = '<span style="color:var(--text-3);font-size:13px;">未上传</span>';
+  }
+}
+
+async function handleQrUpload(input){
+  var file = input.files[0];
+  if(!file) return;
+  showToast('上传中...');
+  try{
+    var url = await uploadImgToOSS(file);
+    siteSettings.admin_qrcode_url = url;
+    renderQrPreview();
+    showToast('上传成功');
+  }catch(e){
+    console.error('qr upload:', e);
+    showToast('上传失败');
+  }
+  input.value = '';
+}
+
+function clearQrcode(){
+  siteSettings.admin_qrcode_url = '';
+  renderQrPreview();
+}
+
+async function saveSiteSettings(){
+  var mpLink = document.getElementById('ss-mp-link').value.trim();
+  try{
+    await callZionPost(ZION.update_farm_settings, {
+      settings_json: JSON.stringify({
+        admin_qrcode_url: siteSettings.admin_qrcode_url,
+        mp_link: mpLink
+      })
+    });
+    siteSettings.mp_link = mpLink;
+    closeModal('siteSettingsModal');
+    showToast('设置已保存');
+  }catch(e){
+    console.error('save settings:', e);
+    showToast('保存失败');
+  }
+}
 </script>
 </body>
 </html>

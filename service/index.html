@@ -449,6 +449,10 @@ async function loadFromBackend(){
       list=list.filter(function(o){return o.member_id===mid;});
     }
     if(!list||!list.length){
+      if(urlMemberId){
+        showEmptyState(settings);
+        return;
+      }
       document.getElementById('switchList').innerHTML='<div style="text-align:center;padding:24px;color:var(--text-3);font-size:13px;">暂无用户数据，请先在管理面板导入</div>';
       return;
     }
@@ -519,6 +523,52 @@ function buildSwitchList(){
     h+='<span class="cell-arrow"></span></div>';
   });
   c.innerHTML=h;
+}
+
+function showEmptyState(settings){
+  var qrUrl = settings.admin_qrcode_url || '';
+  var mpLink = settings.mp_link || '';
+
+  document.getElementById('loadingState').style.display='none';
+  document.getElementById('mainContent').style.display='none';
+
+  var el = document.getElementById('emptyState');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'emptyState';
+    document.body.insertBefore(el, document.querySelector('.tab-bar'));
+  }
+
+  var h = '';
+  h += '<div style="padding:60px 24px 40px;text-align:center;max-width:400px;margin:0 auto;">';
+  h += '<div style="font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:6px;">GegeDa生态农场会员</div>';
+  h += '<div style="width:48px;height:3px;background:#4B9E3F;border-radius:2px;margin:12px auto 24px;"></div>';
+  h += '<div style="font-size:15px;color:#666;margin-bottom:32px;">查询不到您的订单</div>';
+
+  h += '<div style="background:#fff;border-radius:12px;border:1px solid #eee;padding:24px;margin-bottom:16px;text-align:left;">';
+  h += '<div style="font-size:14px;font-weight:600;color:#333;margin-bottom:12px;">如果您已下单</div>';
+  h += '<div style="font-size:13px;color:#666;margin-bottom:16px;">请联系管理员为您绑定订单</div>';
+  if(qrUrl){
+    h += '<div style="text-align:center;"><img src="'+qrUrl+'" style="width:160px;height:160px;border-radius:8px;border:1px solid #f0f0f0;"></div>';
+  } else {
+    h += '<div style="text-align:center;padding:20px;background:#fafafa;border-radius:8px;font-size:13px;color:#999;">管理员尚未设置微信二维码</div>';
+  }
+  h += '</div>';
+
+  h += '<div style="background:#fff;border-radius:12px;border:1px solid #eee;padding:24px;text-align:left;">';
+  h += '<div style="font-size:14px;font-weight:600;color:#333;margin-bottom:12px;">如果您未下单</div>';
+  h += '<div style="font-size:13px;color:#666;margin-bottom:16px;">欢迎前往公众号下单</div>';
+  if(mpLink){
+    h += '<a href="'+mpLink+'" style="display:block;text-align:center;background:#4B9E3F;color:#fff;font-size:14px;font-weight:500;padding:12px;border-radius:8px;text-decoration:none;">前往公众号</a>';
+  } else {
+    h += '<div style="text-align:center;padding:12px;background:#fafafa;border-radius:8px;font-size:13px;color:#999;">管理员尚未设置公众号链接</div>';
+  }
+  h += '</div>';
+
+  h += '<div style="height:80px;"></div>';
+  h += '</div>';
+
+  el.innerHTML = h;
 }
 
 loadFromBackend();

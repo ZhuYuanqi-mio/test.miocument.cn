@@ -191,6 +191,10 @@ async function loadMyData(){
     }
 
     if(!list.length){
+      if(urlMemberId){
+        location.replace('/service/' + qs);
+        return;
+      }
       document.getElementById('profileName').textContent = '暂无数据';
       document.getElementById('myStatusTag').textContent = '无订单';
       document.getElementById('myStatusTag').className = 'tag tag-gray';
