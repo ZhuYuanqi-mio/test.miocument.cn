@@ -161,6 +161,29 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
 .dup-item .dup-name{font-weight:600;color:var(--text-1)}
 .dup-item .dup-detail{font-size:12px;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+.sync-progress{margin-bottom:16px}
+.sync-bar-wrap{height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;margin:8px 0}
+.sync-bar{height:100%;background:var(--green);border-radius:4px;transition:width .3s}
+.sync-bar.has-fail{background:linear-gradient(90deg,var(--green) var(--ok-pct),var(--red) var(--ok-pct))}
+.sync-stats{display:flex;gap:16px;margin:10px 0 6px;font-size:13px}
+.sync-stats .ss-ok{color:var(--green);font-weight:600}
+.sync-stats .ss-fail{color:var(--red);font-weight:600}
+.sync-stats .ss-skip{color:var(--orange);font-weight:600}
+.sync-log{max-height:320px;overflow-y:auto;border:1px solid #f0f0f0;border-radius:8px}
+.sync-row{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:13px;border-bottom:1px solid #f8f8f8}
+.sync-row:last-child{border-bottom:none}
+.sync-row .sr-idx{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;color:#fff;font-weight:600}
+.sync-row .sr-idx.ok{background:var(--green)}
+.sync-row .sr-idx.fail{background:var(--red)}
+.sync-row .sr-idx.skip{background:var(--orange)}
+.sync-row .sr-info{flex:1;min-width:0}
+.sync-row .sr-name{font-weight:500}
+.sync-row .sr-detail{font-size:11px;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sync-row .sr-err{font-size:11px;color:var(--red);margin-top:1px}
+.sync-filter-tabs{display:flex;gap:6px;margin-bottom:8px}
+.sync-filter-tabs button{padding:4px 12px;border-radius:14px;font-size:12px;border:1px solid #ddd;background:#fff;color:var(--text-2);cursor:pointer}
+.sync-filter-tabs button.on{border-color:var(--green);background:var(--green-light);color:var(--green);font-weight:500}
+
 @media(max-width:768px){
   .app-header{padding:0 14px;height:48px}
   .app-header h1{font-size:15px;gap:6px}
@@ -507,6 +530,37 @@ input,select,textarea{font-family:inherit;font-size:inherit;outline:none}
   </div>
 </div>
 
+<!-- 导入进度弹窗 -->
+<div class="overlay" id="syncModal">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-head"><h3 id="sync-title">正在导入...</h3><button class="close" id="syncCloseBtn" style="display:none" onclick="closeModal('syncModal')">X</button></div>
+    <div class="modal-body">
+      <div class="sync-progress">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-2)">
+          <span id="sync-progress-text">准备中...</span>
+          <span id="sync-progress-pct">0%</span>
+        </div>
+        <div class="sync-bar-wrap"><div class="sync-bar" id="sync-bar" style="width:0%"></div></div>
+      </div>
+      <div class="sync-stats" id="sync-stats" style="display:none">
+        <span>成功 <span class="ss-ok" id="sync-ok">0</span></span>
+        <span>失败 <span class="ss-fail" id="sync-fail">0</span></span>
+        <span>无电话跳过会员 <span class="ss-skip" id="sync-skip">0</span></span>
+      </div>
+      <div class="sync-filter-tabs" id="sync-filters" style="display:none">
+        <button class="on" onclick="filterSyncLog('all',this)">全部</button>
+        <button onclick="filterSyncLog('fail',this)">仅失败</button>
+        <button onclick="filterSyncLog('skip',this)">无电话</button>
+      </div>
+      <div class="sync-log" id="sync-log"></div>
+    </div>
+    <div class="modal-foot" id="sync-foot" style="display:none">
+      <button class="btn btn-outline-gray" onclick="closeModal('syncModal')">关闭</button>
+      <button class="btn btn-primary" id="sync-retry-btn" style="display:none" onclick="retrySyncFailed()">重试失败项</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -560,18 +614,43 @@ async function callZion(url, data){
 function toISO(d){ return d?(d.indexOf('T')>=0?d:d+'T00:00:00+08:00'):null; }
 function unitByType(t){ return t==='鸡会员'?'只':t==='草莓会员'?'斤':t==='共享菜地'?'月':'次'; }
 
+var syncResults = [];
+
 async function syncToBackend(list){
-  var ok=0,fail=0;
-  showToast('正在同步到后端（'+list.length+'条）...');
+  syncResults = [];
+  var ok=0, fail=0, skip=0;
+  var total = list.length;
+
+  document.getElementById('sync-title').textContent = '正在导入...';
+  document.getElementById('sync-log').innerHTML = '';
+  document.getElementById('sync-stats').style.display = '';
+  document.getElementById('sync-filters').style.display = 'none';
+  document.getElementById('sync-foot').style.display = 'none';
+  document.getElementById('syncCloseBtn').style.display = 'none';
+  document.getElementById('sync-retry-btn').style.display = 'none';
+  document.getElementById('sync-bar').style.width = '0%';
+  document.getElementById('syncModal').classList.add('show');
+
   for(var i=0;i<list.length;i++){
     var o=list[i];
+    var pct = Math.round((i+1)/total*100);
+    document.getElementById('sync-progress-text').textContent = '正在处理 '+(i+1)+'/'+total+'：'+o.wechat;
+    document.getElementById('sync-progress-pct').textContent = pct+'%';
+    document.getElementById('sync-bar').style.width = pct+'%';
+
+    var entry = {idx:i+1, wechat:o.wechat, phone:o.phone||'', product:o.productName, status:'ok', error:'', orderRef:o};
+
     try{
       var memberId=null;
       var phone=o.phone||'';
       if(phone){
         var memberPayload={phone:phone,wechat_name:o.wechat,source:o.source,repurchase:o.repurchase};
         var mr=await callZion(ZION.find_or_create_member,{member_json:JSON.stringify(memberPayload)});
-        if(mr&&mr.member_id&&mr.member_id>0) memberId=mr.member_id;
+        if(mr&&mr.member_id&&mr.member_id>0){ memberId=mr.member_id; }
+        else{ entry.error='会员创建返回异常'; }
+      } else {
+        entry.status='skip';
+        skip++;
       }
       var payload={member_id:memberId,phone:phone,wechat_name:o.wechat,source:o.source,repurchase:o.repurchase,
         member_type:o.memberType,category:o.category,product_name:o.productName,
@@ -580,12 +659,73 @@ async function syncToBackend(list){
         platform:o.platform,pay_time:toISO(o.payTime),
         delivery_method:o.deliveryMethod,status:'active'};
       var r=await callZion(ZION.create_order,{order_json:JSON.stringify(payload)});
-      if(r&&r.order_id){o.backendId=r.order_id;ok++;}
-      else{fail++;console.error('create_order fail:',o.wechat,r);}
-    }catch(e){fail++;console.error('sync error:',e);}
+      if(r&&r.order_id){
+        o.backendId=r.order_id;
+        if(entry.status!=='skip') { entry.status='ok'; ok++; }
+        else ok++;
+      } else {
+        entry.status='fail';
+        entry.error='创建订单失败：'+(r?JSON.stringify(r):'无返回');
+        fail++;
+      }
+    }catch(e){
+      entry.status='fail';
+      entry.error='请求异常：'+e.message;
+      fail++;
+    }
+
+    syncResults.push(entry);
+    document.getElementById('sync-ok').textContent = ok;
+    document.getElementById('sync-fail').textContent = fail;
+    document.getElementById('sync-skip').textContent = skip;
+    appendSyncRow(entry);
   }
-  if(fail>0)showToast('后端同步：成功 '+ok+' / 失败 '+fail);
-  else showToast('后端同步完成：'+ok+' 条订单已入库');
+
+  document.getElementById('sync-progress-text').textContent = '导入完成';
+  document.getElementById('sync-bar').style.width = '100%';
+  if(fail>0){
+    document.getElementById('sync-title').textContent = '导入完成（有 '+fail+' 条失败）';
+    document.getElementById('sync-bar').className = 'sync-bar has-fail';
+    document.getElementById('sync-bar').style.setProperty('--ok-pct', Math.round(ok/total*100)+'%');
+    document.getElementById('sync-retry-btn').style.display = '';
+  } else {
+    document.getElementById('sync-title').textContent = '导入完成';
+  }
+  document.getElementById('syncCloseBtn').style.display = '';
+  document.getElementById('sync-foot').style.display = '';
+  document.getElementById('sync-filters').style.display = '';
+}
+
+function appendSyncRow(entry){
+  var log = document.getElementById('sync-log');
+  var cls = entry.status==='ok'?'ok':entry.status==='skip'?'skip':'fail';
+  var icon = entry.status==='ok'?'✓':entry.status==='skip'?'—':'✗';
+  var h = '<div class="sync-row" data-status="'+cls+'">';
+  h += '<span class="sr-idx '+cls+'">'+icon+'</span>';
+  h += '<div class="sr-info"><div class="sr-name">'+entry.wechat+' <span style="color:var(--text-3);font-weight:400;font-size:11px">'+(entry.phone||'无电话')+'</span></div>';
+  h += '<div class="sr-detail">'+entry.product+'</div>';
+  if(entry.status==='fail') h += '<div class="sr-err">'+entry.error+'</div>';
+  if(entry.status==='skip') h += '<div class="sr-err" style="color:var(--orange)">无客户电话，未创建/绑定会员（订单已创建）</div>';
+  h += '</div></div>';
+  log.insertAdjacentHTML('beforeend', h);
+  log.scrollTop = log.scrollHeight;
+}
+
+function filterSyncLog(type, btn){
+  document.querySelectorAll('.sync-filter-tabs button').forEach(function(b){b.className='';});
+  btn.className='on';
+  document.querySelectorAll('#sync-log .sync-row').forEach(function(row){
+    if(type==='all') row.style.display='';
+    else row.style.display = row.dataset.status===type?'':'none';
+  });
+}
+
+async function retrySyncFailed(){
+  var failList = syncResults.filter(function(e){return e.status==='fail';});
+  if(!failList.length){ showToast('没有需要重试的项'); return; }
+  var retryOrders = failList.map(function(e){return e.orderRef;});
+  closeModal('syncModal');
+  await syncToBackend(retryOrders);
 }
 
 async function loadFromBackend(){
@@ -1159,7 +1299,12 @@ function togglePause(idx){
 
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 document.querySelectorAll('.overlay').forEach(function(m){
-  m.addEventListener('click', function(e){ if(e.target===this) this.classList.remove('show'); });
+  m.addEventListener('click', function(e){
+    if(e.target===this){
+      if(this.id==='syncModal'&&document.getElementById('syncCloseBtn').style.display==='none') return;
+      this.classList.remove('show');
+    }
+  });
 });
 
 function handleImgUpload(input, containerId){
