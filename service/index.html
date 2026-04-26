@@ -531,6 +531,8 @@ function showEmptyState(settings){
 
   document.getElementById('loadingState').style.display='none';
   document.getElementById('mainContent').style.display='none';
+  var tabBar = document.querySelector('.tab-bar');
+  if(tabBar) tabBar.style.display='none';
 
   var el = document.getElementById('emptyState');
   if(!el){
