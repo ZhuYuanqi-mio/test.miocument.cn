@@ -582,7 +582,7 @@ function buildSwitchList(){
       h+='<div style="padding:8px 16px 4px;font-size:11px;color:var(--text-3);background:#fafafa;">有效期型会员</div>';
     }
     lastMode=u.mode;
-    h+='<div class="cell" onclick="switchUser(\''+key+'\')" id="sw-'+key+'">';
+    h+='<div class="cell" onclick="manualSwitchUser(\''+key+'\')" id="sw-'+key+'">';
     h+='<div class="cell-body"><span class="cell-label">'+u.name+' · '+(u.memberType||u.spec||'会员')+'</span>';
     h+='<div class="cell-desc">'+u.product+'</div></div>';
     h+='<span class="cell-arrow"></span></div>';
@@ -980,7 +980,12 @@ function switchUser(type){
   }
 
   renderVegSection(u);
-  if(!urlMemberId) showToast('已切换到 ' + u.name + '（' + u.product + '）');
+}
+
+function manualSwitchUser(key){
+  switchUser(key);
+  var u = users[key];
+  if(u) showToast('已切换到 ' + u.name + '（' + u.product + '）');
 }
 
 /* ---- 选菜功能 ---- */
