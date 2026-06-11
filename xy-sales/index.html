@@ -1174,15 +1174,16 @@ function calcMinPrice(){
   var hasWjxSurvey=selectedSvcs['问卷填写']&&surveyMode==='wjx';
   var copies=parseInt(document.getElementById('sCopies').value)||0;
   var hasOther=selectedSvcs['问卷设计']||selectedSvcs['数据修改']||selectedSvcs['分析报告'];
-  var hasExcelSurvey=selectedSvcs['问卷填写']&&surveyMode==='excel';
 
+  var min=40;
   if(hasWjxSurvey&&hasOther){
-    return Math.round(copies*0.3+50);
+    min=Math.max(40,Math.round(copies*0.3+50));
+  } else if(hasWjxSurvey&&!hasOther){
+    min=Math.max(40,Math.round(copies*0.3));
+  } else if(!hasWjxSurvey){
+    min=50;
   }
-  if(hasWjxSurvey&&!hasOther){
-    return Math.round(copies*0.3);
-  }
-  return 50;
+  return min;
 }
 
 /* ===== Copy quote ===== */
