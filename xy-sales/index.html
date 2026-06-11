@@ -453,7 +453,7 @@ textarea.m-input{min-height:60px;resize:vertical;line-height:1.6}
       <input type="datetime-local" class="m-input" id="submitDeadline">
     </div>
     <div class="m-section">
-      <div class="m-lb">订单总金额 <span class="req">*</span></div>
+      <div class="m-lb">订单总金额 <span style="font-size:11px;color:#888;font-weight:400">（填写后自动标记已付款）</span></div>
       <div style="display:flex;align-items:center;gap:8px">
         <input class="m-input" id="submitPrice" type="number" min="0" step="1" placeholder="输入订单总金额" style="flex:1">
         <span style="font-size:14px;color:#666">元</span>
@@ -597,6 +597,27 @@ function getPrice(o){
   var m=o.chat_notes.match(/\[SALES_PRICE:(\d+(?:\.\d+)?)\]/);
   return m?parseFloat(m[1]):0;
 }
+
+function parsePriceBreakdown(desc){
+  if(!desc)return[];
+  var rows=[];
+  var lines=desc.split('\n');
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i].trim();
+    if(!line)continue;
+    if(line.indexOf('=')===0)break;
+    if(line.indexOf('【答卷要求详情】')>=0)break;
+    var m1=line.match(/^设计问卷(\d+(?:\.\d+)?)r/);
+    if(m1){rows.push({name:'问卷设计',price:parseFloat(m1[1])});continue;}
+    var m2=line.match(/^\+(\d+)份答卷(\d+(?:\.\d+)?)r/);
+    if(m2){rows.push({name:'问卷填写 ('+m2[1]+'份)',price:parseFloat(m2[2])});continue;}
+    var m3=line.match(/^\+数据修改(\d+(?:\.\d+)?)r/);
+    if(m3){rows.push({name:'数据修改',price:parseFloat(m3[1])});continue;}
+    var m4=line.match(/^\+(.+?)(\d+(?:\.\d+)?)r$/);
+    if(m4){rows.push({name:m4[1],price:parseFloat(m4[2])});continue;}
+  }
+  return rows;
+}
 function isPaid(o){return o.chat_notes.indexOf('[SALES_PAID:1]')>=0;}
 function isAfterSale(o){return o.chat_notes.indexOf('[SALES_AFTERSALE:1]')>=0;}
 
@@ -706,7 +727,18 @@ function openDtl(i){
   var g=cd(o),price=getPrice(o),paid=isPaid(o),afterSale=isAfterSale(o);
   var s='';
   s+='<div class="d-card"><div class="lb">订单价格</div><div class="val" style="font-size:22px;font-weight:700">¥'+price.toFixed(0)+'</div></div>';
-  s+='<div class="d-card"><div class="lb">付款状态</div><div class="val"><span class="badge '+(paid?'b-paid':'b-unpaid')+'" style="font-size:13px;padding:4px 12px">'+(paid?'已付款':'未付款')+'</span></div></div>';
+  s+='<div class="d-card"><div class="lb">付款状态</div><div class="val"><span class="badge '+(paid?'b-paid':'b-unpaid')+'" style="font-size:13px;padding:4px 12px">'+(paid?'已付款':'未付款')+'</span></div>';
+  var breakdown=parsePriceBreakdown(o.description);
+  if(breakdown.length>0){
+    s+='<div style="margin-top:10px;border-top:1px solid #eee;padding-top:10px"><div style="font-size:13px;font-weight:600;color:#333;margin-bottom:6px">价格明细</div>';
+    breakdown.forEach(function(row){
+      s+='<div style="display:flex;justify-content:space-between;font-size:13px;color:#444;padding:3px 0;border-bottom:1px dashed #f0f0f0"><span>'+escHtml(row.name)+'</span><span>¥'+row.price+'</span></div>';
+    });
+    var bTotal=0;breakdown.forEach(function(r){bTotal+=r.price;});
+    s+='<div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#222;padding:8px 0 0;margin-top:4px;border-top:2px solid #222"><span>合计</span><span>¥'+bTotal+'</span></div>';
+    s+='</div>';
+  }
+  s+='</div>';
   s+='<div class="d-card"><div class="lb">截止时间</div><div class="val">'+fmtDl(o.deadline)+'</div><div class="card-cd '+g.c+'" style="margin-top:4px">'+g.t+'</div></div>';
   s+='<div class="d-card"><div class="lb">订单状态</div><div class="val">'+(o.status==='completed'?'已完成':'进行中')+'</div></div>';
   s+='<div class="d-card"><div class="lb">任务类型</div><div class="tl">';
@@ -1340,17 +1372,18 @@ function confirmSubmit(){
   if(!name){toast('请输入咸鱼名称');return;}
   var dlVal=document.getElementById('submitDeadline').value;
   if(!dlVal){toast('请选择截止日期');return;}
-  var price=parseFloat(document.getElementById('submitPrice').value);
-  if(!price||price<=0){toast('请输入订单总金额');return;}
+  var price=parseFloat(document.getElementById('submitPrice').value)||0;
+  var hasPaid=price>0;
 
   var deadline=dlVal+':00+08:00';
+  var finalPrice=hasPaid?price:pendingOrderData.calcPrice;
   var orderData={
     xianyu_name:name,
     email:'',
     deadline:deadline,
     task_types:pendingOrderData.svcList.join(','),
     description:pendingOrderData.description,
-    chat_notes:'[SALES_PRICE:'+price+'][SALES_PAID:0]',
+    chat_notes:'[SALES_PRICE:'+finalPrice+'][SALES_PAID:'+(hasPaid?'1':'0')+']',
     status:'pending',
     source:'sales',
     dy_seq:spId
