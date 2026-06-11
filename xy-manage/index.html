@@ -521,7 +521,7 @@ function loadSalespeople(cb){
   .then(function(r){return r.json();})
   .then(function(d){
     cachedSalespeople=JSON.parse(d.salespeople_data||'[]').map(function(sp){
-      return{id:sp.sp_id,name:sp.name};
+      return{id:String(sp.sp_id),name:sp.name};
     });
     if(cb)cb();
   }).catch(function(e){console.error('加载销售员失败:',e);cachedSalespeople=[];if(cb)cb();});
@@ -562,7 +562,7 @@ function createSalesperson(){
   .then(function(d){
     var sp=JSON.parse(d.sp_data||'{}');
     if(sp.sp_id){
-      cachedSalespeople.push({id:sp.sp_id,name:sp.name});
+      cachedSalespeople.push({id:String(sp.sp_id),name:sp.name});
       document.getElementById('spNameInput').value='';
       renderSpList();
       toast('已添加销售员：'+sp.name+'（ID: '+sp.sp_id+'）');
