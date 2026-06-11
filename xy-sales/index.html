@@ -399,7 +399,7 @@ textarea.m-input{min-height:60px;resize:vertical;line-height:1.6}
       <div class="ps-total"><span>合计</span><span id="priceTotal">¥0</span></div>
       <div class="ps-actions">
         <button class="ps-copy-btn" onclick="copyQuote()">复制报价</button>
-        <button class="ps-submit-btn" onclick="submitOrder()">创建订单</button>
+        <button class="ps-submit-btn" onclick="openSubmitModal()">创建订单</button>
       </div>
       <div class="min-price-box" style="display:flex;justify-content:space-between;align-items:center">
         <span style="font-weight:600;color:#92400e">最低价：</span>
@@ -429,6 +429,29 @@ textarea.m-input{min-height:60px;resize:vertical;line-height:1.6}
       <input type="datetime-local" class="m-input" id="payDeadline">
     </div>
     <button style="width:100%;padding:13px;border:none;border-radius:8px;background:#16a34a;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:10px" onclick="confirmPay()">确认已付款</button>
+  </div>
+</div>
+
+<!-- Submit Confirm Modal -->
+<div class="modal-mask" id="submitModal">
+  <div class="modal-box" style="min-height:auto;padding-bottom:40px">
+    <h3><span class="m-close" onclick="closeSubmitModal()">取消</span>确认订单信息</h3>
+    <div class="m-section">
+      <div class="m-lb">咸鱼名称 <span class="req">*</span></div>
+      <input class="m-input" id="submitName" placeholder="输入客户咸鱼名称">
+    </div>
+    <div class="m-section">
+      <div class="m-lb">截止日期 <span class="req">*</span></div>
+      <input type="datetime-local" class="m-input" id="submitDeadline">
+    </div>
+    <div class="m-section">
+      <div class="m-lb">订单总金额 <span class="req">*</span></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input class="m-input" id="submitPrice" type="number" min="0" step="1" placeholder="输入订单总金额" style="flex:1">
+        <span style="font-size:14px;color:#666">元</span>
+      </div>
+    </div>
+    <button style="width:100%;padding:13px;border:none;border-radius:8px;background:#222;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:10px" onclick="confirmSubmit()">确认创建</button>
   </div>
 </div>
 
@@ -1216,6 +1239,9 @@ function copyQuote(){
   }
   lines.push('——————————————');
   lines.push('=合计'+totalPrice+'元');
+  lines.push('');
+  lines.push('【完成时间】');
+  lines.push('默认3天内完成，也可按您指定日期（最快可指定到24h内）；也支持付50r加急2h内完成');
   copyToClipboard(lines.join('\n'));
 }
 
@@ -1255,7 +1281,9 @@ function buildSurveyDetail(){
 }
 
 /* ===== Submit order ===== */
-function submitOrder(){
+var pendingOrderData=null;
+
+function openSubmitModal(){
   var anySvc=false;
   var svcList=[];
   ['问卷设计','问卷填写','数据修改','分析报告'].forEach(function(s){
@@ -1280,15 +1308,36 @@ function submitOrder(){
   var surveyReqDetails=buildSurveyReqDetails();
   if(surveyReqDetails)descParts.push('\n【答卷要求详情】\n'+surveyReqDetails);
 
-  var description=descParts.join('\n');
+  pendingOrderData={svcList:svcList,description:descParts.join('\n'),calcPrice:totalPrice};
 
+  document.getElementById('submitName').value='';
+  document.getElementById('submitDeadline').value='';
+  document.getElementById('submitPrice').value=totalPrice;
+  document.getElementById('submitModal').classList.add('show');
+}
+
+function closeSubmitModal(){
+  document.getElementById('submitModal').classList.remove('show');
+  pendingOrderData=null;
+}
+
+function confirmSubmit(){
+  if(!pendingOrderData)return;
+  var name=document.getElementById('submitName').value.trim();
+  if(!name){toast('请输入咸鱼名称');return;}
+  var dlVal=document.getElementById('submitDeadline').value;
+  if(!dlVal){toast('请选择截止日期');return;}
+  var price=parseFloat(document.getElementById('submitPrice').value);
+  if(!price||price<=0){toast('请输入订单总金额');return;}
+
+  var deadline=dlVal+':00+08:00';
   var orderData={
-    xianyu_name:'未填写用户名称',
+    xianyu_name:name,
     email:'',
-    deadline:null,
-    task_types:svcList.join(','),
-    description:description,
-    chat_notes:'[SALES_PRICE:'+totalPrice+'][SALES_PAID:0]',
+    deadline:deadline,
+    task_types:pendingOrderData.svcList.join(','),
+    description:pendingOrderData.description,
+    chat_notes:'[SALES_PRICE:'+price+'][SALES_PAID:0]',
     status:'pending',
     source:'sales',
     dy_seq:spId
@@ -1299,6 +1348,7 @@ function submitOrder(){
   .then(function(r){return r.json();})
   .then(function(){
     toast('订单已创建');
+    closeSubmitModal();
     closeCreateModal();
     load();
   }).catch(function(e){console.error(e);toast('创建失败');});
