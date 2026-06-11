@@ -1344,14 +1344,25 @@ function confirmSubmit(){
   };
 
   toast('创建中...');
-  fetch(ZION.create_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_json:JSON.stringify(orderData)})})
-  .then(function(r){return r.json();})
-  .then(function(){
-    toast('订单已创建');
-    closeSubmitModal();
-    closeCreateModal();
-    load();
-  }).catch(function(e){console.error(e);toast('创建失败');});
+  var body=JSON.stringify({order_json:JSON.stringify(orderData)});
+  fetch(ZION.create_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:body})
+  .then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.text();
+  })
+  .then(function(txt){
+    var d={};
+    try{d=JSON.parse(txt);}catch(e){}
+    if(d.order_id){
+      toast('订单已创建');
+      closeSubmitModal();
+      closeCreateModal();
+      load();
+    } else {
+      console.error('创建响应:',txt);
+      toast('创建失败: '+(txt||'').slice(0,60));
+    }
+  }).catch(function(e){console.error('创建错误:',e);toast('创建失败: '+e.message);});
 }
 
 function buildSurveyReqDetails(){
