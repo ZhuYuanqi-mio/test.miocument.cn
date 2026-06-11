@@ -250,7 +250,7 @@ textarea.m-input{min-height:60px;resize:vertical;line-height:1.6}
 
     <!-- 3a: 问卷设计 -->
     <div class="m-section" id="secDesign" style="display:none">
-      <div class="m-lb">问卷设计</div>
+      <div class="m-lb">问卷设计 <span class="copy-icon" onclick="copyDesignBlock()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></span></div>
       <div class="m-hint">【问卷设计】20-40元
 1、导入问卷星的基础版（20元）：含基本信息题（5-8道）+ 核心维度量表题（20-30道）
 2、需要配问卷中文版word（额外加10元）/问卷的英文word版（额外加10元）
@@ -299,8 +299,8 @@ textarea.m-input{min-height:60px;resize:vertical;line-height:1.6}
           <span class="copy-icon" onclick="copyText('请问是需要填写到问卷星里，还是答卷excle就可以？（问卷星会贵一些，因为有人工填写费）')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></span>
         </div>
         <div class="m-tags">
-          <span id="sModeWjx" onclick="pickSurveyMode('wjx')" data-mode="wjx">问卷星 (0.3r/份)</span>
-          <span id="sModeExcel" onclick="pickSurveyMode('excel')" data-mode="excel">答卷Excel (0.1r/份)</span>
+          <span id="sModeWjx" onclick="pickSurveyMode('wjx')" data-mode="wjx">问卷星 (0.5r/份)</span>
+          <span id="sModeExcel" onclick="pickSurveyMode('excel')" data-mode="excel">答卷Excel (0.2r/份)</span>
         </div>
       </div>
 
@@ -310,11 +310,10 @@ textarea.m-input{min-height:60px;resize:vertical;line-height:1.6}
           <span class="copy-icon" onclick="copySurveyReqBlock()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></span>
         </div>
         <div class="copy-text-block" style="font-size:11px;line-height:1.6;color:#888;margin-bottom:10px">答卷有什么要求吗？
-答卷excle基础价格0.1r/份，问卷星基础价格0.3r/份
-（1）填写人群要求（每条加0.1r/份）：
-（2）逻辑要求（每条加0.1r/份）：
-（3）比例要求（总共加0.1r/份）：
-（4）统计要求（每条加0.1r/份）：
+（1）填写人群要求：
+（2）逻辑要求
+（3）比例要求
+（4）统计要求
 相关性分析 p≤0.05 、线性回归 VIF<10 二元逻辑回归 AUC>0.8 、T检验 p≤0.05 、方差分析 p≤0.05 、中介效应 显著 、调节效应 显著 、信度检验 α>0.8 、验证性因子分析 适配度良好）</div>
 
         <div class="m-checks">
@@ -346,7 +345,7 @@ textarea.m-input{min-height:60px;resize:vertical;line-height:1.6}
 
     <!-- 3c: 数据修改 -->
     <div class="m-section" id="secDatafix" style="display:none">
-      <div class="m-lb">数据修改</div>
+      <div class="m-lb">数据修改 <span class="copy-icon" onclick="copyDatafixBlock()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></span></div>
       <div class="m-hint">已收集的答卷数据不满足分析标准/结论，支持根据您的要求：
 计算出匹配的答卷（您可验算确认）+告知需删除的答卷+新增问卷
 【这个一般按照1-2r/条答卷数据报价！一般总价会是300-800r】</div>
@@ -359,7 +358,7 @@ textarea.m-input{min-height:60px;resize:vertical;line-height:1.6}
 
     <!-- 3d: 分析报告 -->
     <div class="m-section" id="secReport" style="display:none">
-      <div class="m-lb">分析报告</div>
+      <div class="m-lb">分析报告 <span class="copy-icon" onclick="copyReportBlock()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></span></div>
       <div class="m-checks" id="reportChecks">
         <label><input type="checkbox" class="rpt-item" data-name="描述性统计分析" data-price="15" onchange="calcAll()"> 描述性统计分析 (15元)</label>
         <label><input type="checkbox" class="rpt-item" data-name="信度分析" data-price="20" onchange="calcAll()"> 信度分析 (20元)</label>
@@ -402,11 +401,9 @@ textarea.m-input{min-height:60px;resize:vertical;line-height:1.6}
         <button class="ps-copy-btn" onclick="copyQuote()">复制报价</button>
         <button class="ps-submit-btn" onclick="submitOrder()">创建订单</button>
       </div>
-      <div class="min-price-box">
-        <strong>【最低价提醒】</strong><br>
-        • 如果没有问卷星填写的：保证总价不低于100都可以接<br>
-        • 如果只有问卷星填写的：保证总价不低于答卷数量×0.3<br>
-        • 如果有问卷星填写和其他的：保证总价不低于问卷数量×0.3+80元
+      <div class="min-price-box" style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-weight:600;color:#92400e">最低价：</span>
+        <span style="font-size:18px;font-weight:700;color:#92400e" id="minPriceVal">¥0</span>
       </div>
     </div>
   </div>
@@ -1070,7 +1067,7 @@ function getSurveyPrice(){
   if(!selectedSvcs['问卷填写'])return{price:0,desc:''};
   var copies=parseInt(document.getElementById('sCopies').value)||0;
   if(!copies||!surveyMode)return{price:0,desc:''};
-  var base=surveyMode==='wjx'?0.3:0.1;
+  var base=surveyMode==='wjx'?0.5:0.2;
   var extra=0;
   var reqList=[];
   if(document.getElementById('sReqPeople').checked){extra+=0.1;reqList.push('人群要求');}
@@ -1168,6 +1165,24 @@ function calcAll(){
   }
   document.getElementById('priceRows').innerHTML=rowsHtml;
   document.getElementById('priceTotal').textContent='¥'+totalPrice;
+
+  var minPrice=calcMinPrice();
+  document.getElementById('minPriceVal').textContent='¥'+minPrice;
+}
+
+function calcMinPrice(){
+  var hasWjxSurvey=selectedSvcs['问卷填写']&&surveyMode==='wjx';
+  var copies=parseInt(document.getElementById('sCopies').value)||0;
+  var hasOther=selectedSvcs['问卷设计']||selectedSvcs['数据修改']||selectedSvcs['分析报告'];
+  var hasExcelSurvey=selectedSvcs['问卷填写']&&surveyMode==='excel';
+
+  if(hasWjxSurvey&&hasOther){
+    return Math.round(copies*0.3+50);
+  }
+  if(hasWjxSurvey&&!hasOther){
+    return Math.round(copies*0.3);
+  }
+  return 50;
 }
 
 /* ===== Copy quote ===== */
@@ -1179,12 +1194,63 @@ function copyQuote(){
   var totalPrice=design.price+survey.price+datafix.price+report.price;
   totalPrice=Math.round(totalPrice*100)/100;
   var lines=[];
-  if(selectedSvcs['问卷设计']&&design.desc)lines.push(design.desc);
-  if(selectedSvcs['问卷填写']&&survey.desc)lines.push(survey.desc);
-  if(selectedSvcs['数据修改']&&datafix.desc)lines.push(datafix.desc);
-  if(selectedSvcs['分析报告']&&report.desc)lines.push(report.desc.trim());
-  var text=lines.join('\n')+(lines.length?'\n':'')+'='+totalPrice+'元';
-  copyToClipboard(text);
+  if(selectedSvcs['问卷设计']&&design.price>0){
+    lines.push('【设计问卷】'+design.price+'r');
+    var dDetail=buildDesignDetail();
+    if(dDetail)lines.push(dDetail);
+  }
+  if(selectedSvcs['问卷填写']&&survey.price>0){
+    lines.push('【问卷填写】'+survey.price+'r');
+    var sDetail=buildSurveyDetail();
+    if(sDetail)lines.push(sDetail);
+  }
+  if(selectedSvcs['数据修改']&&datafix.price>0){
+    lines.push('【数据修改】'+datafix.price+'r');
+  }
+  if(selectedSvcs['分析报告']&&report.price>0){
+    lines.push('【分析报告】'+report.price+'r');
+    report.items.forEach(function(it){lines.push('+'+it.name+it.price+'r');});
+    if(report.chartExtra>0)lines.push('+配图表'+report.chartExtra+'r');
+    if(report.wordsPrice>0)lines.push('+目录('+parseInt(document.getElementById('rptWords').value)+'字)'+report.wordsPrice+'r');
+  }
+  lines.push('——————————————');
+  lines.push('=合计'+totalPrice+'元');
+  copyToClipboard(lines.join('\n'));
+}
+
+function buildDesignDetail(){
+  if(designOpt===1)return'（导入问卷星基础版）';
+  if(designOpt===2){
+    var parts=['导入问卷星'];
+    if(document.getElementById('dWordCn').checked)parts.push('中文word');
+    if(document.getElementById('dWordEn').checked)parts.push('英文word');
+    if(parts.length===1)parts.push('word版');
+    return'（'+parts.join('+')+')';
+  }
+  if(designOpt===3){
+    var parts=['导入问卷星'];
+    if(document.getElementById('dWordCn3').checked)parts.push('中文word');
+    if(document.getElementById('dWordEn3').checked)parts.push('英文word');
+    if(!document.getElementById('dWordCn3').checked&&!document.getElementById('dWordEn3').checked)parts.push('word版');
+    parts.push('设计理由/参考文献');
+    return'（'+parts.join('+')+')';
+  }
+  if(designOpt===4){
+    var d=document.getElementById('dOtherDesc').value.trim();
+    return d?'（'+d+'）':'';
+  }
+  return'';
+}
+
+function buildSurveyDetail(){
+  var copies=parseInt(document.getElementById('sCopies').value)||0;
+  var modeTxt=surveyMode==='wjx'?'导入问卷星':'答卷Excel';
+  var parts=[copies+'份答卷',modeTxt];
+  if(document.getElementById('sReqPeople').checked)parts.push('人群要求');
+  if(document.getElementById('sReqLogic').checked)parts.push('逻辑要求');
+  if(document.getElementById('sReqRatio').checked)parts.push('比例要求');
+  if(document.getElementById('sReqStats').checked)parts.push('统计要求');
+  return'（'+parts.join('，')+'）';
 }
 
 /* ===== Submit order ===== */
@@ -1267,7 +1333,22 @@ function buildSurveyReqDetails(){
 function copyText(text){copyToClipboard(text);}
 
 function copySurveyReqBlock(){
-  var text='答卷有什么要求吗？\n答卷excle基础价格0.1r/份，问卷星基础价格0.3r/份\n（1）填写人群要求（每条加0.1r/份）：\n（2）逻辑要求（每条加0.1r/份）：\n（3）比例要求（总共加0.1r/份）：\n（4）统计要求（每条加0.1r/份）：\n相关性分析 p≤0.05 、线性回归 VIF<10 二元逻辑回归 AUC>0.8 、T检验 p≤0.05 、方差分析 p≤0.05 、中介效应 显著 、调节效应 显著 、信度检验 α>0.8 、验证性因子分析 适配度良好）';
+  var text='答卷有什么要求吗？\n（1）填写人群要求：\n（2）逻辑要求\n（3）比例要求\n（4）统计要求\n相关性分析 p≤0.05 、线性回归 VIF<10 二元逻辑回归 AUC>0.8 、T检验 p≤0.05 、方差分析 p≤0.05 、中介效应 显著 、调节效应 显著 、信度检验 α>0.8 、验证性因子分析 适配度良好）';
+  copyToClipboard(text);
+}
+
+function copyDesignBlock(){
+  var text='【问卷设计】20-40元\n1、导入问卷星的基础版（20元）：含基本信息题（5-8道）+ 核心维度量表题（20-30道）\n2、需要配问卷中文版word（额外加10元）/问卷的英文word版（额外加10元）\n3、需要配问卷的设计理由/知网可查的参考文献（额外加20元）\n【请按照数字回复，如1、1+2】';
+  copyToClipboard(text);
+}
+
+function copyDatafixBlock(){
+  var text='【数据修改】\n已收集的答卷数据不满足分析标准/结论，支持根据您的要求：计算出匹配的答卷Excle\n（并告知需删除的答卷+新增问卷）\n【服务流程】\n1、设计好答卷excle您可以查看确认是否符合要求\n2、确认没问题了按照答卷excle一模一样的安排人工填写到问卷里';
+  copyToClipboard(text);
+}
+
+function copyReportBlock(){
+  var text='描述性统计分析(15元)、信度分析(20元)、效度分析(20元)、交叉检验(25元)、ROC曲线(25元）、t检验(25元)、相关性分析(30元)、方差分析(40元)、主成分、因子、聚类、回归分析(45元)、卡方检验(45元)、熵值法(45元)、结构方程(50元)\n- 如需配图表，每个部分需额外加20元\n- 如果有额外的目录要求，按照1-1.5元/100字';
   copyToClipboard(text);
 }
 
