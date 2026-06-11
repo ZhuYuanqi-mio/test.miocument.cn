@@ -196,12 +196,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .cl-type{font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cl-view{padding:5px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#555;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .cl-view:active{background:#f5f5f5}
+
+/* Salesperson modal */
+.sp-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;justify-content:center;align-items:center;padding:24px}
+.sp-modal.show{display:flex}
+.sp-box{background:#fff;border-radius:12px;max-width:400px;width:100%;padding:24px 20px 18px;max-height:85vh;overflow-y:auto}
+.sp-box h3{font-size:15px;font-weight:700;color:#222;margin-bottom:14px;text-align:center}
+.sp-list{margin-bottom:16px}
+.sp-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#fafafa;border-radius:6px;margin-bottom:6px;border:1px solid #eee}
+.sp-item .sp-name{font-size:14px;font-weight:600;color:#222}
+.sp-item .sp-id{font-size:12px;color:#999;margin-left:8px}
+.sp-item .sp-actions{display:flex;gap:6px}
+.sp-item .sp-copy-btn,.sp-item .sp-del-btn{padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;border:1px solid #ddd;background:#fff}
+.sp-item .sp-copy-btn{color:#4a90d9;border-color:#4a90d9}
+.sp-item .sp-copy-btn:active{background:#eef5fc}
+.sp-item .sp-del-btn{color:#c00;border-color:#fcc}
+.sp-item .sp-del-btn:active{background:#fef2f2}
+.sp-create{display:flex;gap:8px}
+.sp-create input{flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;outline:none;background:#fafafa}
+.sp-create input:focus{border-color:#555}
+.sp-create button{padding:10px 18px;border:none;border-radius:6px;background:#222;color:#fff;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.sp-create button:active{opacity:.75}
+.sp-empty{text-align:center;padding:20px 0;color:#aaa;font-size:13px}
+
+/* Salesperson dropdown item style */
+.chip-drop-item.sel-sp .cd-cnt{background:#10b981}
+.assignee-btn.sel-sp{border-color:#10b981;background:#ecfdf5;color:#059669;font-weight:600}
+.chip-drop-sep{height:1px;background:#eee;margin:4px 0}
 </style>
 </head>
 <body>
 
 <div class="top-bar">
-  <h1></h1>
+  <h1>排单管理 <span onclick="openSpModal()" style="display:inline-flex;align-items:center;vertical-align:middle;cursor:pointer;margin-left:6px;opacity:.5" title="销售员管理"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span></h1>
   <div class="search-row">
     <div class="search-box">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -211,13 +238,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
   </div>
   <div class="chips">
     <span class="chip on" data-f="pending" onclick="togglePendingDrop(event)" id="chipPending">未完成 ▾
-      <div class="chip-drop" id="pendingDrop">
-        <div class="chip-drop-item" onclick="event.stopPropagation();pickSub('pending')">全部<span class="cd-cnt" id="cntAll">0</span></div>
-        <div class="chip-drop-item" onclick="event.stopPropagation();pickSub('unassigned')">未分配<span class="cd-cnt" id="cntUa">0</span></div>
-        <div class="chip-drop-item sel-fm" onclick="event.stopPropagation();pickSub('feimi')">肥咪<span class="cd-cnt" id="cntFm">0</span></div>
-        <div class="chip-drop-item sel-nb" onclick="event.stopPropagation();pickSub('nubi')">努比<span class="cd-cnt" id="cntNb">0</span></div>
-        <div class="chip-drop-item sel-em" onclick="event.stopPropagation();pickSub('ermao')">二猫<span class="cd-cnt" id="cntEm">0</span></div>
-      </div>
+      <div class="chip-drop" id="pendingDrop"></div>
     </span>
     <span class="chip" data-f="urgent" onclick="pick(this)">紧急</span>
     <span class="chip" data-f="douyin" onclick="pick(this)">抖音</span>
@@ -342,6 +363,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
   </div>
 </div>
 
+<div class="sp-modal" id="spModal" onclick="closeSpModal()">
+  <div class="sp-box" onclick="event.stopPropagation()">
+    <h3>销售员管理</h3>
+    <div class="sp-list" id="spList"></div>
+    <div class="sp-create">
+      <input type="text" id="spNameInput" placeholder="输入销售员姓名">
+      <button onclick="createSalesperson()">添加</button>
+    </div>
+  </div>
+</div>
+
 <div class="viewer" id="viewer" onclick="this.classList.remove('show')"><img id="vImg" src=""></div>
 <div class="toast" id="toast"></div>
 
@@ -356,7 +388,11 @@ var ZION={
   unread_xy_counts:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/6d1feec2-382f-42e9-ae1f-7cf14450aaf7',
   mark_xy_read:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/ff2afd54-8d81-4a68-bd47-c7162540b755',
   append_xy_chat_note:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/22a5f154-859c-4ef7-8ca0-443f8d359bc8',
-  grant_xy_edit:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/132d2af6-77c2-480c-bf5c-84910ca592b2'
+  grant_xy_edit:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/132d2af6-77c2-480c-bf5c-84910ca592b2',
+  create_xy_salesperson:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/adf0954f-4557-4fdd-a87a-812e5083d99e',
+  list_xy_salespeople:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/758bafca-20af-4ad4-8b08-ec67ac83d9f6',
+  delete_xy_salesperson:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/e38f3ab5-5767-4ee7-8f7d-01368647c4e4',
+  get_xy_salesperson:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/e56e11e8-cdb0-4314-9d88-04011ae6098d'
 };
 var OSS_BASE='https://my-video-storage-shihuang.oss-cn-wuhan-lr.aliyuncs.com/';
 var ICON_BASE=OSS_BASE+'xianyu/icon/';
@@ -409,6 +445,7 @@ function go(){
     if(ao!==bo)return ao-bo;
     return new Date(a.deadline)-new Date(b.deadline);
   });
+  buildPendingDrop();
   stats();filterCards();updateCompletedBadge();updateApprovalBadge();updateSurveyBadge();updateUnreadBadge();
 }
 
@@ -472,6 +509,110 @@ function cd(o){
 }
 function dur(ms){var h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4);return h>=24?Math.floor(h/24)+'天'+h%24+'时':h+'时'+m+'分';}
 var pendingSub='pending';
+
+/* ===== Salesperson Management ===== */
+var cachedSalespeople=[];
+
+function loadSalespeople(cb){
+  if(!ZION.list_xy_salespeople||ZION.list_xy_salespeople.indexOf('填入')>=0){
+    cachedSalespeople=[];if(cb)cb();return;
+  }
+  fetch(ZION.list_xy_salespeople,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    cachedSalespeople=JSON.parse(d.salespeople_data||'[]').map(function(sp){
+      return{id:sp.sp_id,name:sp.name};
+    });
+    if(cb)cb();
+  }).catch(function(e){console.error('加载销售员失败:',e);cachedSalespeople=[];if(cb)cb();});
+}
+
+function getSalespeople(){return cachedSalespeople;}
+
+function openSpModal(){
+  loadSalespeople(function(){renderSpList();});
+  document.getElementById('spModal').classList.add('show');
+  document.getElementById('spNameInput').value='';
+}
+function closeSpModal(){document.getElementById('spModal').classList.remove('show');}
+
+function renderSpList(){
+  var list=getSalespeople();
+  var el=document.getElementById('spList');
+  if(!list.length){el.innerHTML='<div class="sp-empty">暂无销售员</div>';return;}
+  var h='';
+  list.forEach(function(sp){
+    h+='<div class="sp-item">';
+    h+='<div><span class="sp-name">'+escHtml(sp.name)+'</span><span class="sp-id">#'+sp.id+'</span></div>';
+    h+='<div class="sp-actions">';
+    h+='<button class="sp-copy-btn" onclick="copySalesLink(\''+sp.id+'\')">复制链接</button>';
+    h+='<button class="sp-del-btn" onclick="deleteSalesperson(\''+sp.id+'\')">删除</button>';
+    h+='</div></div>';
+  });
+  el.innerHTML=h;
+}
+
+function createSalesperson(){
+  var name=document.getElementById('spNameInput').value.trim();
+  if(!name){toast('请输入销售员姓名');return;}
+  if(!ZION.create_xy_salesperson||ZION.create_xy_salesperson.indexOf('填入')>=0){toast('销售员接口尚未配置');return;}
+  toast('创建中...');
+  fetch(ZION.create_xy_salesperson,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var sp=JSON.parse(d.sp_data||'{}');
+    if(sp.sp_id){
+      cachedSalespeople.push({id:sp.sp_id,name:sp.name});
+      document.getElementById('spNameInput').value='';
+      renderSpList();
+      toast('已添加销售员：'+sp.name+'（ID: '+sp.sp_id+'）');
+    } else {
+      toast('创建失败');
+    }
+  }).catch(function(e){console.error(e);toast('创建失败');});
+}
+
+function deleteSalesperson(id){
+  var sp=null;
+  cachedSalespeople.forEach(function(s){if(s.id===id)sp=s;});
+  if(!sp)return;
+  if(!confirm('确认删除销售员「'+sp.name+'」？'))return;
+  if(!ZION.delete_xy_salesperson||ZION.delete_xy_salesperson.indexOf('填入')>=0){toast('删除接口尚未配置');return;}
+  fetch(ZION.delete_xy_salesperson,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sp_id:id})})
+  .then(function(r){return r.json();})
+  .then(function(){
+    cachedSalespeople=cachedSalespeople.filter(function(s){return s.id!==id;});
+    renderSpList();
+    toast('已删除');
+  }).catch(function(e){console.error(e);toast('删除失败');});
+}
+
+function copySalesLink(id){
+  var link='https://test.miocument.cn/xy-sales/?id='+id;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(link).then(function(){toast('链接已复制');}).catch(function(){fallbackCopy(link);});
+  }else{fallbackCopy(link);}
+}
+
+function buildPendingDrop(){
+  var drop=document.getElementById('pendingDrop');
+  var h='';
+  h+='<div class="chip-drop-item" onclick="event.stopPropagation();pickSub(\'pending\')">全部<span class="cd-cnt" id="cntAll">0</span></div>';
+  h+='<div class="chip-drop-item" onclick="event.stopPropagation();pickSub(\'unassigned\')">未分配<span class="cd-cnt" id="cntUa">0</span></div>';
+  h+='<div class="chip-drop-item sel-fm" onclick="event.stopPropagation();pickSub(\'feimi\')">肥咪<span class="cd-cnt" id="cntFm">0</span></div>';
+  h+='<div class="chip-drop-item sel-nb" onclick="event.stopPropagation();pickSub(\'nubi\')">努比<span class="cd-cnt" id="cntNb">0</span></div>';
+  h+='<div class="chip-drop-item sel-em" onclick="event.stopPropagation();pickSub(\'ermao\')">二猫<span class="cd-cnt" id="cntEm">0</span></div>';
+  var spList=getSalespeople();
+  if(spList.length){
+    h+='<div class="chip-drop-sep"></div>';
+    spList.forEach(function(sp){
+      h+='<div class="chip-drop-item sel-sp" onclick="event.stopPropagation();pickSub(\'sales_'+sp.id+'\')">'+escHtml(sp.name)+'<span class="cd-cnt" id="cntSp_'+sp.id+'">0</span></div>';
+    });
+  }
+  drop.innerHTML=h;
+  updateDropCounts();
+}
+
 function pick(el){
   document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
   el.classList.add('on');
@@ -486,6 +627,7 @@ function togglePendingDrop(e){
   document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
   chip.classList.add('on');
   var drop=document.getElementById('pendingDrop');
+  buildPendingDrop();
   drop.classList.toggle('show');
 }
 function closePendingDrop(){document.getElementById('pendingDrop').classList.remove('show');}
@@ -499,7 +641,13 @@ function pickSub(sub){
 function updatePendingLabel(){
   var chip=document.getElementById('chipPending');
   var labels={'pending':'未完成','unassigned':'未分配','feimi':'肥咪','nubi':'努比','ermao':'二猫'};
-  var txt=(labels[pendingSub]||'未完成')+' ▾';
+  var txt=labels[pendingSub];
+  if(!txt&&pendingSub.indexOf('sales_')===0){
+    var spId=pendingSub.slice(6);
+    var spList=getSalespeople();
+    for(var si=0;si<spList.length;si++){if(spList[si].id===spId){txt=spList[si].name;break;}}
+  }
+  txt=(txt||'未完成')+' ▾';
   chip.childNodes[0].textContent=txt;
 }
 document.addEventListener('click',function(){closePendingDrop();});
@@ -520,6 +668,10 @@ function filterCards(){
       if(pendingSub==='nubi'&&o.assignee!=='努比')return;
       if(pendingSub==='ermao'&&o.assignee!=='二猫')return;
       if(pendingSub==='unassigned'&&o.assignee)return;
+      if(pendingSub.indexOf('sales_')===0){
+        var spId=pendingSub.slice(6);
+        if(!(o.source==='sales'&&o.dy_seq===spId))return;
+      }
     }
     if(curFilter==='approval'&&!(o.status==='completed'&&o.delivery_status==='pending_approval'))return;
     if(curFilter==='survey'&&!(o.status==='completed'&&(o.delivery_status==='pending_survey'||o.delivery_status==='survey_filling')))return;
@@ -605,6 +757,7 @@ function renderCompletedList(q){
 }
 function updateDropCounts(){
   var all=0,ua=0,fm=0,nb=0,em=0;
+  var spCounts={};
   orders.forEach(function(o){
     if(o.status==='completed'||o.source==='douyin')return;
     all++;
@@ -612,12 +765,20 @@ function updateDropCounts(){
     if(o.assignee==='肥咪')fm++;
     if(o.assignee==='努比')nb++;
     if(o.assignee==='二猫')em++;
+    if(o.source==='sales'&&o.dy_seq){
+      spCounts[o.dy_seq]=(spCounts[o.dy_seq]||0)+1;
+    }
   });
-  document.getElementById('cntAll').textContent=all;
-  document.getElementById('cntUa').textContent=ua;
-  document.getElementById('cntFm').textContent=fm;
-  document.getElementById('cntNb').textContent=nb;
-  document.getElementById('cntEm').textContent=em;
+  var elAll=document.getElementById('cntAll');if(elAll)elAll.textContent=all;
+  var elUa=document.getElementById('cntUa');if(elUa)elUa.textContent=ua;
+  var elFm=document.getElementById('cntFm');if(elFm)elFm.textContent=fm;
+  var elNb=document.getElementById('cntNb');if(elNb)elNb.textContent=nb;
+  var elEm=document.getElementById('cntEm');if(elEm)elEm.textContent=em;
+  var spList=getSalespeople();
+  spList.forEach(function(sp){
+    var el=document.getElementById('cntSp_'+sp.id);
+    if(el)el.textContent=spCounts[sp.id]||0;
+  });
 }
 function imgSrc(m){return m.url||m.data||'';}
 function bCard(o,i){
@@ -1360,6 +1521,10 @@ function getVisiblePendingList(){
       if(pendingSub==='nubi'&&o.assignee!=='努比')return;
       if(pendingSub==='ermao'&&o.assignee!=='二猫')return;
       if(pendingSub==='unassigned'&&o.assignee)return;
+      if(pendingSub.indexOf('sales_')===0){
+        var spId2=pendingSub.slice(6);
+        if(!(o.source==='sales'&&o.dy_seq===spId2))return;
+      }
     }
     if(q&&(o.xianyu_name+' '+o.description+' '+o.task_types.join(' ')).toLowerCase().indexOf(q)<0)return;
     list.push({o:o,i:i});
@@ -1707,8 +1872,9 @@ function submitDyCreate(){
   });
 }
 
-load();
+loadSalespeople(function(){load();});
 setInterval(function(){ load(); },30000);
+setInterval(function(){ loadSalespeople(); },60000);
 </script>
 </body>
 </html>

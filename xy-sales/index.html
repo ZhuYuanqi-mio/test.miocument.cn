@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>销售工作台</title>
+<script src="https://gosspublic.alicdn.com/aliyun-oss-sdk-6.18.0.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue',sans-serif;background:#f7f7f7;color:#222;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+.top-bar{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #e0e0e0;padding:14px 16px 10px}
+.top-bar h1{font-size:16px;font-weight:600;color:#222;text-align:center;margin-bottom:10px}
+.search-row{display:flex;align-items:center;gap:8px}
+.search-box{display:flex;align-items:center;background:#f2f2f2;border-radius:6px;padding:0 10px;border:1px solid #e0e0e0;flex:1}
+.search-box svg{flex-shrink:0;margin-right:6px;color:#999}
+.search-box input{flex:1;border:none;background:none;outline:none;font-size:14px;padding:9px 0;color:#222;min-width:0}
+.search-box input::placeholder{color:#aaa}
+.dy-add-btn{width:36px;height:36px;border-radius:50%;border:none;background:#222;color:#fff;font-size:20px;line-height:36px;text-align:center;cursor:pointer;flex-shrink:0}
+.dy-add-btn:active{opacity:.7}
+.chips{display:flex;gap:6px;margin-top:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:wrap}
+.chips::-webkit-scrollbar{display:none}
+.chip{padding:5px 14px;border-radius:6px;font-size:12px;white-space:nowrap;border:1px solid #ccc;color:#666;cursor:pointer;transition:all .15s;background:#fff;position:relative}
+.chip.on{border-color:#222;background:#222;color:#fff;font-weight:500}
+.chip .chip-cnt{font-size:10px;margin-left:3px;opacity:.7}
+
+.container{max-width:640px;margin:0 auto;padding:12px 16px 24px}
+.stats{display:flex;gap:8px;margin-bottom:14px}
+.st{flex:1;text-align:center;padding:10px 0;background:#fff;border-radius:8px;border:1px solid #e0e0e0}
+.st .n{font-size:20px;font-weight:700}
+.st .l{font-size:11px;color:#999;margin-top:1px}
+.st.s1 .n{color:#c00}
+.st.s2 .n{color:#222}
+.st.s3 .n{color:#888}
+
+.empty{text-align:center;padding:60px 0;color:#aaa;font-size:14px}
+
+.card{background:#fff;border-radius:8px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:transform .1s;position:relative;border:1px solid #e0e0e0}
+.card:active{transform:scale(.985)}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.card-name{font-size:14px;font-weight:600;color:#222}
+.badge{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.b-red{background:#fef2f2;color:#c00}
+.b-amber{background:#fffbeb;color:#b45309}
+.b-green{background:#f0fdf4;color:#16a34a}
+.b-gray{background:#f0f0f0;color:#aaa}
+.b-blue{background:#eef5fc;color:#2c6fad}
+.b-paid{background:#f0fdf4;color:#16a34a}
+.b-unpaid{background:#fef2f2;color:#c00}
+.b-aftersale{background:#fff7ed;color:#c60}
+.card-price{font-size:16px;font-weight:700;color:#222;margin-bottom:4px}
+.card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.card-tags span{padding:2px 7px;border-radius:3px;font-size:11px;background:#f2f2f2;color:#555}
+.card-foot{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#999}
+.card-cd{font-size:12px;font-weight:500;margin-top:3px}
+.cd-red{color:#c00}
+.cd-amber{color:#b45309}
+.cd-green{color:#888}
+
+/* Detail overlay */
+.detail{display:none;position:fixed;inset:0;background:#f7f7f7;z-index:200;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.detail.show{display:block}
+.detail-head{position:sticky;top:0;z-index:10;background:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e0e0e0}
+.detail-head h2{font-size:15px;font-weight:600;flex:1;text-align:center;color:#222}
+.detail-head .bk{font-size:13px;color:#222;cursor:pointer;min-width:44px}
+.detail-head .hd-actions{display:flex;gap:6px;min-width:80px;justify-content:flex-end}
+.detail-head .chat-btn{padding:5px 12px;border-radius:6px;border:1px solid #4a90d9;background:#4a90d9;color:#fff;font-size:12px;font-weight:500;cursor:pointer;position:relative}
+.detail-head .chat-btn .cb-dot{position:absolute;top:-4px;right:-4px;min-width:14px;height:14px;border-radius:7px;background:#c00;color:#fff;font-size:9px;line-height:14px;text-align:center;padding:0 3px;display:none}
+.detail-head .chat-btn .cb-dot.show{display:block}
+.detail-inner{max-width:640px;margin:0 auto;padding:14px 16px 24px}
+.d-card{background:#fff;border-radius:8px;padding:14px 16px;margin-bottom:10px;border:1px solid #e0e0e0}
+.d-card .lb{font-size:12px;color:#999;margin-bottom:5px}
+.d-card .val{font-size:14px;color:#222;line-height:1.6;white-space:pre-wrap}
+.d-card .tl{display:flex;flex-wrap:wrap;gap:6px}
+.d-card .tl span{padding:5px 12px;border-radius:6px;background:#222;color:#fff;font-size:13px;font-weight:500}
+.del-btn{display:block;margin:20px auto 0;padding:11px 0;width:100%;border:none;border-radius:8px;background:#fef2f2;color:#c00;font-size:14px;font-weight:500;cursor:pointer;border:1px solid #fcc}
+.del-btn:active{opacity:.75}
+.toggle-btn{display:block;margin:10px auto 0;padding:11px 0;width:100%;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
+.toggle-btn:active{opacity:.75}
+.toggle-btn.pay{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.toggle-btn.unpay{background:#fef2f2;color:#c00;border:1px solid #fcc}
+.toggle-btn.aftersale-on{background:#fff7ed;color:#c60;border:1px solid #fed7aa}
+.toggle-btn.aftersale-off{background:#f5f5f5;color:#666;border:1px solid #ddd}
+
+/* Chat overlay */
+.chat-ov{display:none;position:fixed;inset:0;background:#f7f7f7;z-index:250;flex-direction:column}
+.chat-ov.show{display:flex}
+.chat-ov-head{background:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e0e0e0;flex-shrink:0}
+.chat-ov-head .bk{font-size:13px;color:#222;cursor:pointer;min-width:44px}
+.chat-ov-head h2{font-size:15px;font-weight:600;flex:1;text-align:center;color:#222}
+.chat-ov-head .sync-btn{padding:5px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;color:#222;font-size:12px;cursor:pointer;min-width:74px;text-align:center}
+.chat-ov-head .sync-btn:active{background:#f2f2f2}
+.chat-ov-msgs{flex:1;overflow-y:auto;padding:12px 16px;-webkit-overflow-scrolling:touch}
+.chat-ov-msgs .chat-empty{text-align:center;padding:60px 0;color:#aaa;font-size:14px}
+.msg-row{display:flex;margin-bottom:14px;align-items:flex-start}
+.msg-row.me{flex-direction:row-reverse}
+.msg-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.msg-body{max-width:70%;margin:0 10px}
+.msg-bubble{padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.5;word-break:break-word}
+.msg-row.other .msg-bubble{background:#fff;color:#222;border:1px solid #e0e0e0;border-top-left-radius:4px}
+.msg-row.me .msg-bubble{background:#4a90d9;color:#fff;border-top-right-radius:4px}
+.msg-time{font-size:11px;color:#aaa;margin-top:3px}
+.msg-row.me .msg-time{text-align:right}
+.msg-bubble img.msg-img{max-width:200px;max-height:200px;border-radius:6px;cursor:pointer;display:block}
+.msg-file-card{display:flex;align-items:center;background:#fff;border-radius:8px;padding:10px 12px;min-width:200px;cursor:pointer;border:1px solid #e0e0e0}
+.msg-row.me .msg-file-card{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2)}
+.msg-file-card .file-info{flex:1;min-width:0}
+.msg-file-card .file-info .fn{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg-file-card .file-info .fs{font-size:11px;color:#999;margin-top:2px}
+.chat-ov-input{background:#fff;border-top:1px solid #e0e0e0;padding:8px 12px;display:flex;align-items:flex-end;gap:8px;flex-shrink:0}
+.chat-ov-input .ci-actions{display:flex;gap:4px;flex-shrink:0;padding-bottom:4px}
+.chat-ov-input .ci-btn{width:32px;height:32px;border-radius:50%;border:1px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#666}
+.chat-ov-input .ci-btn:active{background:#f0f0f0}
+.chat-ov-input .ci-btn svg{width:16px;height:16px}
+.chat-ov-input textarea{flex:1;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:14px;resize:none;outline:none;max-height:100px;min-height:36px;font-family:inherit;line-height:1.4;background:#fafafa}
+.chat-ov-input textarea:focus{border-color:#555}
+.chat-ov-input .send-btn{padding:8px 16px;border:none;border-radius:8px;background:#222;color:#fff;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;align-self:flex-end}
+.chat-ov-input .send-btn:active{opacity:.7}
+
+/* Create modal */
+.modal-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.modal-mask.show{display:block}
+.modal-box{background:#fff;border-radius:12px 12px 0 0;max-width:640px;margin:40px auto 0;padding:20px 16px 30px;min-height:calc(100vh - 40px)}
+.modal-box h3{font-size:16px;font-weight:700;color:#222;margin-bottom:16px;text-align:center;position:relative}
+.modal-box h3 .m-close{position:absolute;left:0;top:0;font-size:14px;color:#666;cursor:pointer;font-weight:400;padding:0 8px}
+.m-section{margin-bottom:18px}
+.m-section .m-lb{font-size:14px;font-weight:600;color:#333;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.m-section .m-lb .req{color:#c00}
+.m-section .m-hint{font-size:12px;color:#888;line-height:1.6;margin-bottom:8px;white-space:pre-wrap;background:#fafafa;padding:10px 12px;border-radius:6px;border:1px solid #eee}
+.m-input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;color:#222;background:#fafafa;outline:none;font-family:inherit;box-sizing:border-box}
+.m-input:focus{border-color:#555}
+textarea.m-input{min-height:60px;resize:vertical;line-height:1.6}
+.m-tags{display:flex;flex-wrap:wrap;gap:8px}
+.m-tags span{padding:7px 15px;border:1px solid #ccc;border-radius:6px;font-size:13px;color:#555;cursor:pointer;transition:all .15s;user-select:none;background:#fafafa}
+.m-tags span.on{border-color:#222;background:#222;color:#fff;font-weight:500}
+.m-radio{display:flex;flex-direction:column;gap:8px}
+.m-radio label{display:flex;align-items:center;gap:8px;font-size:13px;color:#333;cursor:pointer;padding:8px 12px;border:1px solid #eee;border-radius:6px;background:#fafafa;transition:all .15s}
+.m-radio label.on{border-color:#222;background:#f5f5f5;font-weight:500}
+.m-radio label input[type=radio]{margin:0}
+.m-checks{display:flex;flex-direction:column;gap:6px}
+.m-checks label{display:flex;align-items:center;gap:8px;font-size:13px;color:#333;cursor:pointer;padding:6px 0}
+.m-checks label input[type=checkbox]{margin:0;width:16px;height:16px}
+.m-checks .sub-checks{margin-left:24px;display:flex;flex-direction:column;gap:4px}
+.m-checks .sub-checks label{font-size:12px;color:#555;padding:4px 0}
+.m-sub-input{width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;outline:none;background:#fafafa;margin-top:4px;box-sizing:border-box}
+.m-sub-input:focus{border-color:#555}
+.copy-text-block{font-size:12px;color:#555;line-height:1.7;background:#fafafa;padding:10px 12px;border-radius:6px;border:1px solid #eee;white-space:pre-wrap;position:relative;margin-bottom:8px}
+.copy-icon{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#888;padding:2px;border-radius:3px;vertical-align:middle;transition:color .15s}
+.copy-icon:hover{color:#222}
+.copy-icon:active{color:#4a90d9}
+.q-line{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:500;color:#333;margin-bottom:8px}
+
+/* Price summary */
+.price-summary{background:#fff;border:2px solid #222;border-radius:10px;padding:16px;margin-top:20px}
+.price-summary .ps-title{font-size:14px;font-weight:600;margin-bottom:10px}
+.price-summary .ps-row{display:flex;justify-content:space-between;font-size:13px;color:#444;padding:4px 0;border-bottom:1px dashed #eee}
+.price-summary .ps-total{display:flex;justify-content:space-between;font-size:18px;font-weight:700;color:#222;padding:10px 0 0;margin-top:6px;border-top:2px solid #222}
+.price-summary .ps-actions{display:flex;gap:8px;margin-top:14px}
+.price-summary .ps-actions button{flex:1;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+.price-summary .ps-actions button:active{opacity:.75}
+.ps-copy-btn{background:#f5f5f5;color:#222;border:1px solid #ddd !important}
+.ps-submit-btn{background:#222;color:#fff}
+.min-price-box{margin-top:12px;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;font-size:12px;color:#92400e;line-height:1.7}
+
+.viewer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:400;justify-content:center;align-items:center;cursor:pointer}
+.viewer.show{display:flex}
+.viewer img{max-width:95%;max-height:90vh;border-radius:4px}
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(34,34,34,.9);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+
+.num-input{width:90px;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;outline:none;background:#fafafa;text-align:center;box-sizing:border-box}
+.num-input:focus{border-color:#555}
+.price-input{width:100px;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;outline:none;background:#fafafa;text-align:right;box-sizing:border-box}
+.price-input:focus{border-color:#555}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1 id="pageTitle">销售工作台</h1>
+  <div class="search-row">
+    <div class="search-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="searchInput" placeholder="搜索咸鱼名称..." oninput="filterCards()">
+    </div>
+    <button class="dy-add-btn" onclick="openCreateModal()">+</button>
+  </div>
+  <div class="chips" id="chipsBar"></div>
+</div>
+
+<div class="container">
+  <div class="stats">
+    <div class="st s1"><div class="n" id="n1">0</div><div class="l">未付款</div></div>
+    <div class="st s2"><div class="n" id="n2">0</div><div class="l">进行中</div></div>
+    <div class="st s3"><div class="n" id="n3">0</div><div class="l">已完成</div></div>
+  </div>
+  <div id="list"></div>
+</div>
+
+<!-- Detail overlay -->
+<div class="detail" id="detailOv">
+  <div class="detail-head">
+    <span class="bk" onclick="closeDtl()">< 返回</span>
+    <h2 id="dtlTitle"></h2>
+    <div class="hd-actions">
+      <button class="chat-btn" id="dtlChatBtn" onclick="openChat()">消息<span class="cb-dot" id="dtlChatDot"></span></button>
+    </div>
+  </div>
+  <div class="detail-inner" id="dtlBody"></div>
+</div>
+
+<!-- Chat overlay -->
+<div class="chat-ov" id="chatOv">
+  <div class="chat-ov-head">
+    <span class="bk" onclick="closeChat()">< 返回</span>
+    <h2 id="chatOvTitle"></h2>
+    <button class="sync-btn" onclick="loadChatMsgs()">同步消息</button>
+  </div>
+  <div class="chat-ov-msgs" id="chatOvMsgs">
+    <div class="chat-empty">暂无消息</div>
+  </div>
+  <div class="chat-ov-input">
+    <div class="ci-actions">
+      <label class="ci-btn" title="发送图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><input type="file" accept="image/*" style="display:none" onchange="salesSendImage(this)"></label>
+      <label class="ci-btn" title="发送文件"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><input type="file" style="display:none" onchange="salesSendFile(this)"></label>
+    </div>
+    <textarea id="chatInput" rows="1" placeholder="输入消息..." oninput="autoGrow(this)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();salesSendText();}"></textarea>
+    <button class="send-btn" onclick="salesSendText()">发送</button>
+  </div>
+</div>
+
+<!-- Create Order Modal -->
+<div class="modal-mask" id="createModal">
+  <div class="modal-box">
+    <h3><span class="m-close" onclick="closeCreateModal()">取消</span>新建订单</h3>
+
+    <!-- Section 1: Customer Info -->
+    <div class="m-section">
+      <div class="m-lb">咸鱼名称 <span class="req">*</span></div>
+      <input class="m-input" id="cXianyuName" placeholder="输入客户咸鱼名称">
+    </div>
+    <div class="m-section">
+      <div class="m-lb">完成期限</div>
+      <input type="datetime-local" class="m-input" id="cDeadline">
+    </div>
+
+    <!-- Section 2: Service Types -->
+    <div class="m-section">
+      <div class="q-line">
+        <span>请问您是要问卷设计/问卷填写/数据修改/分析报告？</span>
+        <span class="copy-icon" onclick="copyText('请问您是要问卷设计/问卷填写/数据修改/分析报告？')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></span>
+      </div>
+      <div class="m-tags" id="serviceTypeTags">
+        <span data-svc="问卷设计" onclick="toggleSvc(this)">问卷设计</span>
+        <span data-svc="问卷填写" onclick="toggleSvc(this)">问卷填写</span>
+        <span data-svc="数据修改" onclick="toggleSvc(this)">数据修改</span>
+        <span data-svc="分析报告" onclick="toggleSvc(this)">分析报告</span>
+      </div>
+    </div>
+
+    <!-- 3a: 问卷设计 -->
+    <div class="m-section" id="secDesign" style="display:none">
+      <div class="m-lb">问卷设计</div>
+      <div class="m-hint">【问卷设计】20-40元
+1、导入问卷星的基础版（20元）：含基本信息题（5-8道）+ 核心维度量表题（20-30道）
+2、需要配问卷中文版word（额外加10元）/问卷的英文word版（额外加10元）
+3、需要配问卷的设计理由/知网可查的参考文献（额外加20元）</div>
+      <div class="m-radio" id="designRadios">
+        <label onclick="pickDesign(1)" id="dr1"><input type="radio" name="design_opt" value="1"> 选项1：基础版（20元）</label>
+        <label onclick="pickDesign(2)" id="dr2"><input type="radio" name="design_opt" value="2"> 选项1+2（30元起）
+          <div id="dr2sub" style="display:none;margin-top:6px;margin-left:24px">
+            <label style="font-size:12px;display:flex;align-items:center;gap:6px;margin-bottom:4px"><input type="checkbox" id="dWordCn" onchange="calcDesign()"> 中文word (+10元)</label>
+            <label style="font-size:12px;display:flex;align-items:center;gap:6px;margin-bottom:4px"><input type="checkbox" id="dWordEn" onchange="calcDesign()"> 英文word (+10元)</label>
+          </div>
+        </label>
+        <label onclick="pickDesign(3)" id="dr3"><input type="radio" name="design_opt" value="3"> 选项1+2+3（40-50元）
+          <div id="dr3sub" style="display:none;margin-top:6px;margin-left:24px">
+            <label style="font-size:12px;display:flex;align-items:center;gap:6px;margin-bottom:4px"><input type="checkbox" id="dWordCn3" onchange="calcDesign()"> 中文word (+10元)</label>
+            <label style="font-size:12px;display:flex;align-items:center;gap:6px;margin-bottom:4px"><input type="checkbox" id="dWordEn3" onchange="calcDesign()"> 英文word (+10元)</label>
+          </div>
+        </label>
+        <label onclick="pickDesign(4)" id="dr4"><input type="radio" name="design_opt" value="4"> 其他
+          <div id="dr4sub" style="display:none;margin-top:6px;margin-left:24px">
+            <input class="m-sub-input" id="dOtherDesc" placeholder="说明" oninput="calcAll()">
+            <div style="margin-top:4px;display:flex;align-items:center;gap:4px;font-size:12px;color:#666">价格：<input class="price-input" id="dOtherPrice" type="number" min="0" value="0" oninput="calcAll()">元</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 3b: 问卷填写 -->
+    <div class="m-section" id="secSurvey" style="display:none">
+      <div class="m-lb">问卷填写</div>
+
+      <div style="margin-bottom:12px">
+        <div class="q-line">
+          <span>请问需要填写多少份呀？</span>
+          <span class="copy-icon" onclick="copyText('请问需要填写多少份呀？')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input class="num-input" id="sCopies" type="number" min="1" value="" placeholder="份数" oninput="calcAll()">
+          <span style="font-size:13px;color:#666">份</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div class="q-line">
+          <span>请问是需要填写到问卷星里，还是答卷excel就可以？</span>
+          <span class="copy-icon" onclick="copyText('请问是需要填写到问卷星里，还是答卷excle就可以？（问卷星会贵一些，因为有人工填写费）')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></span>
+        </div>
+        <div class="m-tags">
+          <span id="sModeWjx" onclick="pickSurveyMode('wjx')" data-mode="wjx">问卷星 (0.3r/份)</span>
+          <span id="sModeExcel" onclick="pickSurveyMode('excel')" data-mode="excel">答卷Excel (0.1r/份)</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div class="q-line">
+          <span>答卷要求</span>
+          <span class="copy-icon" onclick="copySurveyReqBlock()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></span>
+        </div>
+        <div class="copy-text-block" style="font-size:11px;line-height:1.6;color:#888;margin-bottom:10px">答卷有什么要求吗？
+答卷excle基础价格0.1r/份，问卷星基础价格0.3r/份
+（1）填写人群要求（每条加0.1r/份）：
+（2）逻辑要求（每条加0.1r/份）：
+（3）比例要求（总共加0.1r/份）：
+（4）统计要求（每条加0.1r/份）：
+相关性分析 p≤0.05 、线性回归 VIF<10 二元逻辑回归 AUC>0.8 、T检验 p≤0.05 、方差分析 p≤0.05 、中介效应 显著 、调节效应 显著 、信度检验 α>0.8 、验证性因子分析 适配度良好）</div>
+
+        <div class="m-checks">
+          <label><input type="checkbox" id="sReqPeople" onchange="toggleSReq('people')"> 填写人群要求 (+0.1r/份)</label>
+          <div id="sReqPeopleSub" style="display:none;margin-left:24px;margin-bottom:4px"><input class="m-sub-input" id="sReqPeopleDesc" placeholder="人群要求详情" oninput="calcAll()"></div>
+
+          <label><input type="checkbox" id="sReqLogic" onchange="toggleSReq('logic')"> 逻辑要求 (+0.1r/份)</label>
+          <div id="sReqLogicSub" style="display:none;margin-left:24px;margin-bottom:4px"><input class="m-sub-input" id="sReqLogicDesc" placeholder="逻辑要求详情" oninput="calcAll()"></div>
+
+          <label><input type="checkbox" id="sReqRatio" onchange="toggleSReq('ratio')"> 比例要求 (+0.1r/份)</label>
+
+          <label><input type="checkbox" id="sReqStats" onchange="toggleSReq('stats')"> 统计要求 (+0.1r/份)</label>
+          <div class="sub-checks" id="sReqStatsSub" style="display:none">
+            <label><input type="checkbox" class="stat-sub" onchange="calcAll()"> 相关性分析 p≤0.05</label>
+            <label><input type="checkbox" class="stat-sub" onchange="calcAll()"> 线性回归 VIF<10</label>
+            <label><input type="checkbox" class="stat-sub" onchange="calcAll()"> 二元逻辑回归 AUC>0.8</label>
+            <label><input type="checkbox" class="stat-sub" onchange="calcAll()"> T检验 p≤0.05</label>
+            <label><input type="checkbox" class="stat-sub" onchange="calcAll()"> 方差分析 p≤0.05</label>
+            <label><input type="checkbox" class="stat-sub" onchange="calcAll()"> 中介效应 显著</label>
+            <label><input type="checkbox" class="stat-sub" onchange="calcAll()"> 调节效应 显著</label>
+            <label><input type="checkbox" class="stat-sub" onchange="calcAll()"> 信度检验 α>0.8</label>
+            <label><input type="checkbox" class="stat-sub" onchange="calcAll()"> 验证性因子分析 适配度良好</label>
+            <label><input type="checkbox" class="stat-sub-other" onchange="toggleStatOther()"> 其他</label>
+            <div id="statOtherSub" style="display:none;margin-left:24px"><input class="m-sub-input" id="statOtherDesc" placeholder="其他统计要求" oninput="calcAll()"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3c: 数据修改 -->
+    <div class="m-section" id="secDatafix" style="display:none">
+      <div class="m-lb">数据修改</div>
+      <div class="m-hint">已收集的答卷数据不满足分析标准/结论，支持根据您的要求：
+计算出匹配的答卷（您可验算确认）+告知需删除的答卷+新增问卷
+【这个一般按照1-2r/条答卷数据报价！一般总价会是300-800r】</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <span style="font-size:13px;color:#666">报价：</span>
+        <input class="price-input" id="datafixPrice" type="number" min="0" value="" placeholder="0" oninput="calcAll()">
+        <span style="font-size:13px;color:#666">元</span>
+      </div>
+    </div>
+
+    <!-- 3d: 分析报告 -->
+    <div class="m-section" id="secReport" style="display:none">
+      <div class="m-lb">分析报告</div>
+      <div class="m-checks" id="reportChecks">
+        <label><input type="checkbox" class="rpt-item" data-name="描述性统计分析" data-price="15" onchange="calcAll()"> 描述性统计分析 (15元)</label>
+        <label><input type="checkbox" class="rpt-item" data-name="信度分析" data-price="20" onchange="calcAll()"> 信度分析 (20元)</label>
+        <label><input type="checkbox" class="rpt-item" data-name="效度分析" data-price="20" onchange="calcAll()"> 效度分析 (20元)</label>
+        <label><input type="checkbox" class="rpt-item" data-name="交叉检验" data-price="25" onchange="calcAll()"> 交叉检验 (25元)</label>
+        <label><input type="checkbox" class="rpt-item" data-name="ROC曲线" data-price="25" onchange="calcAll()"> ROC曲线 (25元)</label>
+        <label><input type="checkbox" class="rpt-item" data-name="t检验" data-price="25" onchange="calcAll()"> t检验 (25元)</label>
+        <label><input type="checkbox" class="rpt-item" data-name="相关性分析" data-price="30" onchange="calcAll()"> 相关性分析 (30元)</label>
+        <label><input type="checkbox" class="rpt-item" data-name="方差分析" data-price="40" onchange="calcAll()"> 方差分析 (40元)</label>
+        <label><input type="checkbox" class="rpt-item" data-name="主成分、因子、聚类、回归分析" data-price="45" onchange="calcAll()"> 主成分、因子、聚类、回归分析 (45元)</label>
+        <label><input type="checkbox" class="rpt-item" data-name="卡方检验" data-price="45" onchange="calcAll()"> 卡方检验 (45元)</label>
+        <label><input type="checkbox" class="rpt-item" data-name="熵值法" data-price="45" onchange="calcAll()"> 熵值法 (45元)</label>
+        <label><input type="checkbox" class="rpt-item" data-name="结构方程" data-price="50" onchange="calcAll()"> 结构方程 (50元)</label>
+        <label><input type="checkbox" id="rptOther" onchange="toggleRptOther()"> 其他</label>
+        <div id="rptOtherSub" style="display:none;margin-left:24px;margin-bottom:4px">
+          <input class="m-sub-input" id="rptOtherDesc" placeholder="其他分析项说明" oninput="calcAll()">
+          <div style="margin-top:4px;display:flex;align-items:center;gap:4px;font-size:12px;color:#666">价格：<input class="price-input" id="rptOtherPrice" type="number" min="0" value="0" oninput="calcAll()">元</div>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333;cursor:pointer"><input type="checkbox" id="rptChart" onchange="calcAll()"> 如需配图表</label>
+        <div id="rptChartHint" style="display:none;margin-left:24px;font-size:12px;color:#888;margin-top:4px"></div>
+      </div>
+      <div style="margin-top:10px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#333">
+          <span>额外目录要求字数：</span>
+          <input class="num-input" id="rptWords" type="number" min="0" value="" placeholder="0" oninput="calcAll()">
+          <span style="font-size:12px;color:#888">字</span>
+        </div>
+        <div id="rptWordsHint" style="font-size:12px;color:#888;margin-top:4px"></div>
+      </div>
+    </div>
+
+    <!-- Price Summary -->
+    <div class="price-summary" id="priceSummary" style="display:none">
+      <div class="ps-title">价格明细</div>
+      <div id="priceRows"></div>
+      <div class="ps-total"><span>合计</span><span id="priceTotal">¥0</span></div>
+      <div class="ps-actions">
+        <button class="ps-copy-btn" onclick="copyQuote()">复制报价</button>
+        <button class="ps-submit-btn" onclick="submitOrder()">创建订单</button>
+      </div>
+      <div class="min-price-box">
+        <strong>【最低价提醒】</strong><br>
+        • 如果没有问卷星填写的：保证总价不低于100都可以接<br>
+        • 如果只有问卷星填写的：保证总价不低于答卷数量×0.3<br>
+        • 如果有问卷星填写和其他的：保证总价不低于问卷数量×0.3+80元
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="viewer" id="viewer" onclick="this.classList.remove('show')"><img id="vImg" src=""></div>
+<div class="toast" id="toast"></div>
+
+<script>
+var ZION={
+  create_xy_order:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/b4a14608-e61e-46b6-a748-94be7e205d0d',
+  list_xy_orders:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/33fde63b-4f5e-4811-aece-cf6d4cde4dc4',
+  update_xy_order:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/fac52f37-4c00-46ef-abce-9d41bf0511e4',
+  delete_xy_order:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/45edfb1a-1236-4982-9c1b-5c8940e6e096',
+  send_xy_message:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/bda9f3b9-9f40-41f7-98dc-8fe6f79aa66a',
+  list_xy_messages:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/ece148b9-d21f-48ca-bf69-e8c119ecc8df',
+  unread_xy_counts:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/6d1feec2-382f-42e9-ae1f-7cf14450aaf7',
+  mark_xy_read:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/ff2afd54-8d81-4a68-bd47-c7162540b755',
+  append_xy_chat_note:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/22a5f154-859c-4ef7-8ca0-443f8d359bc8',
+  grant_xy_edit:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/132d2af6-77c2-480c-bf5c-84910ca592b2',
+  get_xy_salesperson:'https://zion-app.functorz.com/zero/mwLZrNj8qJA/callback/e56e11e8-cdb0-4314-9d88-04011ae6098d'
+};
+var OSS_BASE='https://my-video-storage-shihuang.oss-cn-wuhan-lr.aliyuncs.com/';
+var ICON_BASE=OSS_BASE+'xianyu/icon/';
+var ADMIN_AVATAR=OSS_BASE+'xianyu/logo.jpg';
+var USER_AVATAR=OSS_BASE+'xianyu/avatar-user.jpg';
+var ossClient=new OSS({region:'oss-cn-wuhan-lr',accessKeyId:'LTAI5tBcUNsZqv33UggKtQds',accessKeySecret:'1pZrU9wXOQW64dqYeGWMBvH0JVC4qs',bucket:'my-video-storage-shihuang'});
+
+var spId='';
+var spName='';
+var orders=[];
+var allOrders=[];
+var curFilter='unpaid';
+var curIdx=null;
+var unreadMap={};
+var chatMsgs=[];
+var chatUser='';
+var refreshTimer=null;
+
+/* ===== Init ===== */
+function init(){
+  var params=new URLSearchParams(window.location.search);
+  spId=params.get('id')||'';
+  if(!spId){document.body.innerHTML='<div style="text-align:center;padding:80px 20px;color:#c00;font-size:15px">缺少销售ID参数，请通过正确链接访问</div>';return;}
+  loadSpName(function(){
+    buildChips();
+    load();
+    refreshTimer=setInterval(function(){load();},30000);
+  });
+}
+
+function loadSpName(cb){
+  if(!ZION.get_xy_salesperson||ZION.get_xy_salesperson.indexOf('填入')>=0){
+    spName='销售员';
+    document.getElementById('pageTitle').textContent=spName+' · 销售工作台';
+    if(cb)cb();
+    return;
+  }
+  fetch(ZION.get_xy_salesperson,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sp_id:spId})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var data=d.salesperson_data?JSON.parse(d.salesperson_data):null;
+    if(data&&data.name){
+      spName=data.name;
+      document.getElementById('pageTitle').textContent=spName+' · 销售工作台';
+    } else {
+      document.body.innerHTML='<div style="text-align:center;padding:80px 20px;color:#c00;font-size:15px">无效的销售员ID，请联系管理员获取正确链接</div>';
+      return;
+    }
+    if(cb)cb();
+  }).catch(function(e){
+    console.error('加载销售员信息失败:',e);
+    spName='销售员';
+    document.getElementById('pageTitle').textContent=spName+' · 销售工作台';
+    if(cb)cb();
+  });
+}
+
+/* ===== Chips ===== */
+var chipDefs=[
+  {key:'all',label:'全部'},
+  {key:'unpaid',label:'未付款'},
+  {key:'paid',label:'已付款'},
+  {key:'incomplete',label:'未完成'},
+  {key:'completed',label:'已完成'},
+  {key:'aftersale',label:'售后中'}
+];
+
+function buildChips(){
+  var h='';
+  chipDefs.forEach(function(c){
+    var on=c.key===curFilter?' on':'';
+    h+='<span class="chip'+on+'" data-f="'+c.key+'" onclick="pickChip(this)">'+c.label+'<span class="chip-cnt" id="cnt_'+c.key+'"></span></span>';
+  });
+  document.getElementById('chipsBar').innerHTML=h;
+}
+
+function pickChip(el){
+  document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on');
+  curFilter=el.dataset.f;
+  filterCards();
+}
+
+/* ===== Load ===== */
+function load(){
+  fetch(ZION.list_xy_orders,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var ls=JSON.parse(d.orders_data||'[]');
+    allOrders=ls.map(function(o){
+      return{id:o.id,xianyu_name:o.xianyu_name||'',email:o.email||'',deadline:o.deadline||'',
+        task_types:(o.task_types||'').split(',').filter(Boolean),
+        description:o.description||'',status:o.status||'pending',
+        chat_notes:o.chat_notes||'',source:o.source||'xianyu',
+        dy_seq:o.dy_seq||'',created_at:o.created_at||''};
+    });
+    orders=allOrders.filter(function(o){return o.source==='sales'&&o.dy_seq===spId;});
+    orders.sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at);});
+    updateStats();
+    updateChipCounts();
+    filterCards();
+  }).catch(function(e){console.error(e);toast('加载失败');});
+  loadUnreadCounts();
+}
+
+function loadUnreadCounts(){
+  fetch(ZION.unread_xy_counts,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    unreadMap=JSON.parse(d.counts_data||'{}');
+  }).catch(function(e){console.error('Unread error:',e);});
+}
+
+/* ===== Helpers ===== */
+function getPrice(o){
+  var m=o.chat_notes.match(/\[SALES_PRICE:(\d+(?:\.\d+)?)\]/);
+  return m?parseFloat(m[1]):0;
+}
+function isPaid(o){return o.chat_notes.indexOf('[SALES_PAID:1]')>=0;}
+function isAfterSale(o){return o.chat_notes.indexOf('[SALES_AFTERSALE:1]')>=0;}
+
+function matchFilter(o){
+  if(curFilter==='all')return true;
+  if(curFilter==='unpaid')return !isPaid(o);
+  if(curFilter==='paid')return isPaid(o);
+  if(curFilter==='incomplete')return isPaid(o)&&o.status==='pending';
+  if(curFilter==='completed')return o.status==='completed';
+  if(curFilter==='aftersale')return isAfterSale(o);
+  return true;
+}
+
+function updateStats(){
+  var unpaid=0,pending=0,done=0;
+  orders.forEach(function(o){
+    if(!isPaid(o))unpaid++;
+    if(o.status==='pending'&&isPaid(o))pending++;
+    if(o.status==='completed')done++;
+  });
+  document.getElementById('n1').textContent=unpaid;
+  document.getElementById('n2').textContent=pending;
+  document.getElementById('n3').textContent=done;
+}
+
+function updateChipCounts(){
+  var counts={all:0,unpaid:0,paid:0,incomplete:0,completed:0,aftersale:0};
+  orders.forEach(function(o){
+    counts.all++;
+    if(!isPaid(o))counts.unpaid++;
+    if(isPaid(o))counts.paid++;
+    if(isPaid(o)&&o.status==='pending')counts.incomplete++;
+    if(o.status==='completed')counts.completed++;
+    if(isAfterSale(o))counts.aftersale++;
+  });
+  chipDefs.forEach(function(c){
+    var el=document.getElementById('cnt_'+c.key);
+    if(el)el.textContent=counts[c.key]>0?' ('+counts[c.key]+')':'';
+  });
+}
+
+function urg(o){
+  if(o.status==='completed')return'done';
+  if(!o.deadline)return'ok';
+  var h=(new Date(o.deadline)-new Date())/36e5;
+  if(h<0)return'over';if(h<12)return'urg';if(h<36)return'soon';return'ok';
+}
+function cd(o){
+  if(o.status==='completed')return{t:'已完成',c:'cd-green'};
+  if(!o.deadline)return{t:'未设置期限',c:'cd-green'};
+  var d=new Date(o.deadline)-new Date();
+  if(d<0)return{t:'超时 '+dur(-d),c:'cd-red'};
+  return{t:'剩余 '+dur(d),c:d<432e5?'cd-red':(d<1296e5?'cd-amber':'cd-green')};
+}
+function dur(ms){var h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4);return h>=24?Math.floor(h/24)+'天'+h%24+'时':h+'时'+m+'分';}
+function fmtDl(d){if(!d)return'未设置';var t=new Date(d);return(t.getMonth()+1)+'/'+t.getDate()+' '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2);}
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtSz(b){return b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';}
+
+/* ===== Card rendering ===== */
+function filterCards(){
+  var q=document.getElementById('searchInput').value.trim().toLowerCase();
+  var h='',c=0;
+  orders.forEach(function(o,i){
+    if(!matchFilter(o))return;
+    if(q&&o.xianyu_name.toLowerCase().indexOf(q)<0)return;
+    c++;h+=bCard(o,i);
+  });
+  document.getElementById('list').innerHTML=c?h:'<div class="empty">暂无订单</div>';
+}
+
+function bCard(o,i){
+  var u=urg(o),g=cd(o);
+  var price=getPrice(o);
+  var paid=isPaid(o);
+  var afterSale=isAfterSale(o);
+  var urgCls=u==='over'||u==='urg'?'b-red':(u==='soon'?'b-amber':(u==='done'?'b-gray':'b-green'));
+  var urgTxt=u==='over'?'超时':(u==='urg'?'紧急':(u==='soon'?'今天':(u==='done'?'完成':'充裕')));
+  var s='<div class="card" onclick="openDtl('+i+')">';
+  s+='<div class="card-head"><span class="card-name">'+escHtml(o.xianyu_name)+'</span>';
+  s+='<span style="display:flex;gap:4px;align-items:center">';
+  if(afterSale)s+='<span class="badge b-aftersale">售后中</span>';
+  s+='<span class="badge '+(paid?'b-paid':'b-unpaid')+'">'+(paid?'已付款':'未付款')+'</span>';
+  if(o.status!=='completed')s+='<span class="badge '+urgCls+'">'+urgTxt+'</span>';
+  s+='</span></div>';
+  s+='<div class="card-price">¥'+price.toFixed(0)+'</div>';
+  if(o.task_types.length){s+='<div class="card-tags">';o.task_types.forEach(function(t){s+='<span>'+escHtml(t)+'</span>';});s+='</div>';}
+  s+='<div class="card-foot"><span>截止 '+fmtDl(o.deadline)+'</span><span>'+fmtDl(o.created_at)+'</span></div>';
+  s+='<div class="card-cd '+g.c+'">'+g.t+'</div>';
+  s+='</div>';
+  return s;
+}
+
+/* ===== Detail ===== */
+function openDtl(i){
+  curIdx=i;var o=orders[i];
+  document.getElementById('dtlTitle').textContent=o.xianyu_name;
+  var uc=unreadMap[o.xianyu_name]||0;
+  var dot=document.getElementById('dtlChatDot');
+  if(uc>0){dot.textContent=uc;dot.classList.add('show');}else{dot.classList.remove('show');}
+  var g=cd(o),price=getPrice(o),paid=isPaid(o),afterSale=isAfterSale(o);
+  var s='';
+  s+='<div class="d-card"><div class="lb">订单价格</div><div class="val" style="font-size:22px;font-weight:700">¥'+price.toFixed(0)+'</div></div>';
+  s+='<div class="d-card"><div class="lb">付款状态</div><div class="val"><span class="badge '+(paid?'b-paid':'b-unpaid')+'" style="font-size:13px;padding:4px 12px">'+(paid?'已付款':'未付款')+'</span></div></div>';
+  s+='<div class="d-card"><div class="lb">截止时间</div><div class="val">'+fmtDl(o.deadline)+'</div><div class="card-cd '+g.c+'" style="margin-top:4px">'+g.t+'</div></div>';
+  s+='<div class="d-card"><div class="lb">订单状态</div><div class="val">'+(o.status==='completed'?'已完成':'进行中')+'</div></div>';
+  s+='<div class="d-card"><div class="lb">任务类型</div><div class="tl">';
+  o.task_types.forEach(function(t){s+='<span>'+escHtml(t)+'</span>';});
+  s+='</div></div>';
+  s+='<div class="d-card"><div class="lb">要求描述</div><div class="val">'+escHtml(o.description).replace(/\n/g,'<br>')+'</div></div>';
+
+  var notesClean=(o.chat_notes||'').replace(/\[SALES_PRICE:\d+(?:\.\d+)?\]/g,'').replace(/\[SALES_PAID:[01]\]/g,'').replace(/\[SALES_AFTERSALE:[01]\]/g,'').trim();
+  if(notesClean){
+    s+='<div class="d-card"><div class="lb">备注</div><div class="val">'+escHtml(notesClean)+'</div></div>';
+  }
+
+  s+='<button class="toggle-btn '+(paid?'unpay':'pay')+'" onclick="togglePaid('+i+')">'+(paid?'标记未付款':'标记已付款')+'</button>';
+  s+='<button class="toggle-btn '+(afterSale?'aftersale-on':'aftersale-off')+'" onclick="toggleAfterSale('+i+')">'+(afterSale?'取消售后状态':'标记为售后中')+'</button>';
+  s+='<button class="del-btn" onclick="delOrder('+i+')">删除此订单</button>';
+  document.getElementById('dtlBody').innerHTML=s;
+  var ov=document.getElementById('detailOv');ov.classList.add('show');ov.scrollTop=0;
+}
+function closeDtl(){document.getElementById('detailOv').classList.remove('show');curIdx=null;}
+
+function togglePaid(i){
+  var o=orders[i];
+  var paid=isPaid(o);
+  var notes=o.chat_notes;
+  if(paid){
+    notes=notes.replace('[SALES_PAID:1]','[SALES_PAID:0]');
+  } else {
+    if(notes.indexOf('[SALES_PAID:0]')>=0){
+      notes=notes.replace('[SALES_PAID:0]','[SALES_PAID:1]');
+    } else {
+      notes+='[SALES_PAID:1]';
+    }
+  }
+  o.chat_notes=notes;
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({chat_notes:notes})})})
+  .then(function(){toast(paid?'已标记未付款':'已标记已付款');updateStats();updateChipCounts();filterCards();openDtl(i);})
+  .catch(function(){toast('操作失败');});
+}
+
+function toggleAfterSale(i){
+  var o=orders[i];
+  var as=isAfterSale(o);
+  var notes=o.chat_notes;
+  if(as){
+    notes=notes.replace('[SALES_AFTERSALE:1]','[SALES_AFTERSALE:0]');
+  } else {
+    if(notes.indexOf('[SALES_AFTERSALE:0]')>=0){
+      notes=notes.replace('[SALES_AFTERSALE:0]','[SALES_AFTERSALE:1]');
+    } else {
+      notes+='[SALES_AFTERSALE:1]';
+    }
+  }
+  o.chat_notes=notes;
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({chat_notes:notes})})})
+  .then(function(){toast(as?'已取消售后':'已标记售后');updateStats();updateChipCounts();filterCards();openDtl(i);})
+  .catch(function(){toast('操作失败');});
+}
+
+function delOrder(i){
+  var o=orders[i];
+  if(!confirm('确认删除「'+o.xianyu_name+'」的订单？'))return;
+  fetch(ZION.delete_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id})})
+  .then(function(){
+    orders.splice(i,1);
+    closeDtl();updateStats();updateChipCounts();filterCards();toast('已删除');
+  }).catch(function(){toast('删除失败');});
+}
+
+/* ===== Chat ===== */
+function openChat(){
+  if(curIdx===null)return;
+  chatUser=orders[curIdx].xianyu_name;
+  document.getElementById('chatOvTitle').textContent=chatUser;
+  document.getElementById('chatOv').classList.add('show');
+  loadChatMsgs();
+  markRead();
+}
+function closeChat(){
+  document.getElementById('chatOv').classList.remove('show');
+  chatUser='';chatMsgs=[];
+  loadUnreadCounts();
+}
+
+function loadChatMsgs(){
+  if(!chatUser)return;
+  fetch(ZION.list_xy_messages,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({xianyu_name:chatUser})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    chatMsgs=JSON.parse(d.messages_data||'[]');
+    renderChatMsgs();
+    scrollChatBottom();
+  }).catch(function(e){console.error(e);});
+}
+
+function renderChatMsgs(){
+  var el=document.getElementById('chatOvMsgs');
+  if(!chatMsgs.length){el.innerHTML='<div class="chat-empty">暂无消息</div>';return;}
+  var h='';
+  chatMsgs.forEach(function(m){
+    var isMe=m.sender==='admin';
+    var cls=isMe?'msg-row me':'msg-row other';
+    var avatar=isMe?ADMIN_AVATAR:USER_AVATAR;
+    h+='<div class="'+cls+'">';
+    h+='<img class="msg-avatar" src="'+avatar+'">';
+    h+='<div class="msg-body">';
+    if(m.msg_type==='image'){
+      h+='<div class="msg-bubble"><img class="msg-img" src="'+m.content+'" onclick="viewImg(\''+m.content+'\')"></div>';
+    }else if(m.msg_type==='file'){
+      var fname=m.file_name||'文件';
+      h+='<div class="msg-bubble" style="padding:0;border:none;background:none"><div class="msg-file-card" onclick="dlByName(\''+m.content+'\',\''+escHtml(fname)+'\')">';
+      h+='<div class="file-info"><div class="fn">'+escHtml(fname)+'</div><div class="fs">'+(m.file_size||'')+'</div></div>';
+      h+='</div></div>';
+    }else{
+      h+='<div class="msg-bubble">'+escHtml(m.content||'').replace(/\n/g,'<br>')+'</div>';
+    }
+    h+='<div class="msg-time">'+fmtChatTime(m.created_at)+'</div>';
+    h+='</div></div>';
+  });
+  el.innerHTML=h;
+}
+
+function fmtChatTime(iso){
+  var d=new Date(iso),now=new Date();
+  var pad=function(n){return n<10?'0'+n:n;};
+  var time=pad(d.getHours())+':'+pad(d.getMinutes());
+  if(d.toDateString()===now.toDateString())return time;
+  return(d.getMonth()+1)+'/'+d.getDate()+' '+time;
+}
+
+function viewImg(url){document.getElementById('vImg').src=url;document.getElementById('viewer').classList.add('show');}
+function dlByName(url,name){
+  fetch(url).then(function(r){return r.blob();}).then(function(b){
+    var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
+  }).catch(function(){window.open(url,'_blank');});
+}
+
+function markRead(){
+  if(!chatUser)return;
+  fetch(ZION.mark_xy_read,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({xianyu_name:chatUser})})
+  .then(function(){delete unreadMap[chatUser];document.getElementById('dtlChatDot').classList.remove('show');})
+  .catch(function(e){console.error(e);});
+}
+
+function salesSendMsg(payload){
+  return fetch(ZION.send_xy_message,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message_json:JSON.stringify(payload)})})
+  .then(function(r){return r.json();});
+}
+
+async function uploadOSS(file,folder){
+  var ext=file.name.split('.').pop();
+  var key='xianyu/'+folder+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,6)+'.'+ext;
+  await ossClient.put(key,file);
+  return OSS_BASE+key;
+}
+
+function salesSendText(){
+  var inp=document.getElementById('chatInput');
+  var txt=inp.value.trim();
+  if(!txt||!chatUser)return;
+  inp.value='';inp.style.height='36px';
+  var msg={xianyu_name:chatUser,sender:'admin',msg_type:'text',content:txt};
+  chatMsgs.push({sender:'admin',msg_type:'text',content:txt,created_at:new Date().toISOString()});
+  renderChatMsgs();scrollChatBottom();
+  salesSendMsg(msg).catch(function(){toast('发送失败');});
+}
+
+function salesSendImage(inp){
+  var f=inp.files[0];if(!f||!chatUser)return;
+  inp.value='';toast('图片上传中...');
+  uploadOSS(f,'chat').then(function(url){
+    var msg={xianyu_name:chatUser,sender:'admin',msg_type:'image',content:url};
+    chatMsgs.push({sender:'admin',msg_type:'image',content:url,created_at:new Date().toISOString()});
+    renderChatMsgs();scrollChatBottom();
+    salesSendMsg(msg).catch(function(){toast('发送失败');});
+  }).catch(function(){toast('上传失败');});
+}
+
+function salesSendFile(inp){
+  var f=inp.files[0];if(!f||!chatUser)return;
+  inp.value='';toast('文件上传中...');
+  var sz=fmtSz(f.size);
+  uploadOSS(f,'chat').then(function(url){
+    var msg={xianyu_name:chatUser,sender:'admin',msg_type:'file',content:url,file_name:f.name,file_size:sz};
+    chatMsgs.push({sender:'admin',msg_type:'file',content:url,file_name:f.name,file_size:sz,created_at:new Date().toISOString()});
+    renderChatMsgs();scrollChatBottom();
+    salesSendMsg(msg).catch(function(){toast('发送失败');});
+  }).catch(function(){toast('上传失败');});
+}
+
+function scrollChatBottom(){setTimeout(function(){var el=document.getElementById('chatOvMsgs');el.scrollTop=el.scrollHeight;},50);}
+function autoGrow(el){el.style.height='36px';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+
+document.getElementById('chatInput').addEventListener('paste',function(e){
+  var items=e.clipboardData&&e.clipboardData.items;
+  if(!items)return;
+  for(var i=0;i<items.length;i++){
+    if(items[i].type.indexOf('image/')===0){
+      e.preventDefault();
+      var f=items[i].getAsFile();
+      if(!f||!chatUser)return;
+      toast('图片上传中...');
+      uploadOSS(f,'chat').then(function(url){
+        var msg={xianyu_name:chatUser,sender:'admin',msg_type:'image',content:url};
+        chatMsgs.push({sender:'admin',msg_type:'image',content:url,created_at:new Date().toISOString()});
+        renderChatMsgs();scrollChatBottom();
+        salesSendMsg(msg).catch(function(){toast('发送失败');});
+      }).catch(function(){toast('上传失败');});
+      return;
+    }
+  }
+});
+
+/* ===== Create Order Modal ===== */
+var selectedSvcs={};
+var designOpt=0;
+var surveyMode='';
+
+function openCreateModal(){
+  resetCreateForm();
+  document.getElementById('createModal').classList.add('show');
+}
+function closeCreateModal(){
+  document.getElementById('createModal').classList.remove('show');
+}
+
+function resetCreateForm(){
+  document.getElementById('cXianyuName').value='';
+  document.getElementById('cDeadline').value='';
+  selectedSvcs={};
+  designOpt=0;
+  surveyMode='';
+  document.querySelectorAll('#serviceTypeTags span').forEach(function(s){s.classList.remove('on');});
+  document.getElementById('secDesign').style.display='none';
+  document.getElementById('secSurvey').style.display='none';
+  document.getElementById('secDatafix').style.display='none';
+  document.getElementById('secReport').style.display='none';
+  document.querySelectorAll('#designRadios input[type=radio]').forEach(function(r){r.checked=false;});
+  document.querySelectorAll('#designRadios label').forEach(function(l){l.classList.remove('on');});
+  document.getElementById('dr2sub').style.display='none';
+  document.getElementById('dr3sub').style.display='none';
+  document.getElementById('dr4sub').style.display='none';
+  document.getElementById('dWordCn').checked=false;
+  document.getElementById('dWordEn').checked=false;
+  document.getElementById('dWordCn3').checked=false;
+  document.getElementById('dWordEn3').checked=false;
+  document.getElementById('dOtherPrice').value='0';
+  document.getElementById('dOtherDesc').value='';
+  document.getElementById('sCopies').value='';
+  document.getElementById('sModeWjx').classList.remove('on');
+  document.getElementById('sModeExcel').classList.remove('on');
+  document.getElementById('sReqPeople').checked=false;
+  document.getElementById('sReqLogic').checked=false;
+  document.getElementById('sReqRatio').checked=false;
+  document.getElementById('sReqStats').checked=false;
+  document.getElementById('sReqPeopleSub').style.display='none';
+  document.getElementById('sReqLogicSub').style.display='none';
+  document.getElementById('sReqStatsSub').style.display='none';
+  document.getElementById('sReqPeopleDesc').value='';
+  document.getElementById('sReqLogicDesc').value='';
+  document.querySelectorAll('.stat-sub').forEach(function(c){c.checked=false;});
+  document.querySelectorAll('.stat-sub-other').forEach(function(c){c.checked=false;});
+  document.getElementById('statOtherSub').style.display='none';
+  document.getElementById('statOtherDesc').value='';
+  document.getElementById('datafixPrice').value='';
+  document.querySelectorAll('.rpt-item').forEach(function(c){c.checked=false;});
+  document.getElementById('rptOther').checked=false;
+  document.getElementById('rptOtherSub').style.display='none';
+  document.getElementById('rptOtherDesc').value='';
+  document.getElementById('rptOtherPrice').value='0';
+  document.getElementById('rptChart').checked=false;
+  document.getElementById('rptChartHint').style.display='none';
+  document.getElementById('rptWords').value='';
+  document.getElementById('rptWordsHint').textContent='';
+  document.getElementById('priceSummary').style.display='none';
+}
+
+function toggleSvc(el){
+  var svc=el.dataset.svc;
+  el.classList.toggle('on');
+  selectedSvcs[svc]=el.classList.contains('on');
+  document.getElementById('secDesign').style.display=selectedSvcs['问卷设计']?'':'none';
+  document.getElementById('secSurvey').style.display=selectedSvcs['问卷填写']?'':'none';
+  document.getElementById('secDatafix').style.display=selectedSvcs['数据修改']?'':'none';
+  document.getElementById('secReport').style.display=selectedSvcs['分析报告']?'':'none';
+  calcAll();
+}
+
+/* Design options */
+function pickDesign(opt){
+  designOpt=opt;
+  document.querySelectorAll('#designRadios > label').forEach(function(l){l.classList.remove('on');});
+  document.getElementById('dr'+opt).classList.add('on');
+  document.getElementById('dr2sub').style.display=opt===2?'block':'none';
+  document.getElementById('dr3sub').style.display=opt===3?'block':'none';
+  document.getElementById('dr4sub').style.display=opt===4?'block':'none';
+  calcAll();
+}
+
+function calcDesign(){calcAll();}
+
+function getDesignPrice(){
+  if(!selectedSvcs['问卷设计'])return{price:0,desc:''};
+  if(designOpt===1)return{price:20,desc:'设计问卷20r\n（导入问卷星基础版）'};
+  if(designOpt===2){
+    var p=20;
+    var parts=['导入问卷星'];
+    if(document.getElementById('dWordCn').checked){p+=10;parts.push('中文word');}
+    if(document.getElementById('dWordEn').checked){p+=10;parts.push('英文word');}
+    if(parts.length===1){p+=10;parts.push('word版');}
+    return{price:p,desc:'设计问卷'+p+'r\n（'+parts.join('+')+'）'};
+  }
+  if(designOpt===3){
+    var p=40;
+    var parts=['导入问卷星','设计理由/参考文献'];
+    if(document.getElementById('dWordCn3').checked){p+=10;parts.splice(1,0,'中文word');}
+    if(document.getElementById('dWordEn3').checked){p+=10;parts.splice(parts.length-1,0,'英文word');}
+    if(!document.getElementById('dWordCn3').checked&&!document.getElementById('dWordEn3').checked){parts.splice(1,0,'word版');}
+    return{price:p,desc:'设计问卷'+p+'r\n（'+parts.join('+')+'）'};
+  }
+  if(designOpt===4){
+    var p=parseFloat(document.getElementById('dOtherPrice').value)||0;
+    var desc=document.getElementById('dOtherDesc').value.trim()||'其他';
+    return{price:p,desc:'设计问卷'+p+'r\n（'+desc+'）'};
+  }
+  return{price:0,desc:''};
+}
+
+/* Survey mode */
+function pickSurveyMode(mode){
+  surveyMode=mode;
+  document.getElementById('sModeWjx').classList.toggle('on',mode==='wjx');
+  document.getElementById('sModeExcel').classList.toggle('on',mode==='excel');
+  calcAll();
+}
+
+function toggleSReq(type){
+  if(type==='people'){
+    document.getElementById('sReqPeopleSub').style.display=document.getElementById('sReqPeople').checked?'block':'none';
+  }else if(type==='logic'){
+    document.getElementById('sReqLogicSub').style.display=document.getElementById('sReqLogic').checked?'block':'none';
+  }else if(type==='stats'){
+    document.getElementById('sReqStatsSub').style.display=document.getElementById('sReqStats').checked?'block':'none';
+  }
+  calcAll();
+}
+
+function toggleStatOther(){
+  var el=document.querySelector('.stat-sub-other');
+  document.getElementById('statOtherSub').style.display=el.checked?'block':'none';
+  calcAll();
+}
+
+function getSurveyPrice(){
+  if(!selectedSvcs['问卷填写'])return{price:0,desc:''};
+  var copies=parseInt(document.getElementById('sCopies').value)||0;
+  if(!copies||!surveyMode)return{price:0,desc:''};
+  var base=surveyMode==='wjx'?0.3:0.1;
+  var extra=0;
+  var reqList=[];
+  if(document.getElementById('sReqPeople').checked){extra+=0.1;reqList.push('人群要求');}
+  if(document.getElementById('sReqLogic').checked){extra+=0.1;reqList.push('逻辑要求');}
+  if(document.getElementById('sReqRatio').checked){extra+=0.1;reqList.push('比例要求');}
+  if(document.getElementById('sReqStats').checked){extra+=0.1;reqList.push('统计要求');}
+  var total=copies*(base+extra);
+  total=Math.round(total*100)/100;
+  var modeTxt=surveyMode==='wjx'?'导入问卷星':'答卷Excel';
+  var desc='+'+copies+'份答卷'+total+'r\n（'+modeTxt;
+  if(reqList.length)desc+='，'+reqList.join('、');
+  desc+='）';
+  return{price:total,desc:desc};
+}
+
+function getDatafixPrice(){
+  if(!selectedSvcs['数据修改'])return{price:0,desc:''};
+  var p=parseFloat(document.getElementById('datafixPrice').value)||0;
+  return{price:p,desc:p>0?'+数据修改'+p+'r':''};
+}
+
+function getReportPrice(){
+  if(!selectedSvcs['分析报告'])return{price:0,items:[],desc:''};
+  var items=[];
+  var total=0;
+  document.querySelectorAll('.rpt-item').forEach(function(c){
+    if(c.checked){
+      var name=c.dataset.name;
+      var p=parseFloat(c.dataset.price);
+      items.push({name:name,price:p});
+      total+=p;
+    }
+  });
+  if(document.getElementById('rptOther').checked){
+    var op=parseFloat(document.getElementById('rptOtherPrice').value)||0;
+    var od=document.getElementById('rptOtherDesc').value.trim()||'其他';
+    items.push({name:od,price:op});
+    total+=op;
+  }
+  var chartExtra=0;
+  if(document.getElementById('rptChart').checked&&items.length>0){
+    chartExtra=items.length*20;
+    document.getElementById('rptChartHint').style.display='block';
+    document.getElementById('rptChartHint').textContent='选择了'+items.length+'个分析项，每项+20元 = +'+chartExtra+'元';
+  } else {
+    document.getElementById('rptChartHint').style.display='none';
+  }
+  total+=chartExtra;
+  var words=parseInt(document.getElementById('rptWords').value)||0;
+  var wordsPrice=0;
+  if(words>0){
+    wordsPrice=Math.ceil(words/100)*1.25;
+    wordsPrice=Math.round(wordsPrice*100)/100;
+    document.getElementById('rptWordsHint').textContent='约 '+wordsPrice+' 元（'+Math.ceil(words/100)+'×1.25）';
+  } else {
+    document.getElementById('rptWordsHint').textContent='';
+  }
+  total+=wordsPrice;
+  var desc='';
+  items.forEach(function(it){desc+='+'+it.name+it.price+'r\n';});
+  if(chartExtra>0)desc+='+配图表'+chartExtra+'r\n';
+  if(wordsPrice>0)desc+='+目录('+words+'字)'+wordsPrice+'r\n';
+  return{price:total,items:items,chartExtra:chartExtra,wordsPrice:wordsPrice,desc:desc};
+}
+
+/* ===== Recalculate all prices ===== */
+function calcAll(){
+  var anySvc=false;
+  for(var k in selectedSvcs){if(selectedSvcs[k])anySvc=true;}
+  if(!anySvc){document.getElementById('priceSummary').style.display='none';return;}
+  document.getElementById('priceSummary').style.display='block';
+  var design=getDesignPrice();
+  var survey=getSurveyPrice();
+  var datafix=getDatafixPrice();
+  var report=getReportPrice();
+  var totalPrice=design.price+survey.price+datafix.price+report.price;
+  totalPrice=Math.round(totalPrice*100)/100;
+  var rowsHtml='';
+  if(selectedSvcs['问卷设计']&&design.price>0){
+    rowsHtml+='<div class="ps-row"><span>问卷设计</span><span>¥'+design.price+'</span></div>';
+  }
+  if(selectedSvcs['问卷填写']&&survey.price>0){
+    var copies=parseInt(document.getElementById('sCopies').value)||0;
+    rowsHtml+='<div class="ps-row"><span>问卷填写 ('+copies+'份)</span><span>¥'+survey.price+'</span></div>';
+  }
+  if(selectedSvcs['数据修改']&&datafix.price>0){
+    rowsHtml+='<div class="ps-row"><span>数据修改</span><span>¥'+datafix.price+'</span></div>';
+  }
+  if(selectedSvcs['分析报告']){
+    report.items.forEach(function(it){
+      rowsHtml+='<div class="ps-row"><span>'+escHtml(it.name)+'</span><span>¥'+it.price+'</span></div>';
+    });
+    if(report.chartExtra>0)rowsHtml+='<div class="ps-row"><span>配图表</span><span>¥'+report.chartExtra+'</span></div>';
+    if(report.wordsPrice>0)rowsHtml+='<div class="ps-row"><span>额外目录</span><span>¥'+report.wordsPrice+'</span></div>';
+  }
+  document.getElementById('priceRows').innerHTML=rowsHtml;
+  document.getElementById('priceTotal').textContent='¥'+totalPrice;
+}
+
+/* ===== Copy quote ===== */
+function copyQuote(){
+  var design=getDesignPrice();
+  var survey=getSurveyPrice();
+  var datafix=getDatafixPrice();
+  var report=getReportPrice();
+  var totalPrice=design.price+survey.price+datafix.price+report.price;
+  totalPrice=Math.round(totalPrice*100)/100;
+  var lines=[];
+  if(selectedSvcs['问卷设计']&&design.desc)lines.push(design.desc);
+  if(selectedSvcs['问卷填写']&&survey.desc)lines.push(survey.desc);
+  if(selectedSvcs['数据修改']&&datafix.desc)lines.push(datafix.desc);
+  if(selectedSvcs['分析报告']&&report.desc)lines.push(report.desc.trim());
+  var text=lines.join('\n')+(lines.length?'\n':'')+'='+totalPrice+'元';
+  copyToClipboard(text);
+}
+
+/* ===== Submit order ===== */
+function submitOrder(){
+  var name=document.getElementById('cXianyuName').value.trim();
+  if(!name){toast('请输入咸鱼名称');return;}
+  var anySvc=false;
+  var svcList=[];
+  ['问卷设计','问卷填写','数据修改','分析报告'].forEach(function(s){
+    if(selectedSvcs[s]){anySvc=true;svcList.push(s);}
+  });
+  if(!anySvc){toast('请选择至少一种服务');return;}
+
+  var design=getDesignPrice();
+  var survey=getSurveyPrice();
+  var datafix=getDatafixPrice();
+  var report=getReportPrice();
+  var totalPrice=design.price+survey.price+datafix.price+report.price;
+  totalPrice=Math.round(totalPrice*100)/100;
+
+  var descParts=[];
+  if(design.desc)descParts.push(design.desc);
+  if(survey.desc)descParts.push(survey.desc);
+  if(datafix.desc)descParts.push(datafix.desc);
+  if(report.desc)descParts.push(report.desc.trim());
+  descParts.push('='+totalPrice+'元');
+
+  var surveyReqDetails=buildSurveyReqDetails();
+  if(surveyReqDetails)descParts.push('\n【答卷要求详情】\n'+surveyReqDetails);
+
+  var description=descParts.join('\n');
+
+  var dlVal=document.getElementById('cDeadline').value;
+  var deadline=dlVal?(dlVal+':00+08:00'):'';
+
+  var orderData={
+    xianyu_name:name,
+    email:'',
+    deadline:deadline,
+    task_types:svcList.join(','),
+    description:description,
+    chat_notes:'[SALES_PRICE:'+totalPrice+'][SALES_PAID:0]',
+    status:'pending',
+    source:'sales',
+    dy_seq:spId
+  };
+
+  toast('创建中...');
+  fetch(ZION.create_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_json:JSON.stringify(orderData)})})
+  .then(function(r){return r.json();})
+  .then(function(){
+    toast('订单已创建');
+    closeCreateModal();
+    load();
+  }).catch(function(e){console.error(e);toast('创建失败');});
+}
+
+function buildSurveyReqDetails(){
+  if(!selectedSvcs['问卷填写'])return'';
+  var parts=[];
+  if(document.getElementById('sReqPeople').checked){
+    var d=document.getElementById('sReqPeopleDesc').value.trim();
+    parts.push('人群要求：'+(d||'有'));
+  }
+  if(document.getElementById('sReqLogic').checked){
+    var d=document.getElementById('sReqLogicDesc').value.trim();
+    parts.push('逻辑要求：'+(d||'有'));
+  }
+  if(document.getElementById('sReqRatio').checked)parts.push('比例要求：有');
+  if(document.getElementById('sReqStats').checked){
+    var statItems=[];
+    document.querySelectorAll('.stat-sub').forEach(function(c){
+      if(c.checked)statItems.push(c.parentElement.textContent.trim());
+    });
+    if(document.querySelector('.stat-sub-other')&&document.querySelector('.stat-sub-other').checked){
+      var od=document.getElementById('statOtherDesc').value.trim();
+      if(od)statItems.push(od);
+    }
+    parts.push('统计要求：'+(statItems.length?statItems.join('、'):'有'));
+  }
+  return parts.join('\n');
+}
+
+/* ===== Copy helpers ===== */
+function copyText(text){copyToClipboard(text);}
+
+function copySurveyReqBlock(){
+  var text='答卷有什么要求吗？\n答卷excle基础价格0.1r/份，问卷星基础价格0.3r/份\n（1）填写人群要求（每条加0.1r/份）：\n（2）逻辑要求（每条加0.1r/份）：\n（3）比例要求（总共加0.1r/份）：\n（4）统计要求（每条加0.1r/份）：\n相关性分析 p≤0.05 、线性回归 VIF<10 二元逻辑回归 AUC>0.8 、T检验 p≤0.05 、方差分析 p≤0.05 、中介效应 显著 、调节效应 显著 、信度检验 α>0.8 、验证性因子分析 适配度良好）';
+  copyToClipboard(text);
+}
+
+function copyToClipboard(text){
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(function(){toast('已复制');}).catch(function(){fallbackCopy(text);});
+  } else {fallbackCopy(text);}
+}
+
+function fallbackCopy(text){
+  var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('已复制');
+}
+
+function toggleRptOther(){
+  document.getElementById('rptOtherSub').style.display=document.getElementById('rptOther').checked?'block':'none';
+  calcAll();
+}
+
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2000);}
+
+init();
+</script>
+</body>
+</html>
