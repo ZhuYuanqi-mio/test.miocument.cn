@@ -234,17 +234,7 @@ textarea.m-input{min-height:60px;resize:vertical;line-height:1.6}
   <div class="modal-box">
     <h3><span class="m-close" onclick="closeCreateModal()">取消</span>新建订单</h3>
 
-    <!-- Section 1: Customer Info -->
-    <div class="m-section">
-      <div class="m-lb">咸鱼名称 <span class="req">*</span></div>
-      <input class="m-input" id="cXianyuName" placeholder="输入客户咸鱼名称">
-    </div>
-    <div class="m-section">
-      <div class="m-lb">完成期限</div>
-      <input type="datetime-local" class="m-input" id="cDeadline">
-    </div>
-
-    <!-- Section 2: Service Types -->
+    <!-- Section: Service Types -->
     <div class="m-section">
       <div class="q-line">
         <span>请问您是要问卷设计/问卷填写/数据修改/分析报告？</span>
@@ -419,6 +409,29 @@ textarea.m-input{min-height:60px;resize:vertical;line-height:1.6}
         • 如果有问卷星填写和其他的：保证总价不低于问卷数量×0.3+80元
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Pay Confirm Modal -->
+<div class="modal-mask" id="payModal">
+  <div class="modal-box" style="min-height:auto;padding-bottom:40px">
+    <h3><span class="m-close" onclick="closePayModal()">取消</span>确认付款信息</h3>
+    <div class="m-section">
+      <div class="m-lb">咸鱼名称 <span class="req">*</span></div>
+      <input class="m-input" id="payXianyuName" placeholder="输入客户咸鱼名称">
+    </div>
+    <div class="m-section">
+      <div class="m-lb">订单价格 <span class="req">*</span></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input class="m-input" id="payPrice" type="number" min="0" step="1" placeholder="输入实际收款价格" style="flex:1">
+        <span style="font-size:14px;color:#666">元</span>
+      </div>
+    </div>
+    <div class="m-section">
+      <div class="m-lb">完成期限 <span class="req">*</span></div>
+      <input type="datetime-local" class="m-input" id="payDeadline">
+    </div>
+    <button style="width:100%;padding:13px;border:none;border-radius:8px;background:#16a34a;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:10px" onclick="confirmPay()">确认已付款</button>
   </div>
 </div>
 
@@ -634,8 +647,9 @@ function bCard(o,i){
   var afterSale=isAfterSale(o);
   var urgCls=u==='over'||u==='urg'?'b-red':(u==='soon'?'b-amber':(u==='done'?'b-gray':'b-green'));
   var urgTxt=u==='over'?'超时':(u==='urg'?'紧急':(u==='soon'?'今天':(u==='done'?'完成':'充裕')));
+  var isPlaceholder=o.xianyu_name==='未填写用户名称';
   var s='<div class="card" onclick="openDtl('+i+')">';
-  s+='<div class="card-head"><span class="card-name">'+escHtml(o.xianyu_name)+'</span>';
+  s+='<div class="card-head"><span class="card-name"'+(isPlaceholder?' style="color:#aaa;font-style:italic"':'')+'>'+escHtml(o.xianyu_name)+'</span>';
   s+='<span style="display:flex;gap:4px;align-items:center">';
   if(afterSale)s+='<span class="badge b-aftersale">售后中</span>';
   s+='<span class="badge '+(paid?'b-paid':'b-unpaid')+'">'+(paid?'已付款':'未付款')+'</span>';
@@ -652,7 +666,7 @@ function bCard(o,i){
 /* ===== Detail ===== */
 function openDtl(i){
   curIdx=i;var o=orders[i];
-  document.getElementById('dtlTitle').textContent=o.xianyu_name;
+  document.getElementById('dtlTitle').textContent=o.xianyu_name==='未填写用户名称'?'未填写':o.xianyu_name;
   var uc=unreadMap[o.xianyu_name]||0;
   var dot=document.getElementById('dtlChatDot');
   if(uc>0){dot.textContent=uc;dot.classList.add('show');}else{dot.classList.remove('show');}
@@ -680,23 +694,64 @@ function openDtl(i){
 }
 function closeDtl(){document.getElementById('detailOv').classList.remove('show');curIdx=null;}
 
+var payingIdx=null;
+
 function togglePaid(i){
   var o=orders[i];
   var paid=isPaid(o);
-  var notes=o.chat_notes;
   if(paid){
-    notes=notes.replace('[SALES_PAID:1]','[SALES_PAID:0]');
+    var notes=o.chat_notes.replace('[SALES_PAID:1]','[SALES_PAID:0]');
+    o.chat_notes=notes;
+    fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({chat_notes:notes})})})
+    .then(function(){toast('已标记未付款');updateStats();updateChipCounts();filterCards();openDtl(i);})
+    .catch(function(){toast('操作失败');});
   } else {
-    if(notes.indexOf('[SALES_PAID:0]')>=0){
-      notes=notes.replace('[SALES_PAID:0]','[SALES_PAID:1]');
-    } else {
-      notes+='[SALES_PAID:1]';
-    }
+    openPayModal(i);
   }
-  o.chat_notes=notes;
-  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify({chat_notes:notes})})})
-  .then(function(){toast(paid?'已标记未付款':'已标记已付款');updateStats();updateChipCounts();filterCards();openDtl(i);})
-  .catch(function(){toast('操作失败');});
+}
+
+function openPayModal(i){
+  payingIdx=i;
+  var o=orders[i];
+  var price=getPrice(o);
+  document.getElementById('payXianyuName').value=o.xianyu_name==='未填写用户名称'?'':o.xianyu_name;
+  document.getElementById('payPrice').value=price>0?price:'';
+  document.getElementById('payDeadline').value=o.deadline?o.deadline.slice(0,16):'';
+  document.getElementById('payModal').classList.add('show');
+}
+function closePayModal(){
+  document.getElementById('payModal').classList.remove('show');
+  payingIdx=null;
+}
+
+function confirmPay(){
+  if(payingIdx===null)return;
+  var o=orders[payingIdx];
+  var name=document.getElementById('payXianyuName').value.trim();
+  if(!name){toast('请输入咸鱼名称');return;}
+  var price=parseFloat(document.getElementById('payPrice').value);
+  if(!price||price<=0){toast('请输入订单价格');return;}
+  var dlVal=document.getElementById('payDeadline').value;
+  if(!dlVal){toast('请选择完成期限');return;}
+  var deadline=dlVal+':00+08:00';
+
+  var notes=o.chat_notes;
+  notes=notes.replace(/\[SALES_PRICE:\d+(?:\.\d+)?\]/,'[SALES_PRICE:'+price+']');
+  if(notes.indexOf('[SALES_PAID:0]')>=0){
+    notes=notes.replace('[SALES_PAID:0]','[SALES_PAID:1]');
+  } else {
+    notes+='[SALES_PAID:1]';
+  }
+
+  var updateData={xianyu_name:name,deadline:deadline,chat_notes:notes};
+  o.xianyu_name=name;o.deadline=deadline;o.chat_notes=notes;
+
+  fetch(ZION.update_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:o.id,update_json:JSON.stringify(updateData)})})
+  .then(function(){
+    toast('已标记已付款');
+    closePayModal();
+    updateStats();updateChipCounts();filterCards();openDtl(payingIdx);
+  }).catch(function(){toast('操作失败');});
 }
 
 function toggleAfterSale(i){
@@ -887,8 +942,6 @@ function closeCreateModal(){
 }
 
 function resetCreateForm(){
-  document.getElementById('cXianyuName').value='';
-  document.getElementById('cDeadline').value='';
   selectedSvcs={};
   designOpt=0;
   surveyMode='';
@@ -1136,8 +1189,6 @@ function copyQuote(){
 
 /* ===== Submit order ===== */
 function submitOrder(){
-  var name=document.getElementById('cXianyuName').value.trim();
-  if(!name){toast('请输入咸鱼名称');return;}
   var anySvc=false;
   var svcList=[];
   ['问卷设计','问卷填写','数据修改','分析报告'].forEach(function(s){
@@ -1164,13 +1215,10 @@ function submitOrder(){
 
   var description=descParts.join('\n');
 
-  var dlVal=document.getElementById('cDeadline').value;
-  var deadline=dlVal?(dlVal+':00+08:00'):'';
-
   var orderData={
-    xianyu_name:name,
+    xianyu_name:'未填写用户名称',
     email:'',
-    deadline:deadline,
+    deadline:'',
     task_types:svcList.join(','),
     description:description,
     chat_notes:'[SALES_PRICE:'+totalPrice+'][SALES_PAID:0]',
