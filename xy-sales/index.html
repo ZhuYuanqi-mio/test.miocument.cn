@@ -56,6 +56,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .cd-red{color:#c00}
 .cd-amber{color:#b45309}
 .cd-green{color:#888}
+.card-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:8px;padding-top:8px;border-top:1px dashed #eee}
+.card-actions .ca-btn{padding:5px 12px;border-radius:5px;font-size:11px;font-weight:500;border:1px solid;cursor:pointer;background:#fff}
+.ca-btn.ca-pay{color:#16a34a;border-color:#bbf7d0}
+.ca-btn.ca-unpay{color:#c00;border-color:#fcc}
+.ca-btn.ca-after{color:#c60;border-color:#fed7aa}
+.ca-btn.ca-after-off{color:#666;border-color:#ddd}
+.ca-btn.ca-del{color:#c00;border-color:#fcc;background:#fef2f2}
+.ca-btn:active{opacity:.6}
 
 /* Detail overlay */
 .detail{display:none;position:fixed;inset:0;background:#f7f7f7;z-index:200;overflow-y:auto;-webkit-overflow-scrolling:touch}
@@ -679,6 +687,11 @@ function bCard(o,i){
   if(o.task_types.length){s+='<div class="card-tags">';o.task_types.forEach(function(t){s+='<span>'+escHtml(t)+'</span>';});s+='</div>';}
   s+='<div class="card-foot"><span>截止 '+fmtDl(o.deadline)+'</span><span>'+fmtDl(o.created_at)+'</span></div>';
   s+='<div class="card-cd '+g.c+'">'+g.t+'</div>';
+  s+='<div class="card-actions" onclick="event.stopPropagation()">';
+  s+='<button class="ca-btn '+(paid?'ca-unpay':'ca-pay')+'" onclick="togglePaid('+i+')">'+(paid?'未付款':'已付款')+'</button>';
+  s+='<button class="ca-btn '+(afterSale?'ca-after':'ca-after-off')+'" onclick="toggleAfterSale('+i+')">'+(afterSale?'取消售后':'售后中')+'</button>';
+  s+='<button class="ca-btn ca-del" onclick="delOrder('+i+')">删除</button>';
+  s+='</div>';
   s+='</div>';
   return s;
 }
