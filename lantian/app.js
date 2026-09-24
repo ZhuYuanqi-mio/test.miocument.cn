@@ -84,8 +84,12 @@ function esc(s) {
     .replaceAll('"', "&quot;");
 }
 
-function topbar(title, sub = "") {
-  return `<header class="topbar"><h1>${esc(title)}</h1><div class="sub">${esc(sub)}</div></header>`;
+function topbar(title, rightHtml = "") {
+  return `<header class="topbar"><h1>${esc(title)}</h1>${rightHtml}</header>`;
+}
+
+function iconPeople() {
+  return `<svg class="ico-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0ZM4.5 19.2c.9-2.9 3.7-5.2 7.5-5.2s6.6 2.3 7.5 5.2c.2.6-.3 1.3-.9 1.3H5.4c-.6 0-1.1-.7-.9-1.3Z"/></svg>`;
 }
 
 function tabbar() {
@@ -93,8 +97,7 @@ function tabbar() {
     ? [
         ["review", "登记", "☰"],
         ["pay", "工资", "¥"],
-        ["people", "人员", "⚙"],
-        ["me", "我的", "●"],
+        ["people", "人员", iconPeople()],
       ]
     : [
         ["work", "记工", "✎"],
@@ -212,15 +215,28 @@ function loginView() {
   };
 }
 
+function logout() {
+  state.me = null;
+  localStorage.removeItem("salary_me_id");
+  const url = new URL(location.href);
+  url.searchParams.delete("user");
+  history.replaceState(null, "", url.pathname + url.hash);
+  loginView();
+}
+
 function shell(title, body) {
-  const sub = `${state.me.name} · ${state.me.role}`;
-  app().innerHTML = `${topbar(title, sub)}<main class="page">${body}</main>${tabbar()}`;
+  const right = isAdmin()
+    ? `<button class="logout-link" id="logoutTop" type="button">退出登录</button>`
+    : `<div class="sub">${esc(state.me.name)}</div>`;
+  app().innerHTML = `${topbar(title, right)}<main class="page">${body}</main>${tabbar()}`;
   app().querySelectorAll("[data-tab]").forEach((btn) => {
     btn.onclick = () => {
       state.tab = btn.dataset.tab;
       render();
     };
   });
+  const logoutBtn = $("#logoutTop");
+  if (logoutBtn) logoutBtn.onclick = logout;
 }
 
 async function workView() {
@@ -865,14 +881,7 @@ function meView() {
     state.me = { ...m, ...fd };
     toast("已保存");
   };
-  $("#logout").onclick = () => {
-    state.me = null;
-    localStorage.removeItem("salary_me_id");
-    const url = new URL(location.href);
-    url.searchParams.delete("user");
-    history.replaceState(null, "", url.pathname + url.hash);
-    loginView();
-  };
+  $("#logout").onclick = logout;
 }
 
 async function render() {
@@ -883,6 +892,7 @@ async function render() {
     if (state.tab === "pay") return payView();
     if (state.tab === "people") return peopleView();
     if (state.tab === "review") return reviewView();
+    if (isAdmin()) return reviewView();
     return meView();
   } catch (e) {
     toast(e.message);

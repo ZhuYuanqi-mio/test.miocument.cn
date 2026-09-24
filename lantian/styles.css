@@ -45,6 +45,14 @@ button { cursor: pointer; }
 }
 .topbar h1 { font-size: 17px; margin: 0; font-weight: 650; }
 .topbar .sub { color: var(--muted); font-size: 12px; }
+.logout-link {
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0;
+}
 
 .page {
   padding: 12px 12px 92px;
@@ -163,7 +171,8 @@ button { cursor: pointer; }
   font-size: 11px;
 }
 .tabbar button.on { color: var(--blue); font-weight: 650; }
-.tabbar .ico { font-size: 18px; line-height: 1; }
+.tabbar .ico { font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; height: 20px; }
+.tabbar .ico-svg { width: 20px; height: 20px; fill: currentColor; }
 
 .empty {
   text-align: center;
