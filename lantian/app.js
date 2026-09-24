@@ -189,8 +189,8 @@ function loginView() {
   app().innerHTML = `
     <div class="login">
       <div class="brand">蓝天工资</div>
-      <div class="hint">手机号登录。管理员看全部，员工只看自己。</div>
-      ${field("手机号", `<input name="phone" placeholder="请输入手机号" />`)}
+      <div class="hint">账号登录。管理员看全部，员工只看自己。</div>
+      ${field("账号", `<input name="phone" placeholder="请输入账号" />`)}
       ${field("密码", `<input name="password" type="password" placeholder="请输入密码" />`)}
       <button class="btn block" id="loginBtn">登录</button>
       <p class="muted" style="margin-top:12px">账号见「工资系统-账号.md」</p>
@@ -204,7 +204,7 @@ function loginView() {
         { phone }
       );
       const user = data.salary_member[0];
-      if (!user || user.password !== password) return toast("手机号或密码不对");
+      if (!user || user.password !== password) return toast("账号或密码不对");
       setLoggedIn(user);
       await loadBase();
       render();
@@ -772,8 +772,8 @@ function memberForm(m) {
     m ? "编辑员工" : "新增员工",
     `<form class="card" id="mf">
       ${field("姓名", `<input name="name" value="${esc(m?.name || "")}" required />`)}
-      ${field("手机号", `<input name="phone" value="${esc(m?.phone || "")}" required />`)}
-      ${field("密码", `<input name="password" value="${esc(m?.password || "123456")}" required />`)}
+      ${field("账号", `<input name="phone" value="${esc(m?.phone || "")}" required />`)}
+      ${field("密码", `<input name="password" value="${esc(m?.password || "")}" required />`)}
       ${field("角色", selectHtml("role", ["员工", "管理员"], m?.role || "员工"))}
       ${field("用工性质", selectHtml("hire_type", ["长期工", "钟点工"], m?.hire_type || "长期工"))}
       ${field("工种", selectHtml("job_type", ["冲压", "焊接", "组装", "销售", "综合"], m?.job_type || "综合"))}
