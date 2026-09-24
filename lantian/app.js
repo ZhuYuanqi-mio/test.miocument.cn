@@ -189,11 +189,9 @@ function loginView() {
   app().innerHTML = `
     <div class="login">
       <div class="brand">蓝天工资</div>
-      <div class="hint">账号登录。管理员看全部，员工只看自己。</div>
       ${field("账号", `<input name="phone" placeholder="请输入账号" />`)}
       ${field("密码", `<input name="password" type="password" placeholder="请输入密码" />`)}
       <button class="btn block" id="loginBtn">登录</button>
-      <p class="muted" style="margin-top:12px">账号见「工资系统-账号.md」</p>
     </div>`;
   $("#loginBtn").onclick = async () => {
     try {
