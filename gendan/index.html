@@ -1,0 +1,3191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>跟单发货</title>
+<style>
+  :root{
+    --bg:#f2f3f5; --card:#fff; --border:#e5e6eb; --line:#ececec;
+    --text:#1d2129; --muted:#86909c; --primary:#2f6bff; --primary-d:#1e4fd6;
+    --orange:#e85d2a; --orange-bg:#f7d7b8; --peach:#f8e0c8; --cream:#fbf1e6;
+    --red:#c0392b; --head:#f8e0c8;
+    --due-orange-bg:#fde7d4; --due-orange:#d35400;
+    --due-red-bg:#fde3e3; --due-red:#c0392b;
+    --due-gray-bg:#eceef1; --due-gray:#6b7280;
+    --row:#f7f8fa;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;overflow:hidden;}
+  body{margin:0;font-family:"PingFang SC","Microsoft YaHei",-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--bg);color:var(--text);font-size:12px;}
+
+  /* 顶部标签栏 */
+  .topbar{height:36px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:stretch;}
+  .topbar .brand{width:128px;display:flex;align-items:center;padding:0 12px;font-weight:700;color:#1f2a4d;font-size:14px;flex:0 0 128px;}
+  .tabs{display:flex;align-items:stretch;flex:1;}
+  .tab{display:flex;align-items:center;gap:8px;padding:0 14px;font-size:13px;color:#4e5969;border-right:1px solid var(--line);cursor:pointer;}
+  .tab:hover{background:#f7f8fa;}
+  .tab.active{background:#eaf1ff;color:var(--primary);font-weight:600;}
+  .tab .home{width:14px;height:14px;flex:0 0 14px;}
+  .tab .home svg{width:14px;height:14px;stroke:#4e5969;fill:none;stroke-width:1.4;}
+  .top-actions{display:flex;align-items:center;gap:8px;flex:0 0 236px;width:236px;padding:0 0 0 8px;align-self:center;}
+  .top-actions #btnDone{margin-left:auto;margin-right:0;}
+  .top-actions #btnTrash{margin-right:8px;}
+  .iconbtn{width:26px;height:26px;border:1px solid var(--border);background:#fff;border-radius:3px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#4e5969;flex:0 0 26px;}
+  .iconbtn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;}
+  .iconbtn:hover{border-color:var(--primary);color:var(--primary);}
+  .iconbtn.on{background:var(--primary);border-color:var(--primary);color:#fff;}
+  .side-tabs{display:flex;align-items:stretch;flex:0 0 auto;margin-right:10px;}
+  .side-tabs .tab:first-child{border-left:1px solid var(--line);}
+  .sys-switch{margin-right:12px;margin-left:0;align-self:center;display:flex;align-items:center;gap:8px;background:#eef5ff;border:1px solid #d6e6ff;border-radius:18px;padding:4px 12px;font-size:12px;color:#1d2129;white-space:nowrap;}
+  .sys-switch .sw{width:34px;height:18px;border-radius:9px;background:#cfd4dc;position:relative;cursor:pointer;flex:0 0 34px;}
+  .sys-switch .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s;}
+  .sys-switch.on .sw{background:var(--primary);}
+  .sys-switch.on .sw::after{left:18px;}
+
+  .app{display:flex;height:calc(100% - 36px);min-height:0;overflow:hidden;}
+  .work{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;height:100%;overflow:hidden;}
+  .work-body{display:flex;flex:1;min-width:0;min-height:0;height:100%;overflow:hidden;}
+  .stage{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+  .stage-body{display:flex;flex:1;min-width:0;min-height:0;overflow:hidden;}
+  .main-col{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+  .work-empty{flex:1;display:none;align-items:center;justify-content:center;color:var(--muted);background:#fff;font-size:13px;}
+  .work-empty.show{display:flex;}
+  #pageDetail{display:none;flex-direction:column;flex:1;min-width:0;min-height:0;height:100%;overflow:hidden;background:#fff;}
+  #pageEmbed{display:none;flex-direction:column;flex:1;min-width:0;min-height:0;height:100%;overflow:hidden;background:#fff;}
+  #pageEmbed iframe{display:none;flex:1;width:100%;border:0;min-height:0;background:#fff;}
+  #pageEmbed iframe.on{display:block;}
+  .detail-body{display:flex;flex:1;min-width:0;min-height:0;overflow:hidden;}
+  .detail-side{width:228px;flex:0 0 228px;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0;}
+  .detail-side .search{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);flex:0 0 auto;}
+  .detail-side .search .cell{padding:4px 8px 8px;border-right:1px solid var(--line);}
+  .detail-side .search .cell:last-child{border-right:none;}
+  .detail-side .search .lab{font-size:11px;font-weight:600;color:#4e5969;padding:2px 0 4px;}
+  .detail-side .search input{width:100%;padding:5px 6px;border:1px solid var(--border);border-radius:3px;font-size:12px;outline:none;}
+  .detail-side .search input:focus{border-color:var(--primary);}
+  .detail-side .dcols{display:grid;grid-template-columns:1fr 1fr;flex:1;min-height:0;}
+  .detail-side .dcol{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line);}
+  .detail-side .dcol:last-child{border-right:none;}
+  .detail-side .dlist{flex:1;min-height:0;overflow:auto;}
+  .detail-side .item{padding:6px 8px;font-size:11px;border-bottom:1px solid var(--line);cursor:pointer;color:#4e5969;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:none;}
+  .detail-side .item:hover{background:#f2f7ff;}
+  .detail-side .item.active{background:#e8f1ff;color:var(--primary);font-weight:600;}
+  .detail-main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+  .detail-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);flex:0 0 auto;flex-wrap:wrap;}
+  .detail-bar input.ym{width:52px;height:24px;border:1px solid var(--border);border-radius:3px;padding:0 6px;font-size:12px;}
+  .detail-bar input.mo{width:28px;text-align:center;}
+  .detail-bar .dt-wrap{position:relative;display:inline-flex;align-items:center;height:24px;width:138px;border:1px solid var(--border);border-radius:3px;background:#fff;box-sizing:border-box;}
+  .detail-bar .dt-wrap:focus-within{border-color:var(--primary);}
+  .detail-bar .dt-text{flex:1;padding:0 24px 0 8px;font-size:12px;color:#86909c;pointer-events:none;white-space:nowrap;overflow:hidden;}
+  .detail-bar .dt-wrap.filled .dt-text{color:#1d2129;}
+  .detail-bar input.dt{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;cursor:pointer;}
+  .detail-bar .dt-cal{position:absolute;right:6px;width:14px;height:14px;pointer-events:none;stroke:#86909c;fill:none;stroke-width:1.4;}
+  .detail-bar .lab{color:#4e5969;white-space:nowrap;}
+  .detail-bar .grow{flex:1;}
+  .detail-bar .pbtn{height:26px;border:1px solid var(--border);background:#fff;border-radius:3px;padding:0 12px;font-size:12px;color:#4e5969;cursor:pointer;}
+  .detail-bar .pbtn:hover{border-color:var(--primary);color:var(--primary);}
+  .detail-wrap{flex:1;min-height:0;overflow:auto;padding:0;}
+  table.detail-table{width:100%;min-width:1180px;table-layout:fixed;border-collapse:collapse;border:1px solid #8d939c;}
+  table.detail-table.bill{min-width:1360px;}
+  table.detail-table th,table.detail-table td{border:1px solid #8d939c;padding:4px 4px;font-size:11px;text-align:center;line-height:1.25;background:#fff;color:#1d2129;}
+  table.detail-table thead th{background:#eceef1;color:#5c6370;font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:1;}
+  table.detail-table thead th.owed{background:#6b7280;color:#fff;}
+  table.detail-table thead th.view{background:#5c6370;color:#fff;}
+  table.detail-table td.name,table.detail-table td.spec{text-align:left;white-space:normal;word-break:break-word;}
+  table.detail-table td.owed{color:#1d2129;font-weight:400;}
+  table.detail-table td.owed.hot{background:#ffff00;color:#1d2129;font-weight:400;}
+  table.detail-table td.view a{color:var(--primary);cursor:pointer;text-decoration:none;}
+  table.detail-table tbody tr:hover td{background:#f2f7ff;}
+  table.detail-table tbody tr:hover td.owed.hot{background:#ffff00;}
+
+  /* 左侧导航（白底） */
+  .nav{width:128px;flex:0 0 128px;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;padding-top:0;}
+  .nav .pblock{flex:1;min-height:0;display:flex;flex-direction:column;}
+  .nav .phead{padding:4px 8px 8px;border-bottom:1px solid var(--line);}
+  .nav .phead .lab{font-size:11px;font-weight:600;color:#4e5969;padding:2px 0 4px;cursor:default;}
+  .nav .phead input{width:100%;padding:5px 6px;border:1px solid var(--border);border-radius:3px;font-size:12px;outline:none;}
+  .nav .phead input:focus{border-color:var(--primary);}
+  .nav .plist{flex:1;min-height:0;overflow:auto;}
+  .nav .pitem{display:flex;align-items:center;gap:6px;padding:6px 8px;font-size:11px;border-bottom:1px solid var(--line);color:#4e5969;cursor:pointer;}
+  .nav .pitem:hover{background:#f2f7ff;}
+  .nav .pitem.active{background:#e8f1ff;color:var(--primary);font-weight:600;}
+  .nav .pitem .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .nav .pitem .del{color:#c9cdd4;display:flex;cursor:pointer;flex:0 0 14px;}
+  .nav .pitem .del svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.5;}
+  .nav .pitem .del:hover{color:var(--red);}
+
+  /* 订单列表列 */
+  .orders{width:236px;flex:0 0 236px;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;}
+  .minibtn{border:1px solid var(--border);background:#fff;border-radius:3px;padding:3px 8px;font-size:11px;color:#4e5969;cursor:pointer;}
+  .minibtn.blue{background:var(--primary);border-color:var(--primary);color:#fff;}
+  .minibtn:hover{border-color:var(--primary);color:var(--primary);}
+  .minibtn.blue:hover{color:#fff;background:var(--primary-d);}
+  .orders .search{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);}
+  .orders .search .cell{padding:4px 8px 8px;border-right:1px solid var(--line);}
+  .orders .search .cell:last-child{border-right:none;}
+  .orders .search .lab{font-size:11px;font-weight:600;color:#4e5969;padding:2px 0 4px;}
+  .orders .search input{width:100%;padding:5px 6px;border:1px solid var(--border);border-radius:3px;font-size:12px;outline:none;}
+  .orders .search input:focus{border-color:var(--primary);}
+  .orders .cols{display:grid;grid-template-columns:1fr 1fr;flex:1;min-height:0;}
+  .orders .col{overflow:auto;border-right:1px solid var(--line);}
+  .orders .col:last-child{border-right:none;}
+  .orders .item{padding:6px 8px;font-size:11px;border-bottom:1px solid var(--line);cursor:pointer;color:#4e5969;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:none;}
+  .orders .col:last-child .item{white-space:normal;word-break:break-word;line-height:1.35;}
+  .orders .item:hover{background:#f2f7ff;}
+  .orders .item.active{background:#e8f1ff;color:var(--primary);font-weight:600;}
+
+  /* 中间主区 */
+  .main{flex:1;min-width:0;min-height:0;position:relative;overflow:hidden;padding:0;background:#fff;}
+  #content{position:absolute;inset:0;overflow-y:scroll;padding:10px 12px;scrollbar-gutter:stable;}
+  #content::-webkit-scrollbar{width:10px;}
+  #content::-webkit-scrollbar-track{background:#f2f3f5;}
+  #content::-webkit-scrollbar-thumb{background:#c0c4cc;border-radius:5px;border:2px solid #f2f3f5;}
+  #content::-webkit-scrollbar-thumb:hover{background:#9aa0a6;}
+  #content{scrollbar-width:thin;scrollbar-color:#c0c4cc #f2f3f5;}
+  .more-loader{display:none;padding:18px 0 22px;text-align:center;}
+  .more-loader.show{display:block;}
+  .more-loader .spin{width:26px;height:26px;margin:0 auto;border:3px solid #e5e6eb;border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .block{background:#fff;border:none;margin-bottom:14px;overflow:visible;}
+  .block.hl{box-shadow:0 0 0 2px var(--primary);}
+  .bhead{display:flex;align-items:center;gap:10px;padding:6px 4px 8px;background:#fff;border-bottom:none;}
+  .bhead .seq{color:#4e5969;font-size:12px;min-width:14px;}
+  .bhead .lab{font-size:12px;color:#1d2129;}
+  .bhead .lab b{font-weight:700;}
+  .bhead .up{margin-left:auto;color:#86909c;font-size:11px;display:inline-flex;align-items:center;gap:6px;}
+  .bhead .receipt-btn{width:16px;height:16px;border:none;background:transparent;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#86909c;}
+  .bhead .receipt-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.6;}
+  .bhead .receipt-btn:hover{color:var(--red);}
+  .bhead .receipt-btn.restore:hover{color:#2f9e44;}
+
+  table{border-collapse:collapse;width:100%;table-layout:fixed;border:1px solid #8d939c;}
+  th,td{border:1px solid #8d939c;padding:4px 4px;text-align:center;font-size:11px;overflow:hidden;line-height:1.3;}
+  th:first-child,td:first-child{border-left:1px solid #8d939c;}
+  thead th{background:var(--due-gray-bg);color:#5c6370;font-weight:600;white-space:nowrap;}
+  thead th.print{white-space:nowrap;}
+  thead th.samples{font-size:10px;padding:4px 1px;}
+  thead th.qs{background:var(--due-gray);color:#fff;}
+  .block.due-orange thead th{background:var(--due-orange-bg);color:#8a4b16;}
+  .block.due-orange thead th.qs{background:var(--due-orange);color:#fff;}
+  .block.due-red thead th{background:var(--due-red-bg);color:#8a1f1f;}
+  .block.due-red thead th.qs{background:var(--due-red);color:#fff;}
+  .block.due-gray thead th{background:var(--due-gray-bg);color:#5c6370;}
+  .block.due-gray thead th.qs{background:var(--due-gray);color:#fff;}
+  tbody td{color:#1d2129;background:#fff;white-space:normal;word-break:break-word;}
+  tbody td.name,tbody td.spec{text-align:left;}
+  tbody td.spec{color:#1d2129;}
+  tbody td.qs{font-weight:700;}
+  .block.due-orange tbody td.qs{color:var(--due-orange);}
+  .block.due-red tbody td.qs{color:var(--due-red);}
+  .block.due-gray tbody td.qs{color:var(--due-gray);}
+  tbody td.samples{font-weight:700;}
+  tbody tr.stock td{font-weight:700;color:var(--due-orange);background:#fff;}
+  tbody tr.stock td.spec{color:var(--due-orange);}
+  tbody tr.stock td.qs,tbody tr.stock td.samples{color:var(--due-orange);}
+  tbody tr:hover td{background:#e8f3ff;}
+  tbody tr:hover td.tagcell, tbody tr.stock:hover td.tagcell{background:#fff;}
+  td.mini a{color:var(--primary);cursor:pointer;text-decoration:none;font-weight:400;}
+  .status{padding:40px;text-align:center;color:var(--muted);}
+  .err{color:var(--red);}
+
+  .plan-panel{display:none;flex:0 0 auto;max-height:36vh;background:#fff;border-bottom:1px solid var(--border);min-height:0;}
+  .plan-panel.show{display:flex;flex-direction:column;}
+  .plan-bar{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);flex:0 0 auto;}
+  .plan-bar .ttl{font-size:13px;font-weight:700;color:#1d2129;white-space:nowrap;}
+  .plan-bar input.q{width:168px;height:26px;border:1px solid var(--border);border-radius:13px;padding:0 12px;font-size:12px;outline:none;}
+  .plan-bar input.q:focus{border-color:var(--primary);}
+  .plan-bar .grow{flex:1;}
+  .plan-bar .pbtn{height:26px;border:1px solid var(--border);background:#fff;border-radius:3px;padding:0 12px;font-size:12px;color:#4e5969;cursor:pointer;}
+  .plan-bar .pbtn:hover{border-color:var(--primary);color:var(--primary);}
+  .plan-bar .x{width:26px;height:26px;border:none;background:transparent;color:#86909c;font-size:16px;cursor:pointer;line-height:26px;}
+  .plan-bar .x:hover{color:#1d2129;}
+  .plan-wrap{overflow:auto;flex:1;min-height:0;background:#fff;}
+  table.plan-table{width:max-content;min-width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #c9cdd4;}
+  table.plan-table th,table.plan-table td{border:1px solid #dfe3e8;padding:3px 4px;font-size:11px;background:#fff;color:#1d2129;text-align:center;line-height:1.25;overflow:hidden;}
+  table.plan-table thead th{background:#f7f8fa;color:#4e5969;font-weight:600;white-space:nowrap;}
+  table.plan-table td.name,table.plan-table td.spec{text-align:left;white-space:normal;word-break:break-word;overflow-wrap:anywhere;}
+  table.plan-table td.owed{color:var(--red);font-weight:700;line-height:1.2;}
+  table.plan-table td.owed .lab{display:block;font-size:10px;font-weight:600;}
+  table.plan-table input.cell{width:100%;height:22px;border:1px solid transparent;padding:0 3px;text-align:center;font-size:11px;outline:none;background:transparent;}
+  table.plan-table input.cell:focus{border-color:var(--primary);background:#fff;}
+  table.plan-table .rm{width:18px;height:18px;border-radius:50%;border:1px solid #c9cdd4;background:#fff;color:#86909c;font-size:11px;line-height:16px;cursor:pointer;padding:0;}
+  table.plan-table .rm:hover{border-color:var(--red);color:var(--red);}
+  table.plan-table .detail{border:none;background:transparent;cursor:pointer;color:#4e5969;padding:0;display:inline-flex;}
+  table.plan-table .detail svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;}
+  table.plan-table tbody tr:hover td{background:#f7f8fa;}
+
+  .ship-panel{display:none;order:2;flex:0 0 auto;z-index:8;background:#fff;border-top:1px solid #2f6bff;max-height:42vh;}
+  .ship-panel.show{display:flex;flex-direction:column;}
+  .ship-panel.collapsed{max-height:none;}
+  .ship-panel.collapsed #shipBody{display:none;}
+  #shipBody{display:flex;flex-direction:column;flex:1;min-height:0;background:#fff;}
+  .ship-title{background:#2f6bff;color:#fff;font-size:13px;font-weight:700;padding:7px 12px;display:flex;align-items:center;cursor:pointer;user-select:none;}
+  .ship-title .chev{margin-left:auto;font-size:14px;color:#fff;font-weight:400;line-height:1;}
+  .ship-meta{background:#fff;padding:8px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid #000;}
+  .ship-meta label{color:#1d2129;font-size:12px;white-space:nowrap;}
+  .ship-meta input{height:24px;border:1px solid #000;background:#fff;padding:0 6px;font-size:12px;outline:none;color:#1d2129;}
+  .ship-meta input.date{width:118px;}
+  .ship-meta input.cust,.ship-meta input.person{width:88px;}
+  .ship-meta .note-no{font-size:12px;color:#1d2129;letter-spacing:.2px;}
+  .ship-meta .note-dash{font-size:12px;color:#1d2129;}
+  .ship-meta input.seq{width:56px;text-align:center;}
+  .ship-meta .grow{flex:1;min-width:8px;}
+  .ship-btn{height:26px;border:none;background:#2f6bff;color:#fff;padding:0 16px;font-size:12px;border-radius:2px;cursor:pointer;font-weight:600;}
+  .ship-btn:hover{background:var(--primary-d);}
+  .ship-btn:disabled{opacity:.55;cursor:not-allowed;}
+  .ship-table-wrap{overflow:auto;background:#fff;flex:1;min-height:0;}
+  table.ship-table{width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #000;}
+  table.ship-table th,table.ship-table td{border:1px solid #000;padding:5px 6px;font-size:13px;background:#fff;color:#1d2129;}
+  table.ship-table thead th{background:#fff;color:#1d2129;font-weight:600;white-space:nowrap;}
+  table.ship-table td{white-space:nowrap;}
+  table.ship-table td.name,table.ship-table td.spec{text-align:left;white-space:normal;word-break:break-word;}
+  table.ship-table td.num{text-align:center;}
+  table.ship-table td.qty,table.ship-table td.owed,table.ship-table td.inp{font-size:15px;font-weight:700;text-align:center;}
+  table.ship-table td.qty{color:#1d2129;}
+  table.ship-table td.owed{color:var(--red);}
+  table.ship-table .c-rm{width:44px;}
+  table.ship-table .c-tag{width:44px;}
+  table.ship-table .c-oid{width:110px;}
+  table.ship-table .c-code{width:120px;}
+  table.ship-table .c-name{width:28%;}
+  table.ship-table .c-spec{width:16%;}
+  table.ship-table .c-unit{width:48px;}
+  table.ship-table .c-qty{width:88px;}
+  table.ship-table .c-owed{width:80px;}
+  table.ship-table .c-inp{width:88px;}
+  table.ship-table .c-spare{width:72px;}
+  table.ship-table input.cell{width:100%;min-width:48px;height:26px;border:none;padding:0 4px;font-size:15px;font-weight:700;text-align:center;background:transparent;outline:none;color:#1d2129;}
+  .rm-btn{width:18px;height:18px;border-radius:50%;border:1px solid #8d939c;background:#fff;color:#4e5969;font-size:11px;line-height:16px;cursor:pointer;padding:0;}
+  .rm-btn:hover{border-color:var(--red);color:var(--red);}
+  .tag-ic{width:14px;height:14px;display:inline-block;vertical-align:middle;cursor:pointer;}
+  .tag-ic path{fill:#4e5969;}
+  table.ship-table td.tagcell:hover, table.ship-table tr:hover td.tagcell{background:#fff;}
+  .tag-btn{border:none;background:transparent;padding:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
+  .tag-btn:hover,.tag-btn:focus{background:transparent;outline:none;}
+  thead th.tag{font-size:10px;padding:4px 1px;}
+
+  .label-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40;align-items:center;justify-content:center;}
+  .label-mask.show{display:flex;}
+  .label-box{background:#fff;border-radius:10px;padding:16px 16px 14px;display:flex;flex-direction:column;align-items:center;box-sizing:border-box;}
+  .label-edit{width:360px;display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;color:#1d2129;}
+  .label-edit label{font-weight:700;white-space:nowrap;}
+  .label-edit input{height:28px;border:1px solid #000;padding:0 8px;font-size:13px;}
+  .label-sheet{width:360px;height:360px;box-sizing:border-box;padding:10px 12px 12px;display:flex;flex-direction:column;background:#fff;overflow:hidden;}
+  .label-h{text-align:center;font-size:20px;font-weight:800;color:#111;line-height:1.2;white-space:nowrap;}
+  .label-sub{font-size:15px;font-weight:700;color:#111;padding:8px 2px 8px 4px;white-space:nowrap;}
+  .label-sub span{margin-left:6px;font-weight:700;}
+  table.label-tbl{width:100%;flex:1;border-collapse:collapse;table-layout:fixed;border:2px solid #000;}
+  table.label-tbl th,table.label-tbl td{border:1.5px solid #000;padding:0 4px;text-align:center;background:#fff;color:#111;font-size:13px;line-height:1.2;}
+  table.label-tbl .k{font-weight:800;font-size:13px;white-space:nowrap;}
+  table.label-tbl .name,table.label-tbl .spec{padding:4px 6px;vertical-align:middle;}
+  table.label-tbl .oid{font-size:18px;font-weight:800;letter-spacing:.4px;white-space:nowrap;overflow:hidden;}
+  table.label-tbl .code{font-size:18px;font-weight:800;letter-spacing:.4px;white-space:nowrap;overflow:hidden;}
+  table.label-tbl .fix{font-weight:800;font-size:14px;white-space:nowrap;vertical-align:middle;}
+  table.label-tbl .pack{padding:0 2px;vertical-align:middle;}
+  .lb-fill{width:100%;max-height:100%;overflow:hidden;text-align:center;white-space:normal;word-break:break-word;line-height:1.25;font-weight:700;}
+  #lbName{font-size:14px;}
+  #lbSpec{font-size:16px;font-weight:800;}
+  table.label-tbl .pack-in{display:flex;align-items:center;justify-content:center;width:100%;height:32px;max-height:32px;overflow:hidden;outline:none;text-align:center;font-size:14px;font-weight:800;font-family:inherit;line-height:1.15;white-space:normal;word-break:break-all;color:#111;box-sizing:border-box;}
+  .label-actions{display:flex;gap:10px;margin-top:12px;width:360px;}
+  .label-actions .p{flex:1;height:40px;border:none;border-radius:20px;background:#2f6bff;color:#fff;font-size:15px;font-weight:700;cursor:pointer;}
+  .label-actions .c{width:88px;height:40px;border:1px solid #d0d5dd;border-radius:20px;background:#fff;color:#4e5969;font-size:15px;cursor:pointer;}
+
+  .note-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:50;align-items:center;justify-content:center;}
+  .note-mask.show{display:flex;}
+  .note-box{background:#fff;border-radius:10px;padding:16px 16px 14px;display:flex;flex-direction:column;align-items:center;box-sizing:border-box;}
+  .note-edit{width:800px;display:flex;align-items:center;gap:8px;margin:0 0 10px 28px;font-size:13px;color:#1d2129;}
+  .note-edit label{font-weight:700;white-space:nowrap;}
+  .note-edit input{height:28px;border:1px solid #000;padding:0 8px;font-size:13px;}
+  .note-edit .msg{font-size:12px;color:#86909c;}
+  .note-edit .msg.err{color:var(--red);}
+  .note-print{display:flex;align-items:flex-start;}
+  .note-tags{width:28px;flex:0 0 28px;position:relative;height:473px;}
+  .note-tags .note-tag{position:absolute;left:4px;width:20px;height:20px;}
+  .note-tags .note-tag .tag-ic{width:16px;height:16px;}
+  .note-dels{width:28px;flex:0 0 28px;position:relative;height:473px;}
+  .note-dels .note-del{position:absolute;left:2px;width:24px;height:24px;border:none;background:transparent;padding:0;cursor:pointer;color:#111;display:flex;align-items:center;justify-content:center;}
+  .note-dels .note-del svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;}
+  .note-dels .note-del:hover{color:var(--red);}
+  .note-sheet{width:800px;height:473px;box-sizing:border-box;padding:8px 14px 6px;display:flex;flex-direction:column;background:#fff;overflow:hidden;color:#111;}
+  .note-sheet .dn-co{text-align:center;font-size:28px;font-weight:800;letter-spacing:1px;line-height:1.15;}
+  .note-sheet .dn-sub{text-align:center;font-size:20px;font-weight:400;margin:0 0 2px;}
+  .note-sheet .dn-addr{text-align:center;font-size:16px;font-weight:400;white-space:nowrap;line-height:1.25;}
+  .note-sheet .dn-meta{display:flex;justify-content:space-between;align-items:flex-end;font-size:16px;font-weight:400;padding:4px 0 2px;width:100%;box-sizing:border-box;}
+  .note-sheet table.dn-tbl{width:100%;flex:1;border-collapse:collapse;table-layout:fixed;border:1.5px solid #000;}
+  .note-sheet table.dn-tbl tbody{height:100%;}
+  .note-sheet table.dn-tbl tbody tr:not(.dn-foot){height:16.6%;}
+  .note-sheet table.dn-tbl th,.note-sheet table.dn-tbl td{height:34px;border:1.5px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#fff;color:#111;line-height:1.15;overflow:hidden;}
+  .note-sheet table.dn-tbl thead th{height:42px;background:#fff;color:#111;font-weight:400;font-size:13px;white-space:nowrap;}
+  .note-sheet table.dn-tbl thead th.wrap2{white-space:normal;line-height:1.1;}
+  .note-sheet tbody tr:hover td{background:#fff;}
+  .note-sheet table.dn-tbl td.name,.note-sheet table.dn-tbl td.spec{white-space:normal;word-break:break-word;font-size:13px;}
+  .note-sheet table.dn-tbl td.oid,.note-sheet table.dn-tbl td.code{white-space:normal;word-break:break-all;overflow:hidden;}
+  .note-sheet table.dn-tbl th.unit,.note-sheet table.dn-tbl td.unit{font-size:8px;padding:2px 1px;}
+  .note-sheet table.dn-tbl td.qty{font-size:13px;font-weight:400;}
+  .note-sheet table.dn-tbl td.remark{white-space:normal;line-height:1.1;}
+  .note-sheet table.dn-tbl .dn-foot td{height:34px;font-size:12px;font-weight:700;text-align:left;padding:5px 8px;white-space:nowrap;}
+  .note-sheet .dn-tip{font-size:13px;font-weight:700;text-align:center;padding:5px 2px 0;white-space:nowrap;letter-spacing:0;}
+  .note-actions{display:flex;gap:10px;margin:12px 0 0 28px;width:800px;}
+  .note-actions .p{flex:1;height:40px;border:none;border-radius:20px;background:#2f6bff;color:#fff;font-size:15px;font-weight:700;cursor:pointer;}
+  .note-actions .c{width:88px;height:40px;border:1px solid #d0d5dd;border-radius:20px;background:#fff;color:#4e5969;font-size:15px;cursor:pointer;}
+  #printFrame{position:fixed;left:-9999px;top:0;width:1px;height:1px;border:0;}
+
+  /* 右侧 近期送货单 */
+  .recent{width:133px;flex:0 0 133px;background:#fff;border-left:1px solid var(--border);display:flex;flex-direction:column;}
+  .recent .rhead{padding:8px 10px;border-bottom:1px solid var(--line);font-weight:700;display:flex;align-items:center;gap:6px;}
+  .recent .rhead .sw{margin-left:auto;width:26px;height:14px;border-radius:8px;background:#d5d9e0;position:relative;cursor:pointer;flex:0 0 26px;}
+  .recent .rhead .sw::after{content:"";position:absolute;top:1px;left:1px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .15s;}
+  .recent .rhead .sw.on{background:var(--primary);}
+  .recent .rhead .sw.on::after{left:13px;}
+  .recent .filter{padding:8px 6px;border-bottom:1px solid var(--line);color:#4e5969;display:flex;gap:3px;align-items:center;}
+  .recent .filter input{width:40px;border:1px solid var(--border);border-radius:4px;padding:3px 4px;font-size:11px;}
+  .recent .filter input.month{width:22px;text-align:center;}
+  .recent .rlist{flex:1;min-height:0;overflow-y:scroll;scrollbar-gutter:stable;}
+  .recent .rlist::-webkit-scrollbar{width:10px;}
+  .recent .rlist::-webkit-scrollbar-track{background:#f2f3f5;border-left:1px solid var(--line);}
+  .recent .rlist::-webkit-scrollbar-thumb{background:#c0c4cc;border-radius:5px;border:2px solid #f2f3f5;}
+  .recent .rlist::-webkit-scrollbar-thumb:hover{background:#9aa0a6;}
+  .recent .rlist{scrollbar-width:thin;scrollbar-color:#c0c4cc #f2f3f5;}
+  .recent .ritem{display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid var(--line);color:#4e5969;font-size:11px;cursor:pointer;}
+  .recent .ritem:hover{background:#f2f7ff;}
+  .recent .ritem .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .recent .ritem .del{color:#c9cdd4;display:flex;}
+  .recent .ritem .del svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.5;}
+  .recent .ritem .del:hover{color:var(--red);}
+
+  .pwd-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:60;align-items:center;justify-content:center;}
+  .pwd-mask.show{display:flex;}
+  .pwd-box{background:#fff;border-radius:10px;padding:18px 20px 16px;width:280px;box-sizing:border-box;}
+  .pwd-box .pwd-title{font-size:15px;font-weight:700;color:#1d2129;margin-bottom:12px;text-align:center;}
+  .pwd-box input{width:100%;height:32px;border:1px solid #000;padding:0 8px;font-size:14px;outline:none;}
+  .pwd-box .pwd-err{min-height:18px;color:var(--red);font-size:12px;margin-top:6px;text-align:center;}
+  .pwd-box.confirm input,.pwd-box.confirm .pwd-err{display:none;}
+  .pwd-box .pwd-actions{display:flex;gap:10px;margin-top:10px;}
+  .pwd-box .pwd-actions .p{flex:1;height:34px;border:none;border-radius:17px;background:#2f6bff;color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
+  .pwd-box .pwd-actions .c{width:80px;height:34px;border:1px solid #d0d5dd;border-radius:17px;background:#fff;color:#4e5969;font-size:14px;cursor:pointer;}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand" id="brandName">永佛</div>
+    <div class="top-actions">
+      <button class="minibtn" id="btnSample">产前样</button>
+      <button class="minibtn" id="btnAll">全部</button>
+      <button class="minibtn" id="btnDone">出完订单</button>
+      <button type="button" class="iconbtn" id="btnTrash" title="回收站">
+        <svg viewBox="0 0 16 16"><path d="M3 4h10l-.8 9.2A1.2 1.2 0 0 1 11 14.4H5a1.2 1.2 0 0 1-1.2-1.2L3 4z"/><path d="M6 4V3h4v1M2 4h12"/></svg>
+      </button>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div class="side-tabs" id="sideTabs"></div>
+    <div class="sys-switch" id="sysSwitch">
+      <span class="sw"></span> <span id="sysName">永佛</span>
+    </div>
+  </div>
+
+  <div class="app">
+    <!-- 左侧白底导航 -->
+    <aside class="nav" id="nav">
+      <div class="pblock">
+        <div class="phead">
+          <div class="lab">生产计划</div>
+          <input type="text" id="navPlanSearch" placeholder="搜索" autocomplete="off" />
+        </div>
+        <div class="plist" id="navPlanList"></div>
+      </div>
+    </aside>
+
+    <div class="work" id="pageShip">
+    <div class="work-body">
+    <!-- 订单列表 -->
+    <section class="orders">
+      <div class="search">
+        <div class="cell">
+          <div class="lab">订单编号</div>
+          <input type="text" id="search" placeholder="搜索" autocomplete="off" />
+        </div>
+        <div class="cell">
+          <div class="lab">规格型号</div>
+          <input type="text" id="search2" placeholder="请输入..." autocomplete="off" />
+        </div>
+      </div>
+      <div class="cols">
+        <div class="col" id="oidList"></div>
+        <div class="col" id="specList"></div>
+      </div>
+    </section>
+
+    <div class="stage">
+    <div id="planPanel" class="plan-panel">
+      <div class="plan-bar">
+        <span class="ttl">生产计划</span>
+        <input class="q" id="planTitle" placeholder="请输入..." autocomplete="off" />
+        <span class="grow"></span>
+        <button type="button" class="pbtn" id="btnPlanSave">保存</button>
+        <button type="button" class="pbtn" id="btnPlanPrint">打印</button>
+        <button type="button" class="x" id="btnPlanClose">×</button>
+      </div>
+      <div class="plan-wrap">
+        <table class="plan-table">
+          <colgroup>
+            <col style="width:36px"><col style="width:36px"><col style="width:36px">
+            <col style="width:110px"><col style="width:110px"><col style="width:180px"><col style="width:160px">
+            <col style="width:64px"><col style="width:64px"><col style="width:78px"><col style="width:52px">
+            <col style="width:56px"><col style="width:64px"><col style="width:64px">
+            <col style="width:56px"><col style="width:72px"><col style="width:40px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>发货</th><th>标签</th><th>序号</th>
+              <th>订单编号</th><th>物料编码</th><th>物料名称</th><th>规格</th>
+              <th>订单数量</th><th>送货总数</th><th>交货日期</th><th>产前样</th>
+              <th>欠数</th><th>生产数量</th><th>送货数量</th>
+              <th>生产箱数</th><th>备注</th><th>删除</th>
+            </tr>
+          </thead>
+          <tbody id="planTbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="stage-body">
+    <div class="main-col">
+    <!-- 中间主区 -->
+    <main class="main">
+      <div id="content"><div class="status">加载中…</div></div>
+    </main>
+    </div>
+
+    <!-- 右侧 近期送货单 -->
+    <aside class="recent">
+      <div class="rhead">近期送货单 <span class="sw" id="recentSw"></span></div>
+      <div class="filter"><input type="text" id="recentYear" /> 年 <input type="text" class="month" id="recentMonth" /> 月</div>
+      <div class="rlist" id="recentList"></div>
+    </aside>
+    </div>
+    </div>
+    </div>
+    <div id="shipPanel" class="ship-panel">
+      <div class="ship-title" id="shipTitle">填写发货信息 <span class="chev" id="shipChev">⌃</span></div>
+      <div id="shipBody">
+        <div class="ship-meta">
+          <label>送货日期</label>
+          <input type="date" class="date" id="shipDate" />
+          <label>单据编号</label>
+          <span class="note-no" id="shipNoteNo">YF</span>
+          <span class="note-dash">-</span>
+          <input class="seq" id="shipSeq" />
+          <label>客户名</label>
+          <input class="cust" id="shipCustomer" />
+          <label>送货人</label>
+          <input class="person" id="shipPerson" value="张文文" />
+          <span class="grow"></span>
+          <button type="button" class="ship-btn" id="btnOpenNote">开发货单</button>
+          <button type="button" class="ship-btn" id="btnOpenReplenish">开补货单</button>
+        </div>
+        <div class="ship-table-wrap">
+          <table class="ship-table">
+            <thead>
+              <tr>
+                <th class="c-rm">移除</th>
+                <th class="c-tag">标签</th>
+                <th class="c-oid">订单编号</th>
+                <th class="c-code">存货编码</th>
+                <th class="c-name">存货名称</th>
+                <th class="c-spec">规格</th>
+                <th class="c-unit">单位</th>
+                <th class="c-qty">订单数量</th>
+                <th class="c-owed">欠数</th>
+                <th class="c-inp">送货数量</th>
+                <th class="c-inp">箱数</th>
+                <th class="c-spare">备品</th>
+              </tr>
+            </thead>
+            <tbody id="shipTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </div>
+    <div class="work" id="pageDetail">
+      <div class="detail-body">
+        <aside class="detail-side">
+          <div class="search">
+            <div class="cell">
+              <div class="lab">订单编号</div>
+              <input type="text" id="detailOidSearch" placeholder="搜索" autocomplete="off" />
+            </div>
+            <div class="cell">
+              <div class="lab">发货单号</div>
+              <input type="text" id="detailNoteSearch" placeholder="请输入..." autocomplete="off" />
+            </div>
+          </div>
+          <div class="dcols">
+            <div class="dcol">
+              <div class="dlist" id="detailOidList"></div>
+            </div>
+            <div class="dcol">
+              <div class="dlist" id="detailNoteList"></div>
+            </div>
+          </div>
+        </aside>
+        <section class="detail-main">
+          <div class="detail-bar">
+            <input class="ym" id="detailYear" /> <span class="lab">年</span>
+            <input class="ym mo" id="detailMonth" /> <span class="lab">月</span>
+            <span class="lab">送货日期：</span>
+            <span class="dt-wrap">
+              <span class="dt-text">年/月/日</span>
+              <input class="dt" type="date" id="detailStart" />
+              <svg class="dt-cal" viewBox="0 0 16 16"><rect x="2.2" y="3.2" width="11.6" height="10.6" rx="1.4"/><path d="M2.2 6.4h11.6M5.2 2.2v2.2M10.8 2.2v2.2"/></svg>
+            </span>
+            <span class="lab">至</span>
+            <span class="dt-wrap">
+              <span class="dt-text">年/月/日</span>
+              <input class="dt" type="date" id="detailEnd" />
+              <svg class="dt-cal" viewBox="0 0 16 16"><rect x="2.2" y="3.2" width="11.6" height="10.6" rx="1.4"/><path d="M2.2 6.4h11.6M5.2 2.2v2.2M10.8 2.2v2.2"/></svg>
+            </span>
+            <span class="grow"></span>
+            <button type="button" class="pbtn" id="btnDetailXlsx">下载表格</button>
+            <button type="button" class="pbtn" id="btnDetailPrint">导出打印</button>
+          </div>
+          <div class="detail-wrap" id="detailWrap">
+            <table class="detail-table">
+              <colgroup>
+                <col style="width:40px"><col style="width:88px"><col style="width:120px">
+                <col style="width:110px"><col style="width:100px"><col style="width:18%">
+                <col style="width:12%"><col style="width:64px"><col style="width:64px">
+                <col style="width:52px"><col style="width:64px"><col style="width:40px">
+                <col style="width:88px"><col style="width:72px">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>序号</th><th>发货日期</th><th>发货单号</th>
+                  <th>订单编号</th><th>物料编码</th><th>物料名称</th>
+                  <th>规格</th><th>订单数量</th><th>送货总数</th>
+                  <th class="owed">欠数</th><th>送货数量</th><th>单位</th>
+                  <th>交货日期</th><th class="view">送货单</th>
+                </tr>
+              </thead>
+              <tbody id="detailTbody"></tbody>
+            </table>
+            <div id="detailMoreLoader" class="more-loader"><div class="spin"></div></div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div class="work-empty" id="pageOther">该页面暂未接入</div>
+    <div id="pageEmbed">
+      <iframe class="embed-frame" data-page="upload" title="上传订单"></iframe>
+      <iframe class="embed-frame" data-page="summary" title="订单汇总"></iframe>
+    </div>
+  </div>
+
+  <div class="label-mask" id="labelMask">
+    <div class="label-box">
+      <div class="label-edit">
+        <label>生产日期</label>
+        <input type="date" id="labelDate" />
+      </div>
+      <div class="label-sheet" id="labelSheet">
+        <div class="label-h">供应商名称：04023</div>
+        <div class="label-sub">生产日期：<span id="lbDate"></span></div>
+        <table class="label-tbl">
+          <colgroup>
+            <col style="width:72px" /><col style="width:62px" /><col style="width:78px" /><col style="width:78px" /><col style="width:46px" />
+          </colgroup>
+          <tr>
+            <td class="k" style="height:64px;">品名</td>
+            <td class="name" colspan="4"><div class="lb-fill" id="lbName"></div></td>
+          </tr>
+          <tr>
+            <td class="k" style="height:42px;">规格</td>
+            <td class="spec" colspan="4"><div class="lb-fill" id="lbSpec"></div></td>
+          </tr>
+          <tr>
+            <td class="k" style="height:36px;">订单编号</td>
+            <td class="oid" id="lbOid" colspan="4"></td>
+          </tr>
+          <tr>
+            <td class="k" style="height:36px;">存货编码</td>
+            <td class="code" id="lbCode" colspan="4"></td>
+          </tr>
+          <tr>
+            <td class="k" style="height:32px;">检察员</td>
+            <td class="fix">王西敏</td>
+            <td class="k">包装数量</td>
+            <td class="pack"><div class="pack-in" id="lbPackQty" contenteditable="true"></div></td>
+            <td class="k">单位</td>
+          </tr>
+          <tr>
+            <td class="k" style="height:32px;">自主检验</td>
+            <td class="fix">合格</td>
+            <td class="k">包装总数量</td>
+            <td class="pack"><div class="pack-in" id="lbPackTotal" contenteditable="true"></div></td>
+            <td class="fix">PCS</td>
+          </tr>
+        </table>
+      </div>
+      <div class="label-actions">
+        <button type="button" class="p" id="lbPrint">打印</button>
+        <button type="button" class="c" id="lbCancel">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="note-mask" id="noteMask">
+    <div class="note-box">
+      <div class="note-edit">
+        <label>送货日期</label>
+        <input type="date" id="noteDate" />
+        <span class="msg" id="noteDateMsg"></span>
+      </div>
+      <div class="note-print">
+        <div class="note-tags" id="noteTags"></div>
+        <div class="note-sheet" id="noteSheet"></div>
+        <div class="note-dels" id="noteDels"></div>
+      </div>
+      <div class="note-actions">
+        <button type="button" class="p" id="notePrint">1号电脑</button>
+        <button type="button" class="p" id="notePrintLand">2号电脑</button>
+        <button type="button" class="c" id="noteBack">返回</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pwd-mask" id="pwdMask">
+    <div class="pwd-box">
+      <div class="pwd-title">请输入删除密码</div>
+      <input type="password" id="pwdInput" autocomplete="off" />
+      <div class="pwd-err" id="pwdErr"></div>
+      <div class="pwd-actions">
+        <button type="button" class="p" id="pwdOk">确定</button>
+        <button type="button" class="c" id="pwdCancel">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <iframe id="printFrame" title="print"></iframe>
+
+<script>
+const ENDPOINT = "https://zion-app.functorz.com/zero/X57jbwZD70V/api/graphql-v2";
+const TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJoYXN1cmFfY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsidXNlciIsImFkbWluIl0sIngtaGFzdXJhLWRlZmF1bHQtcm9sZSI6ImFkbWluIiwieC1oYXN1cmEtdXNlci1pZCI6IjEwMDk5OTk5OTk5OTk5OTkifSwiemVybyI6e30sInJvbGVzIjpbImFkbWluIiwidXNlciJdLCJaRVJPX1VTRVJfSUQiOiIxMDA5OTk5OTk5OTk5OTk5IiwiZGVmYXVsdFJvbGUiOiJhZG1pbiJ9.xlhzWJx_jUjURDUxTPGWiOS5MKeplUXT8BQ_m7eD3Rs";
+const TABLE = "hongfu_order";
+const SHIP_NOTE_TABLE = "ud_0028hongfu0029fahuobiao_2d0af0";
+const SHIP_MAT_TABLE = "ud_0028hongfu0029fahuobiao_2f06f0";
+const PLAN_TABLE = "ud_danjuguanjia_shengchanjihua_db9141";
+const PLAN_MAT_TABLE = "ud_danjuguanjia_shengchanjihua_wuliao_eaec2a";
+let WHO = 46;
+let seqManual = false;
+let seqMonthKey = "";
+let openingNote = false;
+let recentReplenish = false;
+let RECENT_NOTES = [];
+let pendingDeleteId = null;
+let deletingNote = false;
+let pwdMode = null;
+let pendingReceiptOid = null;
+let pendingReceiptTo = null;
+let updatingReceipt = false;
+
+let GROUPS_ALL = [];
+let GROUPS = [];
+let FILTERED = [];
+let ROW_BY_ID = new Map();
+let ORDER_IDS = [];
+let SPECS = [];
+let selectedOrders = [];
+let selectedSpecs = [];
+let searchText = "";
+let searchSpec = "";
+let filterMode = null;
+const PAGE = 8;
+let visibleCount = PAGE;
+let appending = false;
+let loadToken = 0;
+let dataLoading = false;
+let loadedReceipt = null;
+let shipCart = [];
+let planCart = [];
+let savingPlan = false;
+let NAV_PLANS = [];
+let navPlanKw = "";
+let editingPlanId = null;
+let shipCollapsed = false;
+let scrollTick = false;
+let DETAIL_ROWS = [];
+let detailSelectedOids = [];
+let detailSelectedNotes = [];
+let detailOidKw = "";
+let detailNoteKw = "";
+let detailLoadedKey = "";
+let detailToken = 0;
+const DETAIL_PAGE = 40;
+let detailVisibleCount = 0;
+let detailAppending = false;
+let detailScrollTick = false;
+let currentNote = null;
+let savingNoteDate = false;
+let deletingNoteLine = false;
+let noteLabelReturn = false;
+
+const PAGES = [
+  {id:"ship", name:"跟单发货"},
+  {id:"done", name:"出完订单", hideTab:true},
+  {id:"trash", name:"回收站", hideTab:true},
+  {id:"detail", name:"发货明细"},
+  {id:"bill", name:"对账单"},
+  {id:"upload", name:"上传订单", src:"index.html", side:true},
+  {id:"summary", name:"订单汇总", src:"订单查看.html", side:true}
+];
+let activePage = "ship";
+let summaryUnlocked = false;
+let billUnlocked = false;
+let trashPass = false;
+
+function pageById(id){ return PAGES.find(p=>p.id===id); }
+function tabHtml(p){
+  return `<div class="tab ${p.id===activePage?'active':''}" data-page="${p.id}">${esc(p.name)}</div>`;
+}
+function renderTabs(){
+  document.getElementById("tabs").innerHTML = PAGES.filter(p=>!p.side && !p.hideTab && !(p.id==="bill" && !billAllowed())).map(tabHtml).join("");
+  const side = document.getElementById("sideTabs");
+  if(side) side.innerHTML = PAGES.filter(p=>p.side).map(tabHtml).join("");
+}
+function isShipLike(){ return activePage==="ship" || activePage==="done" || activePage==="trash"; }
+function isTrashPage(){ return activePage==="trash"; }
+function isDetailLike(){ return activePage==="detail" || activePage==="bill"; }
+function isBillPage(){ return activePage==="bill"; }
+function billAllowed(){ return WHO===46; }
+function billView(){ return isBillPage() && billAllowed(); }
+function lockOutShangliBill(){
+  if(billAllowed()) return false;
+  billUnlocked = false;
+  if(pwdMode==="bill") closePwd();
+  if(activePage!=="bill") return false;
+  activePage = "ship";
+  return true;
+}
+function embedSrc(page){
+  return page.src + "?who=" + WHO;
+}
+function embedFrames(){
+  return Array.from(document.querySelectorAll("#pageEmbed iframe[data-page]"));
+}
+function loadEmbedFrame(frame, page){
+  if(!frame || !page || !page.src) return;
+  const next = embedSrc(page);
+  if(frame.getAttribute("data-src") === next) return;
+  frame.setAttribute("data-src", next);
+  frame.src = next;
+}
+function syncEmbed(){
+  const page = pageById(activePage);
+  embedFrames().forEach(frame=>{
+    const p = pageById(frame.getAttribute("data-page"));
+    const on = !!(page && p && p.id===page.id);
+    frame.classList.toggle("on", on);
+    if(on) loadEmbedFrame(frame, p);
+  });
+}
+function warmUploadEmbed(){
+  const p = pageById("upload");
+  const frame = document.querySelector('#pageEmbed iframe[data-page="upload"]');
+  loadEmbedFrame(frame, p);
+}
+function resetEmbeds(){
+  embedFrames().forEach(frame=>{
+    frame.removeAttribute("data-src");
+    frame.removeAttribute("src");
+    frame.classList.remove("on");
+  });
+}
+function showPage(){
+  if(lockOutShangliBill()) renderTabs();
+  const ship = document.getElementById("pageShip");
+  const detail = document.getElementById("pageDetail");
+  const other = document.getElementById("pageOther");
+  const embed = document.getElementById("pageEmbed");
+  const nav = document.getElementById("nav");
+  const actions = document.querySelector(".top-actions");
+  const shipLike = isShipLike();
+  const isDetail = isDetailLike();
+  const page = pageById(activePage);
+  const isEmbed = !!(page && page.src);
+  ship.style.display = shipLike ? "flex" : "none";
+  if(detail) detail.style.display = isDetail ? "flex" : "none";
+  if(embed) embed.style.display = isEmbed ? "flex" : "none";
+  if(nav) nav.style.display = shipLike ? "flex" : "none";
+  if(actions){
+    actions.style.visibility = shipLike ? "visible" : "hidden";
+    actions.style.pointerEvents = shipLike ? "auto" : "none";
+  }
+  other.classList.toggle("show", !shipLike && !isDetail && !isEmbed);
+  document.title = page.name;
+  if(shipLike){
+    const want = isTrashPage()?4:1;
+    if(loadedReceipt != null && loadedReceipt !== want) loadData();
+    else applyFilter();
+  }
+  if(isDetail){ syncDetailHead(); loadDetail(); }
+  if(isEmbed) syncEmbed();
+  syncBtns();
+}
+function openPage(id){
+  if(id==="summary" && !summaryUnlocked){
+    askSummaryPwd();
+    return;
+  }
+  if(id==="trash" && activePage!=="trash"){
+    if(!trashPass){
+      askTrashPwd();
+      return;
+    }
+    trashPass = false;
+  }
+  if(id==="bill"){
+    if(!billAllowed()) return;
+    if(!billUnlocked){
+      askBillPwd();
+      return;
+    }
+  }
+  if(id!==activePage){
+    selectedOrders = [];
+    selectedSpecs = [];
+  }
+  activePage = id;
+  renderTabs(); showPage();
+}
+document.querySelector(".topbar").addEventListener("click", (e)=>{
+  const tab = e.target.closest(".tab[data-page]");
+  if(!tab) return;
+  openPage(tab.getAttribute("data-page"));
+});
+
+function gqlEsc(s){
+  return String(s==null?"":s).replace(/\\/g,"\\\\").replace(/"/g,'\\"');
+}
+async function gql(query, variables){
+  const res = await fetch(ENDPOINT,{method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+TOKEN},
+    body:JSON.stringify({query,variables})});
+  const j = await res.json();
+  if(j.errors && j.errors.length) throw new Error(j.errors.map(e=>e.message).join("; "));
+  return j.data;
+}
+function pad(n){return String(n).padStart(2,"0");}
+function fmtDate(s){
+  if(!s) return "";
+  const d = new Date(s);
+  if(isNaN(d)){ const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[1]}/${m[2]}/${m[3]}`:String(s); }
+  return d.getFullYear()+"/"+pad(d.getMonth()+1)+"/"+pad(d.getDate());
+}
+function fmtDateTime(s){
+  if(!s) return "";
+  const d = new Date(s); if(isNaN(d)) return String(s);
+  return d.getFullYear()+"/"+pad(d.getMonth()+1)+"/"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes());
+}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function remarkHtml(s){ return esc(s).replace(/\n/g,"<br>"); }
+function spareRemark(n){ return "（备品）\n"+n; }
+function num(v){return v==null?"":v;}
+
+function sumShipped(lines){
+  let n = 0;
+  if(!lines) return 0;
+  for(let i=0;i<lines.length;i++){
+    const v = lines[i].ud_shuliang_42c7e4;
+    if(v!=null) n += Number(v);
+  }
+  return n;
+}
+function toneOf(min){
+  if(min<=3) return "due-red";
+  if(min<=5) return "due-orange";
+  return "due-gray";
+}
+function finalizeGroups(list){
+  for(const g of list){
+    let min = Infinity;
+    for(const r of g.rows){ if(r._days!=null && r._days<min) min = r._days; }
+    g.dueSoonest = min;
+    g.tone = toneOf(min);
+    g.rows.sort((a,b)=> a.id - b.id);
+  }
+  list.sort((a,b)=> a.dueSoonest - b.dueSoonest);
+}
+function absorbRows(map, batch, sums){
+  for(const r of batch){
+    const shipped = sums[String(r.id)] || 0;
+    const qty = r.quantity==null ? 0 : Number(r.quantity);
+    const owed = qty - shipped;
+    r.shipped = shipped;
+    r.owed = owed;
+    r._days = daysUntil(r.inventory_date);
+    r._date = fmtDate(r.inventory_date);
+    r._stock = Number(r.ud_kucunshuliang_77689a)===1;
+    r._sample = (r.samples!=null && Number(r.samples)>0) ? num(r.samples) : "";
+    ROW_BY_ID.set(String(r.id), r);
+    const key = r.order_identifier==null ? "(空)" : r.order_identifier;
+    let g = map.get(key);
+    if(!g){
+      g = {order_identifier:key, order_date:r.order_date, upload:r.created_at, _upload:fmtDateTime(r.created_at), _date:fmtDate(r.order_date), rows:[]};
+      map.set(key, g);
+    }
+    g.rows.push(r);
+    if(r.created_at > g.upload){
+      g.upload = r.created_at;
+      g._upload = fmtDateTime(r.created_at);
+    }
+    if(!g.order_date){
+      g.order_date = r.order_date;
+      g._date = fmtDate(r.order_date);
+    }
+  }
+}
+async function loadShipSums(ids){
+  const sums = {};
+  if(!ids.length) return sums;
+  const mats = [];
+  let offset = 0;
+  const page = 2000;
+  while(true){
+    const data = await gql(`query {
+      ${SHIP_MAT_TABLE}(where:{order_hongfu_order:{_in:[${ids.join(",")}]}, ud_shifoushanchu_65c743:{_is_null:true}}, limit:${page}, offset:${offset}){
+        order_hongfu_order ud_shuliang_42c7e4 ud_fahuodan_0028hongfu0029fahuobiao_6d3ef7
+      }
+    }`);
+    const rows = data[SHIP_MAT_TABLE] || [];
+    for(let i=0;i<rows.length;i++) mats.push(rows[i]);
+    if(rows.length < page) break;
+    offset += page;
+  }
+  const noteIds = [];
+  const seen = new Set();
+  for(const m of mats){
+    const nid = m.ud_fahuodan_0028hongfu0029fahuobiao_6d3ef7;
+    if(nid==null || seen.has(nid)) continue;
+    seen.add(nid);
+    noteIds.push(nid);
+  }
+  const valid = new Set();
+  for(let i=0;i<noteIds.length;i+=200){
+    const chunk = noteIds.slice(i, i+200);
+    const nd = await gql(`query {
+      ${SHIP_NOTE_TABLE}(where:{id:{_in:[${chunk.join(",")}]}, ud_querenfahuo_dc08c7:{_eq:1}}){ id }
+    }`);
+    (nd[SHIP_NOTE_TABLE]||[]).forEach(n=> valid.add(Number(n.id)));
+  }
+  for(const m of mats){
+    if(!valid.has(Number(m.ud_fahuodan_0028hongfu0029fahuobiao_6d3ef7))) continue;
+    const k = String(m.order_hongfu_order);
+    const v = m.ud_shuliang_42c7e4;
+    sums[k] = (sums[k]||0) + (v==null ? 0 : Number(v));
+  }
+  return sums;
+}
+async function loadData(){
+  const token = ++loadToken;
+  dataLoading = true;
+  const content = document.getElementById("content");
+  content.innerHTML = `<div class="status">加载中…</div>`;
+  ROW_BY_ID = new Map();
+  try{
+    const all = [];
+    let offset = 0;
+    const page = 1000;
+    while(true){
+      const data = await gql(`query {
+        ${TABLE}(where:{who:{_eq:${WHO}}, ud_querenfahuo_0b338c:{_eq:${isTrashPage()?4:1}}, ud_shifouchuwan_82b5f4:{_eq:0}}, order_by:{id:desc}, limit:${page}, offset:${offset}){
+          id order_identifier order_date created_at inventory_identifier inventory_name specification unit kehu_name
+          quantity unit_price ud_kucunshuliang_77689a inventory_date samples
+        }
+      }`);
+      if(token!==loadToken) return;
+      const batch = data[TABLE] || [];
+      for(let i=0;i<batch.length;i++) all.push(batch[i]);
+      if(batch.length < page) break;
+      offset += page;
+    }
+    const sums = await loadShipSums(all.map(r=>r.id));
+    if(token!==loadToken) return;
+    const map = new Map();
+    absorbRows(map, all, sums);
+    GROUPS_ALL = Array.from(map.values());
+    finalizeGroups(GROUPS_ALL);
+    loadedReceipt = isTrashPage() ? 4 : 1;
+    dataLoading = false;
+    applyFilter();
+  }catch(err){
+    if(token!==loadToken) return;
+    dataLoading = false;
+    content.innerHTML = `<div class="status err">加载失败：${esc(err.message)}</div>`;
+  }
+}
+
+function hasSample(r){ return r.samples!=null && Number(r.samples)>0; }
+function matchOwed(r){
+  if(activePage==="trash") return true;
+  return activePage==="done" ? r.owed<=0 : r.owed>0;
+}
+
+function applyFilter(){
+  let list = [];
+  for(const g of GROUPS_ALL){
+    let rows = g.rows.filter(matchOwed);
+    if(filterMode==="sample") rows = rows.filter(hasSample);
+    if(!rows.length) continue;
+    let min = Infinity;
+    for(const r of rows){ if(r._days!=null && r._days<min) min = r._days; }
+    list.push(Object.assign({}, g, {rows, dueSoonest:min, tone:toneOf(min)}));
+  }
+  GROUPS = list;
+  const oidSet = new Set();
+  const specSet = new Set();
+  for(const g of GROUPS){
+    if(g.order_identifier) oidSet.add(g.order_identifier);
+    for(const r of g.rows){ if(r.specification) specSet.add(r.specification); }
+  }
+  ORDER_IDS = Array.from(oidSet);
+  SPECS = Array.from(specSet);
+  selectedOrders = selectedOrders.filter(v => oidSet.has(v));
+  selectedSpecs = selectedSpecs.filter(v => specSet.has(v));
+  renderOrders();
+  renderMain();
+}
+
+function syncSys(){
+  const on = WHO===52;
+  document.getElementById("sysSwitch").classList.toggle("on", on);
+  const name = on ? "尚笠" : "永佛";
+  document.getElementById("sysName").textContent = name;
+  document.getElementById("brandName").textContent = name;
+}
+function syncBtns(){
+  document.getElementById("btnSample").classList.toggle("blue", filterMode==="sample");
+  const d = document.getElementById("btnDone");
+  if(d) d.classList.toggle("blue", activePage==="done");
+  const t = document.getElementById("btnTrash");
+  if(t) t.classList.toggle("on", activePage==="trash");
+}
+
+function toggleIn(arr, v){
+  const i = arr.indexOf(v);
+  if(i>=0) arr.splice(i,1); else arr.push(v);
+}
+
+function findOrderRow(id){
+  return ROW_BY_ID.get(String(id)) || null;
+}
+function todayISO(){
+  const d = new Date();
+  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+}
+function weekdayOf(iso){
+  const m = String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!m) return -1;
+  return new Date(Number(m[1]), Number(m[2])-1, Number(m[3])).getDay();
+}
+function isWeekend(iso){
+  const d = weekdayOf(iso);
+  return d===0 || d===6;
+}
+function nextWorkday(iso){
+  const m = String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const d = m ? new Date(Number(m[1]), Number(m[2])-1, Number(m[3])) : new Date();
+  while(d.getDay()===0 || d.getDay()===6) d.setDate(d.getDate()+1);
+  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+}
+function workdayISO(iso){
+  return isWeekend(iso) ? nextWorkday(iso) : iso;
+}
+function notePrefixOf(iso){
+  const p = WHO===52 ? "SL" : "YF";
+  return p + String(iso||"").replace(/-/g,"");
+}
+function notePrefix(){
+  return notePrefixOf(document.getElementById("shipDate").value || workdayISO(todayISO()));
+}
+function toISODate(s){
+  const m = String(s||"").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return m[1]+"-"+m[2]+"-"+m[3];
+  const d = new Date(s);
+  if(isNaN(d)) return "";
+  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+}
+function noteSeq(note){
+  if(note && note.ud_xuhao_287e34!=null && note.ud_xuhao_287e34!=="") return Number(note.ud_xuhao_287e34) || 0;
+  const m = String(note && note.ud_danjubianhao_d7a460 || "").match(/-(\d+)\s*$/);
+  return m ? Number(m[1]) : 0;
+}
+function seqFromNote(note){
+  return pad(noteSeq(note) || 1);
+}
+async function nextSeqForMonth(iso, excludeId){
+  const {start, end} = monthRange(iso);
+  const extra = excludeId ? `, id:{_neq:${Number(excludeId)}}` : "";
+  const data = await gql(`query {
+    ${SHIP_NOTE_TABLE}_aggregate(where:{
+      ud_suoshugongsi_gongsiku_9aa4ba:{_eq:${WHO}},
+      ud_querenfahuo_dc08c7:{_eq:1},
+      ud_songhuoriqi_5e32f9:{_gte:"${start}", _lt:"${end}"}
+      ${extra}
+    }){ aggregate { count } }
+  }`);
+  const count = (data[SHIP_NOTE_TABLE+"_aggregate"] && data[SHIP_NOTE_TABLE+"_aggregate"].aggregate
+    && data[SHIP_NOTE_TABLE+"_aggregate"].aggregate.count) || 0;
+  return pad(count+1);
+}
+function shipDateISO(){
+  return workdayISO(document.getElementById("shipDate").value || todayISO());
+}
+function monthKeyOf(iso){
+  return WHO + ":" + String(iso).slice(0,7);
+}
+function monthRange(iso){
+  const m = String(iso).match(/^(\d{4})-(\d{2})/);
+  const y = m ? Number(m[1]) : new Date().getFullYear();
+  const mo = m ? Number(m[2]) : (new Date().getMonth()+1);
+  const start = y+"-"+pad(mo)+"-01";
+  const ny = mo===12 ? y+1 : y;
+  const nm = mo===12 ? 1 : mo+1;
+  return {start, end: ny+"-"+pad(nm)+"-01"};
+}
+function syncNoteNo(){
+  document.getElementById("shipNoteNo").textContent = notePrefix();
+}
+async function refreshSeq(force){
+  const iso = shipDateISO();
+  const key = monthKeyOf(iso);
+  if(!force && seqManual && key===seqMonthKey) return;
+  const {start, end} = monthRange(iso);
+  try{
+    const data = await gql(`query {
+      ${SHIP_NOTE_TABLE}_aggregate(where:{
+        ud_suoshugongsi_gongsiku_9aa4ba:{_eq:${WHO}},
+        ud_querenfahuo_dc08c7:{_eq:1},
+        ud_songhuoriqi_5e32f9:{_gte:"${start}", _lt:"${end}"}
+      }){ aggregate { count } }
+    }`);
+    if(!force && seqManual) return;
+    const count = (data[SHIP_NOTE_TABLE+"_aggregate"] && data[SHIP_NOTE_TABLE+"_aggregate"].aggregate
+      && data[SHIP_NOTE_TABLE+"_aggregate"].aggregate.count) || 0;
+    document.getElementById("shipSeq").value = pad(count+1);
+    seqManual = false;
+    seqMonthKey = key;
+  }catch(err){
+    if(!document.getElementById("shipSeq").value) document.getElementById("shipSeq").value = "01";
+  }
+}
+function syncShipChecks(id, on){
+  document.querySelectorAll(`.ship-ck[data-id="${id}"]`).forEach(ck=>{ ck.checked = !!on; });
+}
+function toggleShip(id, on){
+  if(on){
+    const row = findOrderRow(id);
+    if(!row){ syncShipChecks(id, false); return; }
+    addShipRow(row);
+  }else{
+    removeShipRow(id);
+  }
+}
+function addShipRow(row){
+  if(!shipCart.some(x=> String(x.id)===String(row.id))){
+    shipCart.push({
+      id: row.id,
+      order_identifier: row.order_identifier,
+      inventory_identifier: row.inventory_identifier,
+      inventory_name: row.inventory_name,
+      specification: row.specification,
+      unit: row.unit,
+      quantity: row.quantity,
+      shipped: row.shipped,
+      owed: row.owed,
+      unit_price: row.unit_price,
+      kehu_name: row.kehu_name,
+      shipQty: "",
+      cases: "",
+      spare: ""
+    });
+    const cust = document.getElementById("shipCustomer");
+    if(cust && !cust.value && row.kehu_name) cust.value = row.kehu_name;
+  }
+  syncShipChecks(row.id, true);
+  renderShipPanel();
+}
+function removeShipRow(id){
+  shipCart = shipCart.filter(x=> String(x.id)!==String(id));
+  syncShipChecks(id, false);
+  renderShipPanel();
+}
+function addPlanRow(row){
+  if(planCart.some(x=> String(x.id)===String(row.id))) return;
+  planCart.push({
+    id: row.id,
+    order_identifier: row.order_identifier,
+    inventory_identifier: row.inventory_identifier,
+    inventory_name: row.inventory_name,
+    specification: row.specification,
+    quantity: row.quantity,
+    shipped: row.shipped,
+    owed: row.owed,
+    _date: row._date,
+    _sample: row._sample,
+    produceQty: "",
+    shipQty: "",
+    produceCases: "",
+    remark: ""
+  });
+  renderPlanPanel();
+}
+function removePlanRow(id){
+  planCart = planCart.filter(x=> String(x.id)!==String(id));
+  document.querySelectorAll(`.plan-ck[data-id="${id}"]`).forEach(ck=>{ ck.checked = false; });
+  renderPlanPanel();
+}
+function clearPlan(){
+  planCart = [];
+  editingPlanId = null;
+  document.querySelectorAll(".plan-ck").forEach(ck=>{ ck.checked = false; });
+  renderPlanPanel();
+  renderNavPlans();
+}
+function owedText(v){
+  if(v==null || v==="") return "";
+  const n = Number(v);
+  if(isNaN(n)) return String(v);
+  if(n>0) return `<span class="lab">少出</span>${n}`;
+  if(n<0) return `<span class="lab">多出</span>${Math.abs(n)}`;
+  return String(n);
+}
+function planTitleDefault(){
+  const d = new Date();
+  return pad(d.getMonth()+1)+pad(d.getDate());
+}
+function syncPlanTitle(force){
+  const el = document.getElementById("planTitle");
+  if(!el) return;
+  if(force || !String(el.value||"").trim()) el.value = planTitleDefault();
+}
+function planVisible(){
+  return planCart;
+}
+function renderPlanPanel(){
+  const panel = document.getElementById("planPanel");
+  panel.classList.toggle("show", planCart.length>0);
+  if(planCart.length) syncPlanTitle();
+  const tb = document.getElementById("planTbody");
+  const list = planVisible();
+  tb.innerHTML = list.map((r,i)=>`
+    <tr data-id="${r.id}">
+      <td><input type="checkbox" class="ship-ck" data-id="${r.id}" ${shipCart.some(x=>String(x.id)===String(r.id))?'checked':''} /></td>
+      <td class="tagcell"><button type="button" class="tag-btn" data-tag="${r.id}"><svg class="tag-ic" viewBox="0 0 16 16"><path d="M2.5 2.5h6.2L14 8.8 8.8 14 2.5 7.7V2.5zm3.1 4.1a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/></svg></button></td>
+      <td>${i+1}</td>
+      <td>${esc(r.order_identifier)}</td>
+      <td>${esc(r.inventory_identifier)}</td>
+      <td class="name">${esc(r.inventory_name)}</td>
+      <td class="spec">${esc(r.specification)}</td>
+      <td>${num(r.quantity)}</td>
+      <td>${num(r.shipped)}</td>
+      <td>${esc(r._date)}</td>
+      <td>${r._sample||""}</td>
+      <td class="owed">${owedText(r.owed)}</td>
+      <td><input class="cell" data-f="produceQty" value="${esc(r.produceQty)}" /></td>
+      <td><input class="cell" data-f="shipQty" value="${esc(r.shipQty)}" /></td>
+      <td><input class="cell" data-f="produceCases" value="${esc(r.produceCases)}" /></td>
+      <td><input class="cell" data-f="remark" value="${esc(r.remark)}" /></td>
+      <td><button type="button" class="rm" data-plan-rm="${r.id}">✕</button></td>
+    </tr>`).join("");
+}
+function fitLabelText(el, maxPx){
+  if(!el) return;
+  el.style.fontSize = maxPx + "px";
+  let size = maxPx;
+  while(size > 9 && el.scrollHeight > el.clientHeight + 1){
+    size -= 1;
+    el.style.fontSize = size + "px";
+  }
+}
+function fitPackText(el){
+  if(!el) return;
+  el.style.fontSize = "14px";
+  let size = 14;
+  while(size > 8 && el.scrollHeight > el.clientHeight + 1){
+    size -= 1;
+    el.style.fontSize = size + "px";
+  }
+}
+function bindPackFit(el){
+  if(!el) return;
+  el.addEventListener("input", ()=> fitPackText(el));
+  el.addEventListener("keydown", (e)=>{ if(e.key==="Enter") e.preventDefault(); });
+  el.addEventListener("paste", (e)=>{
+    e.preventDefault();
+    const t = ((e.clipboardData || window.clipboardData).getData("text") || "").replace(/\s+/g," ").trim();
+    document.execCommand("insertText", false, t);
+  });
+}
+bindPackFit(document.getElementById("lbPackQty"));
+bindPackFit(document.getElementById("lbPackTotal"));
+function closeLabel(){
+  document.getElementById("labelMask").classList.remove("show");
+  if(noteLabelReturn && currentNote){
+    document.getElementById("noteMask").classList.add("show");
+  }
+  noteLabelReturn = false;
+}
+function openLabel(row, fromNote){
+  if(!row) return;
+  noteLabelReturn = !!fromNote;
+  if(fromNote) document.getElementById("noteMask").classList.remove("show");
+  document.querySelector(".label-h").textContent = WHO===52 ? "供应商名称：02063" : "供应商名称：04023";
+  const iso = workdayISO(todayISO());
+  const dateEl = document.getElementById("labelDate");
+  dateEl.value = iso;
+  dateEl.setAttribute("data-last", iso);
+  document.getElementById("lbDate").textContent = fmtDate(iso);
+  const nameEl = document.getElementById("lbName");
+  const specEl = document.getElementById("lbSpec");
+  nameEl.textContent = row.inventory_name || "";
+  specEl.textContent = row.specification || "";
+  document.getElementById("lbOid").textContent = row.order_identifier || "";
+  document.getElementById("lbCode").textContent = row.inventory_identifier || "";
+  ["lbPackQty","lbPackTotal"].forEach(id=>{
+    const el = document.getElementById(id);
+    el.textContent = "";
+    el.style.fontSize = "14px";
+  });
+  document.getElementById("labelMask").classList.add("show");
+  requestAnimationFrame(()=>{
+    fitLabelText(nameEl, 14);
+    fitLabelText(specEl, 16);
+  });
+}
+function renderShipPanel(){
+  const panel = document.getElementById("shipPanel");
+  panel.classList.toggle("show", shipCart.length>0);
+  panel.classList.toggle("collapsed", shipCollapsed);
+  document.getElementById("shipChev").textContent = shipCollapsed ? "⌄" : "⌃";
+  const tb = document.getElementById("shipTbody");
+  tb.innerHTML = shipCart.map(r=>`
+    <tr data-id="${r.id}">
+      <td><button type="button" class="rm-btn" data-rm="${r.id}">✕</button></td>
+      <td class="tagcell"><button type="button" class="tag-btn" data-tag="${r.id}"><svg class="tag-ic" viewBox="0 0 16 16"><path d="M2.5 2.5h6.2L14 8.8 8.8 14 2.5 7.7V2.5zm3.1 4.1a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/></svg></button></td>
+      <td>${esc(r.order_identifier)}</td>
+      <td>${esc(r.inventory_identifier)}</td>
+      <td class="name">${esc(r.inventory_name)}</td>
+      <td class="spec">${esc(r.specification)}</td>
+      <td class="num">${esc(r.unit)}</td>
+      <td class="qty">${num(r.quantity)}</td>
+      <td class="owed">${num(r.owed)}</td>
+      <td class="inp"><input class="cell" data-f="shipQty" value="${esc(r.shipQty)}" /></td>
+      <td class="inp"><input class="cell" data-f="cases" value="${esc(r.cases)}" /></td>
+      <td class="inp"><input class="cell" data-f="spare" value="${esc(r.spare)}" /></td>
+    </tr>`).join("");
+}
+
+function visibleOids(){
+  const kw = searchText.trim().toLowerCase();
+  return ORDER_IDS.filter(v=> !kw || v.toLowerCase().includes(kw));
+}
+function visibleSpecs(){
+  const sk = searchSpec.trim().toLowerCase();
+  return SPECS.filter(v=> !sk || v.toLowerCase().includes(sk));
+}
+function renderOrders(){
+  const oids = visibleOids();
+  const specs = visibleSpecs();
+  const oidEl = document.getElementById("oidList");
+  const specEl = document.getElementById("specList");
+  oidEl.innerHTML = oids.map((v,i)=>`<div class="item ${selectedOrders.includes(v)?'active':''}" data-i="${i}">${esc(v)}</div>`).join("") || `<div class="item">无匹配</div>`;
+  specEl.innerHTML = specs.map((v,i)=>`<div class="item ${selectedSpecs.includes(v)?'active':''}" data-i="${i}">${esc(v)}</div>`).join("") || `<div class="item">无匹配</div>`;
+}
+
+function parseDate(s){
+  if(!s) return null;
+  const d = new Date(s);
+  if(!isNaN(d)) return d;
+  const m = String(s).match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+  if(!m) return null;
+  return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+}
+function daysUntil(s){
+  const d = parseDate(s);
+  if(!d) return null;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const due = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((due - today) / 86400000);
+}
+function blockHtml(g, idx){
+  const rowsHtml = g.rows.map((r,i)=>`
+    <tr class="${r._stock?'stock':''}">
+      <td><input type="checkbox" class="ship-ck" data-id="${r.id}" ${shipCart.some(x=>String(x.id)===String(r.id))?'checked':''} /></td>
+      <td class="tagcell"><button type="button" class="tag-btn" data-tag="${r.id}"><svg class="tag-ic" viewBox="0 0 16 16"><path d="M2.5 2.5h6.2L14 8.8 8.8 14 2.5 7.7V2.5zm3.1 4.1a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/></svg></button></td>
+      <td>${i+1}</td>
+      <td>${esc(r.inventory_identifier)}</td>
+      <td class="name">${esc(r.inventory_name)}</td>
+      <td class="spec">${esc(r.specification)}</td>
+      <td>${num(r.quantity)}</td>
+      <td>${num(r.shipped)}</td>
+      <td class="qs">${num(r.owed)}</td>
+      <td>${esc(r._date)}</td>
+      <td class="samples">${r._sample}</td>
+      <td><input type="checkbox" class="plan-ck" data-id="${r.id}" ${planCart.some(x=>String(x.id)===String(r.id))?'checked':''} /></td>
+    </tr>`).join("");
+  return `
+  <div class="block ${g.tone||"due-gray"}" data-oid="${esc(g.order_identifier)}">
+    <div class="bhead">
+      <span class="seq">${idx||""}</span>
+      <span class="lab">订单日期:${esc(g._date)}&nbsp;&nbsp;订单单号:<b>${esc(g.order_identifier)}</b></span>
+      <span class="up">${esc(g._upload)}
+        <button type="button" class="receipt-btn${isTrashPage()?" restore":""}" data-receipt="${esc(g.order_identifier)}" title="${isTrashPage()?"恢复确认收货":"作废确认收货"}">
+          ${isTrashPage()
+            ? `<svg viewBox="0 0 16 16"><path d="M3.2 8.2l3.2 3.2 6.4-7"/></svg>`
+            : `<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>`}
+        </button>
+      </span>
+    </div>
+    <table>
+      <colgroup>
+        <col style="width:4%"><col style="width:4%"><col style="width:4%"><col style="width:12%">
+        <col style="width:22%"><col style="width:19%"><col style="width:7%"><col style="width:7%">
+        <col style="width:5%"><col style="width:8%"><col style="width:4%"><col style="width:4%">
+      </colgroup>
+      <thead><tr>
+        <th>发货</th><th class="tag">标签</th><th>序号</th><th>物料编码</th><th>物料名称</th><th>规格</th>
+        <th>订单数量</th><th>送货总数</th><th class="qs">欠数</th><th>交货日期</th><th class="samples">产前样</th><th class="print">计划</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  </div>`;
+}
+
+function updateFiltered(){
+  let list = GROUPS;
+  if(selectedOrders.length){
+    const set = new Set(selectedOrders);
+    list = list.filter(g=> set.has(g.order_identifier));
+  }
+  if(selectedSpecs.length){
+    const set = new Set(selectedSpecs);
+    const next = [];
+    for(const g of list){
+      const rows = g.rows.filter(r=> set.has(r.specification));
+      if(rows.length) next.push(Object.assign({}, g, {rows}));
+    }
+    list = next;
+  }
+  FILTERED = list;
+}
+function filteredGroups(){ return FILTERED; }
+
+function renderMain(){
+  updateFiltered();
+  appending = false;
+  const content = document.getElementById("content");
+  const list = FILTERED;
+  if(list.length===0){
+    content.innerHTML = dataLoading ? `<div class="status">加载中…</div>` : `<div class="status">没有数据</div>`;
+    return;
+  }
+  visibleCount = Math.min(PAGE, list.length);
+  content.innerHTML = list.slice(0, visibleCount).map((g,i)=>blockHtml(g, i+1)).join("")
+    + `<div id="moreLoader" class="more-loader"><div class="spin"></div></div>`;
+  fillUntilScroll();
+}
+function fillUntilScroll(){
+  const el = document.getElementById("content");
+  if(!el) return;
+  let guard = 0;
+  while(visibleCount < FILTERED.length && el.scrollHeight <= el.clientHeight + 40 && guard < 30){
+    const before = visibleCount;
+    paintMore();
+    if(visibleCount===before) break;
+    guard++;
+  }
+}
+function showLoader(on){
+  const ld = document.getElementById("moreLoader");
+  if(ld) ld.classList.toggle("show", !!on);
+}
+function paintMore(){
+  const list = FILTERED;
+  if(visibleCount >= list.length) return false;
+  const start = visibleCount, end = Math.min(start + PAGE, list.length);
+  const loader = document.getElementById("moreLoader");
+  const html = list.slice(start, end).map((g,i)=>blockHtml(g, start+i+1)).join("");
+  if(loader) loader.insertAdjacentHTML("beforebegin", html);
+  else document.getElementById("content").insertAdjacentHTML("beforeend", html);
+  visibleCount = end;
+  return true;
+}
+function appendMore(){
+  if(appending || visibleCount >= FILTERED.length) return;
+  appending = true;
+  showLoader(true);
+  setTimeout(()=>{
+    paintMore();
+    appending = false;
+    showLoader(false);
+    const el = document.getElementById("content");
+    if(el && visibleCount < FILTERED.length && el.scrollTop + el.clientHeight >= el.scrollHeight - 80){
+      appendMore();
+    }
+  }, 220);
+}
+
+function recentMonthISO(){
+  const y = Number(document.getElementById("recentYear").value) || new Date().getFullYear();
+  const mo = Number(document.getElementById("recentMonth").value) || (new Date().getMonth()+1);
+  return y+"-"+pad(mo)+"-01";
+}
+function syncRecentSw(){
+  document.getElementById("recentSw").classList.toggle("on", recentReplenish);
+}
+async function loadRecentNotes(){
+  const el = document.getElementById("recentList");
+  el.innerHTML = `<div class="status">加载中…</div>`;
+  const {start, end} = monthRange(recentMonthISO());
+  const extra = recentReplenish ? ", ud_buhuo_17a177:{_eq:true}" : "";
+  try{
+    const data = await gql(`query {
+      ${SHIP_NOTE_TABLE}(where:{
+        ud_suoshugongsi_gongsiku_9aa4ba:{_eq:${WHO}},
+        ud_querenfahuo_dc08c7:{_eq:1},
+        ud_songhuoriqi_5e32f9:{_gte:"${start}", _lt:"${end}"}
+        ${extra}
+      }, order_by:{ud_xuhao_287e34:desc, id:desc}, limit:200){
+        id ud_danjubianhao_d7a460 ud_xuhao_287e34
+      }
+    }`);
+    RECENT_NOTES = data[SHIP_NOTE_TABLE] || [];
+    RECENT_NOTES.sort((a,b)=>{
+      const sa = noteSeq(a), sb = noteSeq(b);
+      if(sb!==sa) return sb - sa;
+      return Number(b.id) - Number(a.id);
+    });
+    renderRecent();
+  }catch(err){
+    el.innerHTML = `<div class="status err">加载失败</div>`;
+  }
+}
+function renderRecent(){
+  const el = document.getElementById("recentList");
+  el.innerHTML = RECENT_NOTES.map(n=>{
+    const tag = n.ud_danjubianhao_d7a460 || n.id;
+    return `<div class="ritem" data-id="${n.id}"><span class="t">${esc(tag)}</span><span class="del" data-del="${n.id}"><svg viewBox="0 0 16 16"><path d="M3 4h10l-.8 9.2A1.2 1.2 0 0 1 11 14.4H5a1.2 1.2 0 0 1-1.2-1.2L3 4z"/><path d="M6 4V3h4v1M2 4h12"/></svg></span></div>`;
+  }).join("") || `<div class="status">无</div>`;
+}
+function closePwd(){
+  document.getElementById("pwdMask").classList.remove("show");
+  pendingDeleteId = null;
+  deletingNote = false;
+  pendingReceiptOid = null;
+  pendingReceiptTo = null;
+  updatingReceipt = false;
+  pwdMode = null;
+  document.getElementById("pwdInput").value = "";
+  document.getElementById("pwdErr").textContent = "";
+  document.querySelector(".pwd-title").textContent = "请输入删除密码";
+  document.querySelector(".pwd-box").classList.remove("confirm");
+}
+function openPwd(title, confirmOnly){
+  document.querySelector(".pwd-title").textContent = title;
+  document.getElementById("pwdInput").value = "";
+  document.getElementById("pwdErr").textContent = "";
+  document.querySelector(".pwd-box").classList.toggle("confirm", !!confirmOnly);
+  document.getElementById("pwdMask").classList.add("show");
+  setTimeout(()=>{
+    if(confirmOnly) document.getElementById("pwdOk").focus();
+    else document.getElementById("pwdInput").focus();
+  }, 0);
+}
+function askSummaryPwd(){
+  pwdMode = "summary";
+  openPwd("请输入访问密码");
+}
+function askBillPwd(){
+  if(!billAllowed()) return;
+  pwdMode = "bill";
+  openPwd("请输入访问密码");
+}
+function askDeleteNote(id){
+  pendingDeleteId = id;
+  pwdMode = "delete";
+  openPwd("请输入删除密码");
+}
+function askTrashPwd(){
+  pwdMode = "trash";
+  openPwd("请输入访问密码");
+}
+function askReceiptPwd(oid, to){
+  pendingReceiptOid = oid;
+  pendingReceiptTo = to;
+  pwdMode = "receipt";
+  if(to===1) openPwd("确认恢复该订单？", true);
+  else openPwd("请输入作废密码");
+}
+function oidWhere(oid){
+  if(oid==null || oid==="" || oid==="(空)") return "order_identifier:{_is_null:true}";
+  return `order_identifier:{_eq:"${gqlEsc(oid)}"}`;
+}
+async function confirmReceipt(){
+  if(updatingReceipt) return;
+  const to = Number(pendingReceiptTo);
+  if(to===4){
+    const pwd = String(document.getElementById("pwdInput").value || "").trim();
+    if(pwd !== "612"){
+      document.getElementById("pwdErr").textContent = "密码错误";
+      document.getElementById("pwdInput").focus();
+      return;
+    }
+  }
+  const oid = pendingReceiptOid;
+  if(oid==null || (to!==1 && to!==4)) return;
+  updatingReceipt = true;
+  document.getElementById("pwdErr").textContent = "";
+  const from = to===4 ? 1 : 4;
+  try{
+    await gql(`mutation {
+      update_${TABLE}(where:{who:{_eq:${WHO}}, ${oidWhere(oid)}, ud_querenfahuo_0b338c:{_eq:${from}}}, _set:{ud_querenfahuo_0b338c:${to}}){ affected_rows }
+    }`);
+    closePwd();
+    await loadData();
+  }catch(err){
+    updatingReceipt = false;
+    document.getElementById("pwdErr").textContent = (to===4?"作废失败：":"恢复失败：")+err.message;
+  }
+}
+function confirmPwd(){
+  if(pwdMode==="receipt"){
+    confirmReceipt();
+    return;
+  }
+  if(pwdMode==="trash"){
+    const pwd = String(document.getElementById("pwdInput").value || "").trim();
+    if(pwd !== "612"){
+      document.getElementById("pwdErr").textContent = "密码错误";
+      document.getElementById("pwdInput").focus();
+      return;
+    }
+    trashPass = true;
+    closePwd();
+    openPage("trash");
+    return;
+  }
+  if(pwdMode==="summary"){
+    const pwd = String(document.getElementById("pwdInput").value || "").trim();
+    if(pwd !== "jR33"){
+      document.getElementById("pwdErr").textContent = "密码错误";
+      document.getElementById("pwdInput").focus();
+      return;
+    }
+    summaryUnlocked = true;
+    closePwd();
+    openPage("summary");
+    return;
+  }
+  if(pwdMode==="bill"){
+    if(!billAllowed()){ closePwd(); return; }
+    const pwd = String(document.getElementById("pwdInput").value || "").trim();
+    if(pwd !== "4515691"){
+      document.getElementById("pwdErr").textContent = "密码错误";
+      document.getElementById("pwdInput").focus();
+      return;
+    }
+    billUnlocked = true;
+    closePwd();
+    openPage("bill");
+    return;
+  }
+  confirmDeleteNote();
+}
+async function confirmDeleteNote(){
+  if(deletingNote) return;
+  const pwd = String(document.getElementById("pwdInput").value || "").trim();
+  if(pwd !== "45"){
+    document.getElementById("pwdErr").textContent = "密码错误";
+    document.getElementById("pwdInput").focus();
+    return;
+  }
+  const id = Number(pendingDeleteId);
+  if(!id) return;
+  deletingNote = true;
+  document.getElementById("pwdErr").textContent = "";
+  try{
+    await gql(`mutation {
+      update_${SHIP_NOTE_TABLE}(where:{id:{_eq:${id}}}, _set:{ud_querenfahuo_dc08c7:2}){ affected_rows }
+    }`);
+    closePwd();
+    await loadRecentNotes();
+    refreshSeq(true);
+  }catch(err){
+    deletingNote = false;
+    document.getElementById("pwdErr").textContent = "删除失败："+err.message;
+  }
+}
+function fmtSlashDate(s){
+  if(!s) return "";
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return m[1]+"/"+m[2]+"/"+m[3];
+  return fmtDate(s);
+}
+function closeNote(){
+  document.getElementById("noteMask").classList.remove("show");
+  currentNote = null;
+  savingNoteDate = false;
+}
+function paintNote(){
+  const note = currentNote;
+  if(!note) return;
+  const mats = note.mats || [];
+  const sl = WHO===52;
+  const company = sl ? "深圳市尚笠五金制品有限公司" : "深圳市永佛科技有限公司";
+  const addr = sl
+    ? "地址：深圳市龙岗区坪地镇中心村嘉喜路6号"
+    : "地址：深圳市龙岗区坪地镇中心村嘉喜路63号　电话：0755-84067900　传真：0755-84067800";
+  const recv = (note.ud_kehuming_5a737f || "") + "1号仓库";
+  const no = note.ud_danjubianhao_d7a460 || "";
+  const person = note.ud_lianxiren_f1fd6b || "张文文";
+  const date = fmtSlashDate(note.ud_songhuoriqi_5e32f9);
+  const emptyRows = Math.max(0, 6 - mats.length);
+  const isReplenishNote = !!note.ud_buhuo_17a177;
+  const rows = mats.map(m=>{
+    let remark = m.ud_beizhu_c04340 || "";
+    if(isReplenishNote && !remark) remark = "补货";
+    return `
+      <tr>
+        <td class="oid">${esc(m.ud_dingdanbianma_a7f61f)}</td>
+        <td class="code">${esc(m.ud_wuliaobianma_1e21cf)}</td>
+        <td class="name">${esc(m.ud_wuliaomingcheng_e7d976)}</td>
+        <td class="spec">${esc(m.ud_guige_461d8f)}</td>
+        <td class="qty">${num(m.ud_shuliang_42c7e4)}</td>
+        <td class="unit">${esc(m.ud_danwei_9fcb37)}</td>
+        <td class="qty">${num(m.ud_xiangshu_879876)}</td>
+        <td class="qty">${num(m.ud_dingdanshuliang_d5fd1d)}</td>
+        <td class="qty">${num(m.ud_songhuozongshu_b28427)}</td>
+        <td class="qty">${num(m.ud_qianshu_586cf3)}</td>
+        <td class="remark">${remarkHtml(remark)}</td>
+      </tr>`;
+  }).join("") + Array.from({length:emptyRows}, ()=>`
+      <tr>
+        <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+      </tr>`).join("");
+  document.getElementById("noteSheet").innerHTML = `
+      <div class="dn-co">${esc(company)}</div>
+      <div class="dn-sub">送货单</div>
+      <div class="dn-addr">${esc(addr)}</div>
+      <div class="dn-meta"><span>收货单位：${esc(recv)}</span><span>送货单号：${esc(no)}</span></div>
+      <table class="dn-tbl">
+        <colgroup>
+          <col style="width:83px"><col style="width:82px"><col style="width:193px"><col style="width:119px">
+          <col style="width:54px"><col style="width:20px"><col style="width:32px"><col style="width:48px">
+          <col style="width:48px"><col style="width:32px"><col style="width:48px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>采购单号</th><th>存货编码</th><th>货物名称</th><th>规格型号</th>
+            <th>送货数量</th><th class="unit">单位</th><th>箱数</th><th>订单数</th>
+            <th class="wrap2">出货<br>总数</th><th>欠数</th><th>备注</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr class="dn-foot">
+            <td colspan="2">送货人：${esc(person)}</td>
+            <td>送货日期：${esc(date)}</td>
+            <td colspan="3">收货人：</td>
+            <td colspan="5">收货日期：</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="dn-tip">温馨提示：如果您发现物料单据存在数量不符的情况、请在48小时内及时告知；超时未提出的、将默认单据数量准确无误。</div>`;
+  const dateEl = document.getElementById("noteDate");
+  if(dateEl){
+    const iso = toISODate(note.ud_songhuoriqi_5e32f9);
+    dateEl.value = iso;
+    dateEl.setAttribute("data-last", iso || workdayISO(todayISO()));
+  }
+  layoutNoteTags();
+  fitNoteTip();
+}
+function fitNoteTip(root){
+  const sheet = root || document.getElementById("noteSheet");
+  if(!sheet) return;
+  const tip = sheet.querySelector(".dn-tip");
+  const tbl = sheet.querySelector("table.dn-tbl");
+  if(!tip || !tbl) return;
+  const w = tbl.getBoundingClientRect().width;
+  if(!w) return;
+  tip.style.paddingLeft = "0px";
+  tip.style.paddingRight = "0px";
+  tip.style.boxSizing = "border-box";
+  tip.style.width = w + "px";
+  tip.style.whiteSpace = "nowrap";
+  tip.style.letterSpacing = "0px";
+  tip.style.fontSize = "12px";
+  const natural = tip.scrollWidth;
+  if(natural <= 0) return;
+  const size = Math.max(12, 12 * (w / natural));
+  tip.style.fontSize = size + "px";
+  const after = tip.scrollWidth;
+  const n = Math.max(1, Array.from(tip.textContent || "").length - 1);
+  if(after > 0 && after < w) tip.style.letterSpacing = ((w - after) / n) + "px";
+}
+function layoutNoteTags(){
+  const wrap = document.getElementById("noteTags");
+  const dels = document.getElementById("noteDels");
+  const sheet = document.getElementById("noteSheet");
+  if(!wrap || !sheet) return;
+  const mats = (currentNote && currentNote.mats) || [];
+  const rows = sheet.querySelectorAll("table.dn-tbl tbody tr:not(.dn-foot)");
+  const sheetRect = sheet.getBoundingClientRect();
+  wrap.innerHTML = mats.map((m,i)=>{
+    const tr = rows[i];
+    if(!tr) return "";
+    const r = tr.getBoundingClientRect();
+    const top = r.top - sheetRect.top + (r.height - 20) / 2;
+    return `<button type="button" class="tag-btn note-tag" style="top:${top}px" data-note-tag="${i}">
+      <svg class="tag-ic" viewBox="0 0 16 16"><path d="M2.5 2.5h6.2L14 8.8 8.8 14 2.5 7.7V2.5zm3.1 4.1a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/></svg>
+    </button>`;
+  }).join("");
+  if(dels){
+    dels.innerHTML = mats.map((m,i)=>{
+      const tr = rows[i];
+      if(!tr || m.id==null) return "";
+      const r = tr.getBoundingClientRect();
+      const top = r.top - sheetRect.top + (r.height - 24) / 2;
+      return `<button type="button" class="note-del" style="top:${top}px" data-note-del="${m.id}" title="删除此行">
+        <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>
+      </button>`;
+    }).join("");
+  }
+}
+async function deleteNoteLine(matId){
+  if(!currentNote || deletingNoteLine) return;
+  const id = Number(matId);
+  if(!id) return;
+  if(!confirm("确定删除该行发货记录？")) return;
+  deletingNoteLine = true;
+  try{
+    await gql(`mutation {
+      update_${SHIP_MAT_TABLE}(where:{id:{_eq:${id}}}, _set:{ud_shifoushanchu_65c743:2}){ affected_rows }
+    }`);
+    currentNote.mats = (currentNote.mats || []).filter(m => Number(m.id) !== id);
+    if(!currentNote.mats.length){
+      await gql(`mutation {
+        update_${SHIP_NOTE_TABLE}(where:{id:{_eq:${Number(currentNote.id)}}}, _set:{ud_querenfahuo_dc08c7:2}){ affected_rows }
+      }`);
+      closeNote();
+    }else{
+      paintNote();
+    }
+    await loadData();
+    await loadRecentNotes();
+    if(isDetailLike()){ detailLoadedKey = ""; loadDetail(true); }
+  }catch(err){
+    alert("删除失败："+err.message);
+  }finally{
+    deletingNoteLine = false;
+  }
+}
+async function openDeliveryNote(id){
+  try{
+    const data = await gql(`query {
+      note: ${SHIP_NOTE_TABLE}(where:{id:{_eq:${Number(id)}}}){
+        id ud_danjubianhao_d7a460 ud_kehuming_5a737f ud_lianxiren_f1fd6b ud_songhuoriqi_5e32f9 ud_buhuo_17a177 ud_xuhao_287e34
+      }
+      mats: ${SHIP_MAT_TABLE}(where:{ud_fahuodan_0028hongfu0029fahuobiao_6d3ef7:{_eq:${Number(id)}}, ud_shifoushanchu_65c743:{_is_null:true}}, order_by:{id:asc}){
+        id ud_dingdanbianma_a7f61f ud_wuliaobianma_1e21cf ud_wuliaomingcheng_e7d976 ud_guige_461d8f
+        ud_shuliang_42c7e4 ud_danwei_9fcb37 ud_xiangshu_879876 ud_dingdanshuliang_d5fd1d
+        ud_songhuozongshu_b28427 ud_qianshu_586cf3 ud_beizhu_c04340
+      }
+    }`);
+    const note = (data.note || [])[0];
+    if(!note){ alert("找不到送货单"); return; }
+    currentNote = Object.assign({}, note, {mats: data.mats || []});
+    document.getElementById("noteDateMsg").textContent = "";
+    document.getElementById("noteDateMsg").classList.remove("err");
+    paintNote();
+    document.getElementById("noteMask").classList.add("show");
+    requestAnimationFrame(layoutNoteTags);
+  }catch(err){
+    alert("打开送货单失败："+err.message);
+  }
+}
+async function saveNoteDate(){
+  if(!currentNote || savingNoteDate) return;
+  const dateEl = document.getElementById("noteDate");
+  const msg = document.getElementById("noteDateMsg");
+  const date = dateEl && dateEl.value;
+  const oldDate = toISODate(currentNote.ud_songhuoriqi_5e32f9);
+  if(!date || date===oldDate) return;
+  if(isWeekend(date)){
+    dateEl.value = oldDate || workdayISO(todayISO());
+    dateEl.setAttribute("data-last", dateEl.value);
+    msg.textContent = "周末不可发货，请选择周一至周五";
+    msg.classList.add("err");
+    return;
+  }
+  dateEl.setAttribute("data-last", date);
+  savingNoteDate = true;
+  const seqKeep = seqFromNote(currentNote);
+  const previewNo = notePrefixOf(date) + "-" + seqKeep;
+  currentNote.ud_songhuoriqi_5e32f9 = date;
+  currentNote.ud_danjubianhao_d7a460 = previewNo;
+  paintNote();
+  msg.textContent = "保存中…";
+  msg.classList.remove("err");
+  try{
+    const sameMonth = String(date).slice(0,7)===String(oldDate).slice(0,7);
+    const seq = sameMonth ? seqKeep : await nextSeqForMonth(date, currentNote.id);
+    const seqNum = Number(seq);
+    const noteNo = notePrefixOf(date) + "-" + seq;
+    const ym = String(date).slice(0,7).replace("-","");
+    await gql(`mutation {
+      update_${SHIP_NOTE_TABLE}(where:{id:{_eq:${Number(currentNote.id)}}}, _set:{
+        ud_songhuoriqi_5e32f9:"${date}",
+        ud_danjubianhao_d7a460:"${noteNo}",
+        ud_bianhao_766134:"${ym}",
+        ud_xuhao_287e34:${seqNum}
+      }){ affected_rows }
+      update_${SHIP_MAT_TABLE}(where:{ud_fahuodan_0028hongfu0029fahuobiao_6d3ef7:{_eq:${Number(currentNote.id)}}, ud_shifoushanchu_65c743:{_is_null:true}}, _set:{
+        ud_riqi_01c22b:"${date}",
+        ud_fahuoriqi_7bdefe:"${date}",
+        ud_fahuodanhao_d423eb:"${noteNo}"
+      }){ affected_rows }
+    }`);
+    currentNote.ud_songhuoriqi_5e32f9 = date;
+    currentNote.ud_danjubianhao_d7a460 = noteNo;
+    currentNote.ud_xuhao_287e34 = seqNum;
+    paintNote();
+    msg.textContent = "已保存";
+    const yEl = document.getElementById("recentYear");
+    const mEl = document.getElementById("recentMonth");
+    if(yEl) yEl.value = date.slice(0,4);
+    if(mEl) mEl.value = Number(date.slice(5,7));
+    loadRecentNotes();
+    if(isDetailLike()){ detailLoadedKey = ""; loadDetail(true); }
+    refreshSeq(true);
+  }catch(err){
+    currentNote.ud_songhuoriqi_5e32f9 = oldDate;
+    paintNote();
+    dateEl.value = oldDate;
+    msg.textContent = "保存失败："+err.message;
+    msg.classList.add("err");
+  }finally{
+    savingNoteDate = false;
+  }
+}
+
+document.getElementById("content").addEventListener("click", (e)=>{
+  const rec = e.target.closest("[data-receipt]");
+  if(rec){
+    askReceiptPwd(rec.getAttribute("data-receipt"), isTrashPage() ? 1 : 4);
+    return;
+  }
+  const btn = e.target.closest("[data-tag]");
+  if(!btn) return;
+  openLabel(findOrderRow(btn.getAttribute("data-tag")));
+});
+document.getElementById("content").addEventListener("change", (e)=>{
+  const shipCk = e.target.closest(".ship-ck");
+  if(shipCk){
+    toggleShip(shipCk.getAttribute("data-id"), shipCk.checked);
+    return;
+  }
+  const planCk = e.target.closest(".plan-ck");
+  if(!planCk) return;
+  const id = planCk.getAttribute("data-id");
+  if(planCk.checked){
+    const row = findOrderRow(id);
+    if(row) addPlanRow(row);
+    else planCk.checked = false;
+  }else{
+    removePlanRow(id);
+  }
+});
+document.getElementById("planTbody").addEventListener("change", (e)=>{
+  const shipCk = e.target.closest(".ship-ck");
+  if(shipCk) toggleShip(shipCk.getAttribute("data-id"), shipCk.checked);
+});
+document.getElementById("planTbody").addEventListener("click", (e)=>{
+  const tag = e.target.closest("[data-tag]");
+  if(tag){ openLabel(findOrderRow(tag.getAttribute("data-tag"))); return; }
+  const rm = e.target.closest("[data-plan-rm]");
+  if(rm) removePlanRow(rm.getAttribute("data-plan-rm"));
+});
+document.getElementById("planTbody").addEventListener("input", (e)=>{
+  const inp = e.target.closest("input[data-f]");
+  if(!inp) return;
+  const tr = inp.closest("tr");
+  const item = planCart.find(x=> String(x.id)===String(tr.getAttribute("data-id")));
+  if(item) item[inp.getAttribute("data-f")] = inp.value;
+});
+document.getElementById("btnPlanClose").addEventListener("click", clearPlan);
+async function savePlan(){
+  if(savingPlan) return;
+  if(!planCart.length) return;
+  const title = String(document.getElementById("planTitle").value||"").trim() || planTitleDefault();
+  const lines = planCart.map(r=>{
+    const mat = {
+      ai_order: Number(r.id),
+      order_jihua_ai_order: Number(r.id)
+    };
+    const qty = toInt(r.produceQty);
+    const cases = toInt(r.produceCases);
+    const shipQty = toInt(r.shipQty);
+    if(qty!=null) mat.ud_shuliang_9b3a9f = qty;
+    if(cases!=null) mat.ud_xiangshu_71aa8e = cases;
+    if(shipQty!=null) mat.ud_fahuoshuliang_e84bbe = shipQty;
+    if(r.remark) mat.ud_beizhu_01659e = String(r.remark);
+    return mat;
+  });
+  savingPlan = true;
+  document.getElementById("btnPlanSave").disabled = true;
+  try{
+    if(editingPlanId){
+      await gql(`mutation($id:bigint!,$t:String!){
+        update_${PLAN_TABLE}(where:{id:{_eq:$id}}, _set:{ud_biaoti_2aa526:$t}){ affected_rows }
+        delete_${PLAN_MAT_TABLE}(where:{ud_jihua_danjuguanjia_shengchanjihua_9111b0:{_eq:$id}}){ affected_rows }
+      }`, {id: Number(editingPlanId), t: title});
+      await gql(`mutation($o:[${PLAN_MAT_TABLE}_insert_input!]!){
+        insert_${PLAN_MAT_TABLE}(objects:$o){ affected_rows }
+      }`, {o: lines.map(m=> Object.assign({}, m, {ud_jihua_danjuguanjia_shengchanjihua_9111b0: Number(editingPlanId)}))});
+    }else{
+      const obj = {
+        ud_biaoti_2aa526: title,
+        ud_suoshugongsi_gongsiku_2581e3: WHO,
+        ud_querenfahuo_f76fd6: 1,
+        ud_wuliao_ed886f: { data: lines }
+      };
+      const data = await gql(
+        `mutation($o: ${PLAN_TABLE}_insert_input!){ insert_${PLAN_TABLE}_one(object:$o){ id } }`,
+        {o: obj}
+      );
+      const id = data["insert_"+PLAN_TABLE+"_one"] && data["insert_"+PLAN_TABLE+"_one"].id;
+      if(!id) throw new Error("生产计划写入后未返回 id");
+    }
+    clearPlan();
+    syncPlanTitle(true);
+    loadNavPlans();
+  }catch(err){
+    alert("保存失败："+err.message);
+  }finally{
+    savingPlan = false;
+    document.getElementById("btnPlanSave").disabled = false;
+  }
+}
+document.getElementById("btnPlanSave").addEventListener("click", savePlan);
+async function loadNavPlans(){
+  const el = document.getElementById("navPlanList");
+  if(!el) return;
+  const kw = navPlanKw.trim();
+  const extra = kw ? `, ud_biaoti_2aa526:{_ilike:"%${kw.replace(/[%_\\"]/g, "\\$&")}%"}` : "";
+  try{
+    const all = [];
+    let offset = 0;
+    const page = 200;
+    while(true){
+      const data = await gql(`query {
+        ${PLAN_TABLE}(where:{ud_suoshugongsi_gongsiku_2581e3:{_eq:${WHO}}, ud_querenfahuo_f76fd6:{_eq:1}${extra}}, order_by:{created_at:desc}, limit:${page}, offset:${offset}){
+          id ud_biaoti_2aa526
+        }
+      }`);
+      const batch = data[PLAN_TABLE] || [];
+      for(let i=0;i<batch.length;i++) all.push(batch[i]);
+      if(batch.length < page) break;
+      offset += page;
+    }
+    NAV_PLANS = all;
+    renderNavPlans();
+  }catch(err){
+    el.innerHTML = `<div class="pitem">加载失败</div>`;
+  }
+}
+function renderNavPlans(){
+  const el = document.getElementById("navPlanList");
+  if(!el) return;
+  el.innerHTML = NAV_PLANS.map(p=>`
+    <div class="pitem ${String(editingPlanId)===String(p.id)?'active':''}" data-plan-id="${p.id}">
+      <span class="t">${esc(p.ud_biaoti_2aa526||p.id)}</span>
+      <span class="del" data-plan-del="${p.id}"><svg viewBox="0 0 16 16"><path d="M3 4h10l-.8 9.2A1.2 1.2 0 0 1 11 14.4H5a1.2 1.2 0 0 1-1.2-1.2L3 4z"/><path d="M6 4V3h4v1M2 4h12"/></svg></span>
+    </div>`).join("") || "";
+}
+async function openNavPlan(id){
+  try{
+    const data = await gql(`query {
+      note: ${PLAN_TABLE}(where:{id:{_eq:${Number(id)}}}){ id ud_biaoti_2aa526 }
+      mats: ${PLAN_MAT_TABLE}(where:{ud_jihua_danjuguanjia_shengchanjihua_9111b0:{_eq:${Number(id)}}}, order_by:{id:asc}){
+        id ai_order order_jihua_ai_order ud_shuliang_9b3a9f ud_xiangshu_71aa8e ud_fahuoshuliang_e84bbe ud_beizhu_01659e
+      }
+    }`);
+    const note = (data.note||[])[0];
+    if(!note){ alert("找不到生产计划"); return; }
+    const mats = data.mats || [];
+    const ids = mats.map(m=> Number(m.ai_order || m.order_jihua_ai_order)).filter(Boolean);
+    const missing = ids.filter(i=> !ROW_BY_ID.has(String(i)));
+    if(missing.length){
+      const od = await gql(`query {
+        ${TABLE}(where:{id:{_in:[${missing.join(",")}]}}){
+          id order_identifier inventory_identifier inventory_name specification quantity unit_price kehu_name
+          ud_kucunshuliang_77689a inventory_date samples
+        }
+      }`);
+      (od[TABLE]||[]).forEach(r=>{
+        r.shipped = r.shipped||0;
+        r.owed = (r.quantity==null?0:Number(r.quantity)) - (r.shipped||0);
+        r._days = daysUntil(r.inventory_date);
+        r._date = fmtDate(r.inventory_date);
+        r._stock = Number(r.ud_kucunshuliang_77689a)===1;
+        r._sample = (r.samples!=null && Number(r.samples)>0) ? num(r.samples) : "";
+        ROW_BY_ID.set(String(r.id), r);
+      });
+    }
+    planCart = mats.map(m=>{
+      const oid = m.ai_order || m.order_jihua_ai_order;
+      const row = findOrderRow(oid) || {};
+      return {
+        id: oid,
+        matId: m.id,
+        order_identifier: row.order_identifier,
+        inventory_identifier: row.inventory_identifier,
+        inventory_name: row.inventory_name,
+        specification: row.specification,
+        quantity: row.quantity,
+        shipped: row.shipped,
+        owed: row.owed,
+        _date: row._date,
+        _sample: row._sample,
+        produceQty: m.ud_shuliang_9b3a9f==null?"":String(m.ud_shuliang_9b3a9f),
+        shipQty: m.ud_fahuoshuliang_e84bbe==null?"":String(m.ud_fahuoshuliang_e84bbe),
+        produceCases: m.ud_xiangshu_71aa8e==null?"":String(m.ud_xiangshu_71aa8e),
+        remark: m.ud_beizhu_01659e || ""
+      };
+    });
+    editingPlanId = Number(id);
+    const titleEl = document.getElementById("planTitle");
+    if(titleEl) titleEl.value = note.ud_biaoti_2aa526 || "";
+    document.querySelectorAll(".plan-ck").forEach(ck=>{
+      ck.checked = planCart.some(x=> String(x.id)===String(ck.getAttribute("data-id")));
+    });
+    renderPlanPanel();
+    renderNavPlans();
+  }catch(err){
+    alert("打开失败："+err.message);
+  }
+}
+document.getElementById("navPlanList").addEventListener("click", async (e)=>{
+  const del = e.target.closest("[data-plan-del]");
+  if(del){
+    e.stopPropagation();
+    const id = Number(del.getAttribute("data-plan-del"));
+    const item = NAV_PLANS.find(p=> Number(p.id)===id);
+    const title = item && item.ud_biaoti_2aa526 ? item.ud_biaoti_2aa526 : "";
+    if(!confirm("确认删除生产计划"+(title? "「"+title+"」":"")+"？")) return;
+    try{
+      await gql(`mutation {
+        update_${PLAN_TABLE}(where:{id:{_eq:${id}}}, _set:{ud_querenfahuo_f76fd6:2}){ affected_rows }
+      }`);
+      if(String(editingPlanId)===String(id)) clearPlan();
+      await loadNavPlans();
+    }catch(err){
+      alert("删除失败："+err.message);
+    }
+    return;
+  }
+  const it = e.target.closest(".pitem[data-plan-id]");
+  if(!it) return;
+  openNavPlan(it.getAttribute("data-plan-id"));
+});
+let navPlanTimer = null;
+document.getElementById("navPlanSearch").addEventListener("input", (e)=>{
+  navPlanKw = e.target.value;
+  clearTimeout(navPlanTimer);
+  navPlanTimer = setTimeout(loadNavPlans, 250);
+});
+function detailMonthISO(){
+  const y = Number(document.getElementById("detailYear").value) || new Date().getFullYear();
+  const mo = Number(document.getElementById("detailMonth").value) || (new Date().getMonth()+1);
+  return y+"-"+pad(mo)+"-01";
+}
+function filteredDetailRows(){
+  let list = DETAIL_ROWS;
+  if(detailSelectedOids.length){
+    const set = new Set(detailSelectedOids);
+    list = list.filter(r=> set.has(r.oid));
+  }
+  if(detailSelectedNotes.length){
+    const set = new Set(detailSelectedNotes);
+    list = list.filter(r=> set.has(r.noteNo));
+  }
+  return list;
+}
+function renderDetailLists(){
+  const oidEl = document.getElementById("detailOidList");
+  const noteEl = document.getElementById("detailNoteList");
+  if(!oidEl || !noteEl) return;
+  const oids = [];
+  const notes = [];
+  const oidSet = new Set();
+  const noteSet = new Set();
+  for(const r of DETAIL_ROWS){
+    if(r.oid && !oidSet.has(r.oid)){ oidSet.add(r.oid); oids.push(r.oid); }
+    if(r.noteNo && !noteSet.has(r.noteNo)){ noteSet.add(r.noteNo); notes.push(r.noteNo); }
+  }
+  const okw = detailOidKw.trim().toLowerCase();
+  const nkw = detailNoteKw.trim().toLowerCase();
+  const showOids = oids.filter(v=> !okw || v.toLowerCase().includes(okw));
+  const showNotes = notes.filter(v=> !nkw || v.toLowerCase().includes(nkw));
+  oidEl.innerHTML = showOids.map(v=>`<div class="item ${detailSelectedOids.indexOf(v)>=0?'active':''}" data-oid="${esc(v)}">${esc(v)}</div>`).join("") || `<div class="item">无匹配</div>`;
+  noteEl.innerHTML = showNotes.map(v=>`<div class="item ${detailSelectedNotes.indexOf(v)>=0?'active':''}" data-note="${esc(v)}">${esc(v)}</div>`).join("") || `<div class="item">无匹配</div>`;
+}
+function detailColCount(){ return billView() ? 16 : 14; }
+function syncDetailHead(){
+  const table = document.querySelector("#pageDetail table.detail-table");
+  if(!table) return;
+  const bill = billView();
+  table.classList.toggle("bill", bill);
+  const cg = table.querySelector("colgroup");
+  if(cg){
+    cg.innerHTML = bill
+      ? `<col style="width:40px"><col style="width:88px"><col style="width:120px">
+         <col style="width:110px"><col style="width:100px"><col style="width:18%">
+         <col style="width:12%"><col style="width:64px"><col style="width:64px">
+         <col style="width:52px"><col style="width:64px"><col style="width:40px">
+         <col style="width:64px"><col style="width:72px"><col style="width:88px">
+         <col style="width:72px">`
+      : `<col style="width:40px"><col style="width:88px"><col style="width:120px">
+         <col style="width:110px"><col style="width:100px"><col style="width:18%">
+         <col style="width:12%"><col style="width:64px"><col style="width:64px">
+         <col style="width:52px"><col style="width:64px"><col style="width:40px">
+         <col style="width:88px"><col style="width:72px">`;
+  }
+  const tr = table.querySelector("thead tr");
+  if(tr){
+    tr.innerHTML = bill
+      ? `<th>序号</th><th>发货日期</th><th>发货单号</th>
+         <th>订单编号</th><th>物料编码</th><th>物料名称</th>
+         <th>规格</th><th>订单数量</th><th>送货总数</th>
+         <th class="owed">欠数</th><th>送货数量</th><th>单位</th>
+         <th>单价</th><th>金额</th>
+         <th>交货日期</th><th class="view">送货单</th>`
+      : `<th>序号</th><th>发货日期</th><th>发货单号</th>
+         <th>订单编号</th><th>物料编码</th><th>物料名称</th>
+         <th>规格</th><th>订单数量</th><th>送货总数</th>
+         <th class="owed">欠数</th><th>送货数量</th><th>单位</th>
+         <th>交货日期</th><th class="view">送货单</th>`;
+  }
+}
+function detailRowHtml(r, i){
+  const priceCells = billView()
+    ? `<td>${num(r.price)}</td><td>${num(r.amount)}</td>`
+    : "";
+  return `
+    <tr>
+      <td>${i+1}</td>
+      <td>${esc(r.date)}</td>
+      <td>${esc(r.noteNo)}</td>
+      <td>${esc(r.oid)}</td>
+      <td>${esc(r.code)}</td>
+      <td class="name">${esc(r.name)}</td>
+      <td class="spec">${esc(r.spec)}</td>
+      <td>${num(r.orderQty)}</td>
+      <td>${num(r.shippedTotal)}</td>
+      <td class="owed${Number(r.owed)>0?' hot':''}">${num(r.owed)}</td>
+      <td>${num(r.qty)}</td>
+      <td>${esc(r.unit)}</td>
+      ${priceCells}
+      <td>${esc(r.due)}</td>
+      <td class="view">${r.noteId?`<a data-note-id="${r.noteId}">点击查看</a>`:""}</td>
+    </tr>`;
+}
+function showDetailLoader(on){
+  const ld = document.getElementById("detailMoreLoader");
+  if(ld) ld.classList.toggle("show", !!on);
+}
+function paintDetailMore(){
+  const list = filteredDetailRows();
+  if(detailVisibleCount >= list.length) return false;
+  const tb = document.getElementById("detailTbody");
+  if(!tb) return false;
+  const start = detailVisibleCount, end = Math.min(start + DETAIL_PAGE, list.length);
+  tb.insertAdjacentHTML("beforeend", list.slice(start, end).map((r,i)=>detailRowHtml(r, start+i)).join(""));
+  detailVisibleCount = end;
+  return true;
+}
+function fillDetailUntilScroll(){
+  const el = document.getElementById("detailWrap");
+  if(!el || el.clientHeight < 80) return;
+  let guard = 0;
+  while(detailVisibleCount < filteredDetailRows().length && el.scrollHeight <= el.clientHeight + 40 && guard < 30){
+    const before = detailVisibleCount;
+    paintDetailMore();
+    if(detailVisibleCount===before) break;
+    guard++;
+  }
+}
+function appendDetailMore(){
+  if(detailAppending || detailVisibleCount >= filteredDetailRows().length) return;
+  detailAppending = true;
+  showDetailLoader(true);
+  setTimeout(()=>{
+    paintDetailMore();
+    detailAppending = false;
+    showDetailLoader(false);
+    const el = document.getElementById("detailWrap");
+    if(el && detailVisibleCount < filteredDetailRows().length && el.scrollTop + el.clientHeight >= el.scrollHeight - 80){
+      appendDetailMore();
+    }
+  }, 220);
+}
+function renderDetailTable(){
+  const tb = document.getElementById("detailTbody");
+  if(!tb) return;
+  const list = filteredDetailRows();
+  detailAppending = false;
+  showDetailLoader(false);
+  if(!list.length){
+    detailVisibleCount = 0;
+    tb.innerHTML = `<tr><td colspan="${detailColCount()}" class="status">${DETAIL_ROWS.length?"没有匹配数据":"没有数据"}</td></tr>`;
+    return;
+  }
+  detailVisibleCount = Math.min(DETAIL_PAGE, list.length);
+  tb.innerHTML = list.slice(0, detailVisibleCount).map((r,i)=>detailRowHtml(r,i)).join("");
+  requestAnimationFrame(()=> requestAnimationFrame(()=> fillDetailUntilScroll()));
+}
+function renderDetail(){
+  syncDetailHead();
+  renderDetailLists();
+  renderDetailTable();
+}
+async function loadDetail(force){
+  if(isBillPage() && !billAllowed()) return;
+  const yEl = document.getElementById("detailYear");
+  const mEl = document.getElementById("detailMonth");
+  if(!yEl || !mEl) return;
+  const startEl = document.getElementById("detailStart");
+  const endEl = document.getElementById("detailEnd");
+  const iso = detailMonthISO();
+  let {start, end} = monthRange(iso);
+  const ds = startEl && startEl.value;
+  const de = endEl && endEl.value;
+  if(ds && ds > start) start = ds;
+  if(de){
+    const next = new Date(de+"T00:00:00");
+    next.setDate(next.getDate()+1);
+    const endDay = next.getFullYear()+"-"+pad(next.getMonth()+1)+"-"+pad(next.getDate());
+    if(endDay < end) end = endDay;
+  }
+  const key = WHO+":"+start+":"+end;
+  if(!force && key===detailLoadedKey){ renderDetail(); return; }
+  const token = ++detailToken;
+  const tb = document.getElementById("detailTbody");
+  detailVisibleCount = 0;
+  showDetailLoader(false);
+  if(tb) tb.innerHTML = `<tr><td colspan="${detailColCount()}" class="status">加载中…</td></tr>`;
+  try{
+    const notes = [];
+    let offset = 0;
+    const page = 200;
+    while(true){
+      const data = await gql(`query {
+        ${SHIP_NOTE_TABLE}(where:{
+          ud_suoshugongsi_gongsiku_9aa4ba:{_eq:${WHO}},
+          ud_querenfahuo_dc08c7:{_eq:1},
+          ud_songhuoriqi_5e32f9:{_gte:"${start}", _lt:"${end}"}
+        }, order_by:{ud_songhuoriqi_5e32f9:desc, id:desc}, limit:${page}, offset:${offset}){
+          id ud_danjubianhao_d7a460 ud_songhuoriqi_5e32f9
+        }
+      }`);
+      if(token!==detailToken) return;
+      const batch = data[SHIP_NOTE_TABLE] || [];
+      for(let i=0;i<batch.length;i++) notes.push(batch[i]);
+      if(batch.length < page) break;
+      offset += page;
+    }
+    const noteMap = new Map();
+    notes.forEach(n=> noteMap.set(Number(n.id), n));
+    const mats = [];
+    const noteIds = notes.map(n=> n.id);
+    for(let i=0;i<noteIds.length;i+=80){
+      const chunk = noteIds.slice(i, i+80);
+      let moff = 0;
+      while(true){
+        const md = await gql(`query {
+          ${SHIP_MAT_TABLE}(where:{ud_fahuodan_0028hongfu0029fahuobiao_6d3ef7:{_in:[${chunk.join(",")}]}, ud_shifoushanchu_65c743:{_is_null:true}}, order_by:{id:asc}, limit:500, offset:${moff}){
+            id order_hongfu_order ud_fahuodan_0028hongfu0029fahuobiao_6d3ef7
+            ud_dingdanbianma_a7f61f ud_wuliaobianma_1e21cf ud_wuliaomingcheng_e7d976 ud_guige_461d8f
+            ud_shuliang_42c7e4 ud_danwei_9fcb37 ud_dingdanshuliang_d5fd1d
+            ud_songhuozongshu_b28427 ud_qianshu_586cf3${billAllowed() ? " ud_danjie_f023ac ud_jine_bb3a66" : ""}
+          }
+        }`);
+        if(token!==detailToken) return;
+        const batch = md[SHIP_MAT_TABLE] || [];
+        for(let j=0;j<batch.length;j++) mats.push(batch[j]);
+        if(batch.length < 500) break;
+        moff += 500;
+      }
+    }
+    const orderIds = [];
+    const idSet = new Set();
+    for(const m of mats){
+      const oid = m.order_hongfu_order;
+      if(oid!=null && !idSet.has(oid)){ idSet.add(oid); orderIds.push(oid); }
+    }
+    const dueMap = {};
+    for(let i=0;i<orderIds.length;i+=200){
+      const chunk = orderIds.slice(i, i+200);
+      const od = await gql(`query {
+        ${TABLE}(where:{id:{_in:[${chunk.join(",")}]}}){ id inventory_date${billAllowed() ? " unit_price" : ""} }
+      }`);
+      if(token!==detailToken) return;
+      (od[TABLE]||[]).forEach(r=>{ dueMap[String(r.id)] = {due: fmtDate(r.inventory_date), price: r.unit_price}; });
+    }
+    const rows = [];
+    for(const m of mats){
+      const n = noteMap.get(Number(m.ud_fahuodan_0028hongfu0029fahuobiao_6d3ef7));
+      if(!n) continue;
+      const orderMeta = dueMap[String(m.order_hongfu_order)] || {};
+      const qty = m.ud_shuliang_42c7e4;
+      let price = m.ud_danjie_f023ac!=null ? Number(m.ud_danjie_f023ac)
+        : (orderMeta.price!=null ? Number(orderMeta.price) : null);
+      let amount = m.ud_jine_bb3a66!=null ? Number(m.ud_jine_bb3a66)
+        : (price!=null && qty!=null && !isNaN(Number(qty)) ? Number((price * Number(qty)).toFixed(6)) : null);
+      if(!billAllowed()){ price = null; amount = null; }
+      rows.push({
+        noteId: n.id,
+        noteNo: n.ud_danjubianhao_d7a460 || "",
+        date: fmtDate(n.ud_songhuoriqi_5e32f9),
+        oid: m.ud_dingdanbianma_a7f61f || "",
+        code: m.ud_wuliaobianma_1e21cf || "",
+        name: m.ud_wuliaomingcheng_e7d976 || "",
+        spec: m.ud_guige_461d8f || "",
+        orderQty: m.ud_dingdanshuliang_d5fd1d,
+        shippedTotal: m.ud_songhuozongshu_b28427,
+        owed: m.ud_qianshu_586cf3,
+        qty,
+        unit: m.ud_danwei_9fcb37 || "",
+        price,
+        amount,
+        due: orderMeta.due || "",
+        _noteSort: Number(n.id)
+      });
+    }
+    rows.sort((a,b)=>{
+      if(a.date !== b.date) return a.date < b.date ? 1 : -1;
+      if(a._noteSort !== b._noteSort) return b._noteSort - a._noteSort;
+      return 0;
+    });
+    DETAIL_ROWS = rows;
+    detailLoadedKey = key;
+    detailSelectedOids = detailSelectedOids.filter(v=> rows.some(r=>r.oid===v));
+    detailSelectedNotes = detailSelectedNotes.filter(v=> rows.some(r=>r.noteNo===v));
+    renderDetail();
+  }catch(err){
+    if(token!==detailToken) return;
+    DETAIL_ROWS = [];
+    detailLoadedKey = "";
+    if(tb) tb.innerHTML = `<tr><td colspan="${detailColCount()}" class="status err">加载失败：${esc(err.message)}</td></tr>`;
+  }
+}
+function crc32(u8){
+  let c = ~0 >>> 0;
+  for(let i=0;i<u8.length;i++){
+    c ^= u8[i];
+    for(let b=0;b<8;b++) c = (c>>>1) ^ (0xEDB88320 & -(c&1));
+  }
+  return (~c) >>> 0;
+}
+function ule(n, bytes){
+  const a = new Uint8Array(bytes);
+  for(let i=0;i<bytes;i++) a[i] = (n >>> (8*i)) & 255;
+  return a;
+}
+function bytesCat(parts){
+  const n = parts.reduce((s,p)=>s+p.length, 0);
+  const o = new Uint8Array(n); let i=0;
+  for(const p of parts){ o.set(p,i); i+=p.length; }
+  return o;
+}
+function zipStore(files){
+  const enc = new TextEncoder();
+  const locals = [];
+  const centrals = [];
+  let offset = 0;
+  for(const f of files){
+    const nameB = enc.encode(f.name);
+    const data = typeof f.data==="string" ? enc.encode(f.data) : f.data;
+    const crc = crc32(data);
+    const local = bytesCat([
+      ule(0x04034b50,4), ule(20,2), ule(0,2), ule(0,2), ule(0,2), ule(0,2),
+      ule(crc,4), ule(data.length,4), ule(data.length,4), ule(nameB.length,2), ule(0,2),
+      nameB, data
+    ]);
+    const central = bytesCat([
+      ule(0x02014b50,4), ule(20,2), ule(20,2), ule(0,2), ule(0,2), ule(0,2), ule(0,2),
+      ule(crc,4), ule(data.length,4), ule(data.length,4), ule(nameB.length,2), ule(0,2),
+      ule(0,2), ule(0,2), ule(0,2), ule(0,4), ule(offset,4), nameB
+    ]);
+    locals.push(local);
+    centrals.push(central);
+    offset += local.length;
+  }
+  const central = bytesCat(centrals);
+  const eocd = bytesCat([
+    ule(0x06054b50,4), ule(0,2), ule(0,2), ule(files.length,2), ule(files.length,2),
+    ule(central.length,4), ule(offset,4), ule(0,2)
+  ]);
+  return bytesCat([...locals, central, eocd]);
+}
+function xmlEsc(s){
+  return String(s==null?"":s)
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,"")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function colLetter(i){
+  let s="", n=i+1;
+  while(n){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); }
+  return s;
+}
+function xlsxCell(ref, v, asNum){
+  if(v==null || v==="") return `<c r="${ref}"/>`;
+  if(asNum){
+    const n = Number(v);
+    if(!isNaN(n)) return `<c r="${ref}" t="n"><v>${n}</v></c>`;
+  }
+  return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xmlEsc(v)}</t></is></c>`;
+}
+function downloadBlob(data, name, mime){
+  const blob = new Blob([data], {type: mime});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 800);
+}
+function downloadDetailExcel(){
+  if(isBillPage() && !billAllowed()) return;
+  const list = filteredDetailRows();
+  if(!list.length){ alert("没有可下载的数据"); return; }
+  const bill = billView();
+  const kind = bill ? "对账单" : "发货明细";
+  const headers = bill
+    ? ["序号","发货日期","发货单号","订单编号","物料编码","物料名称","规格","订单数量","送货总数","欠数","送货数量","单位","单价","金额","交货日期"]
+    : ["序号","发货日期","发货单号","订单编号","物料编码","物料名称","规格","订单数量","送货总数","欠数","送货数量","单位","交货日期"];
+  const numCols = bill ? {0:1, 7:1, 8:1, 9:1, 10:1, 12:1, 13:1} : {0:1, 7:1, 8:1, 9:1, 10:1};
+  const rowsXml = [];
+  rowsXml.push(`<row r="1">`+headers.map((h,i)=>xlsxCell(colLetter(i)+"1", h)).join("")+`</row>`);
+  list.forEach((r, idx)=>{
+    const rn = idx+2;
+    const vals = bill
+      ? [idx+1, r.date, r.noteNo, r.oid, r.code, r.name, r.spec, r.orderQty, r.shippedTotal, r.owed, r.qty, r.unit, r.price, r.amount, r.due]
+      : [idx+1, r.date, r.noteNo, r.oid, r.code, r.name, r.spec, r.orderQty, r.shippedTotal, r.owed, r.qty, r.unit, r.due];
+    rowsXml.push(`<row r="${rn}">`+vals.map((v,i)=>xlsxCell(colLetter(i)+rn, v, !!numCols[i])).join("")+`</row>`);
+  });
+  const lastCol = colLetter(headers.length-1);
+  const lastRow = list.length+1;
+  const extraCols = bill
+    ? `\n  <col min="13" max="14" width="10" customWidth="1"/>\n  <col min="15" max="15" width="12" customWidth="1"/>`
+    : `\n  <col min="13" max="13" width="12" customWidth="1"/>`;
+  const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<dimension ref="A1:${lastCol}${lastRow}"/>
+<sheetViews><sheetView tabSelected="1" workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+<cols>
+  <col min="1" max="1" width="6" customWidth="1"/>
+  <col min="2" max="2" width="12" customWidth="1"/>
+  <col min="3" max="3" width="16" customWidth="1"/>
+  <col min="4" max="4" width="14" customWidth="1"/>
+  <col min="5" max="5" width="14" customWidth="1"/>
+  <col min="6" max="6" width="28" customWidth="1"/>
+  <col min="7" max="7" width="18" customWidth="1"/>
+  <col min="8" max="11" width="10" customWidth="1"/>
+  <col min="12" max="12" width="8" customWidth="1"/>${extraCols}
+</cols>
+<sheetData>${rowsXml.join("")}</sheetData>
+</worksheet>`;
+  const files = [
+    {name:"[Content_Types].xml", data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+</Types>`},
+    {name:"_rels/.rels", data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`},
+    {name:"xl/workbook.xml", data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets><sheet name="${kind}" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`},
+    {name:"xl/_rels/workbook.xml.rels", data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+</Relationships>`},
+    {name:"xl/worksheets/sheet1.xml", data:sheet}
+  ];
+  const y = document.getElementById("detailYear").value || new Date().getFullYear();
+  const mo = Number(document.getElementById("detailMonth").value) || (new Date().getMonth()+1);
+  const company = bill ? "永佛" : (WHO===52 ? "尚笠" : "永佛");
+  const fname = `${company}_${kind}_${y}年${mo}月.xlsx`;
+  downloadBlob(zipStore(files), fname, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+}
+function printDetail(){
+  if(isBillPage() && !billAllowed()) return;
+  const list = filteredDetailRows();
+  const bill = billView();
+  const colCount = bill ? 15 : 13;
+  const rows = list.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td><td>${esc(r.date)}</td><td>${esc(r.noteNo)}</td>
+      <td>${esc(r.oid)}</td><td>${esc(r.code)}</td><td class="name">${esc(r.name)}</td>
+      <td class="spec">${esc(r.spec)}</td><td>${num(r.orderQty)}</td><td>${num(r.shippedTotal)}</td>
+      <td>${num(r.owed)}</td><td>${num(r.qty)}</td><td>${esc(r.unit)}</td>
+      ${bill ? `<td>${num(r.price)}</td><td>${num(r.amount)}</td>` : ""}
+      <td>${esc(r.due)}</td>
+    </tr>`).join("") || `<tr><td colspan="${colCount}">没有数据</td></tr>`;
+  const head = bill
+    ? `<th>序号</th><th>发货日期</th><th>发货单号</th><th>订单编号</th><th>物料编码</th>
+      <th>物料名称</th><th>规格</th><th>订单数量</th><th>送货总数</th><th>欠数</th>
+      <th>送货数量</th><th>单位</th><th>单价</th><th>金额</th><th>交货日期</th>`
+    : `<th>序号</th><th>发货日期</th><th>发货单号</th><th>订单编号</th><th>物料编码</th>
+      <th>物料名称</th><th>规格</th><th>订单数量</th><th>送货总数</th><th>欠数</th>
+      <th>送货数量</th><th>单位</th><th>交货日期</th>`;
+  printFrame(`<table><thead><tr>
+      ${head}
+    </tr></thead><tbody>${rows}</tbody></table>`,
+    `table{width:100%;border-collapse:collapse;table-layout:fixed;}
+     th,td{border:1px solid #000;padding:3px 4px;font-size:10px;text-align:center;}
+     td.name,td.spec{text-align:left;word-break:break-word;}
+     thead th{font-weight:700;}`,
+    "@page{size:A4 landscape;margin:8mm;}");
+}
+function owedPlain(v){
+  if(v==null || v==="") return "";
+  const n = Number(v);
+  if(isNaN(n)) return String(v);
+  if(n>0) return "少出"+n;
+  if(n<0) return "多出"+Math.abs(n);
+  return String(n);
+}
+function printFrame(html, css, page){
+  const f = document.getElementById("printFrame");
+  const land = /landscape/i.test(page || "");
+  f.style.width = land ? "297mm" : "210mm";
+  f.style.height = land ? "210mm" : "297mm";
+  const doc = f.contentDocument;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>打印</title><style>
+    ${page||"@page{size:A4;margin:8mm;}"}
+    html,body{margin:0;padding:0;background:#fff;color:#000;font-family:"Microsoft YaHei","PingFang SC",sans-serif;}
+    ${css||""}
+  </style></head><body>${html}</body></html>`);
+  doc.close();
+  setTimeout(()=>{
+    const sheet = doc.querySelector(".note-sheet");
+    if(sheet) fitNoteTip(sheet);
+    f.contentWindow.focus();
+    f.contentWindow.print();
+  }, 80);
+}
+function notePrintInnerCss(scale){
+  const s = scale || 1;
+  const px = n => Math.round(n * s) + "px";
+  return `.note-sheet{box-sizing:border-box;padding:${px(4)} ${px(8)} ${px(3)} 0;display:flex;flex-direction:column;background:#fff;overflow:visible;color:#111;}
+     .note-sheet .dn-co{text-align:center;font-size:${px(26)};font-weight:800;letter-spacing:1px;line-height:1.15;flex:0 0 auto;}
+     .note-sheet .dn-sub{text-align:center;font-size:${px(18)};font-weight:400;margin:0 0 ${px(1)};flex:0 0 auto;}
+     .note-sheet .dn-addr{text-align:center;font-size:${px(15)};font-weight:400;white-space:nowrap;line-height:1.25;flex:0 0 auto;}
+     .note-sheet .dn-meta{display:flex;justify-content:space-between;align-items:flex-end;font-size:${px(15)};font-weight:400;padding:${px(2)} 0;width:100%;box-sizing:border-box;flex:0 0 auto;}
+     .note-sheet table.dn-tbl{width:100%;flex:1 1 auto;border-collapse:collapse;table-layout:fixed;border:1.5px solid #000;}
+     .note-sheet table.dn-tbl tbody tr:not(.dn-foot){height:16.6%;}
+     .note-sheet table.dn-tbl th,.note-sheet table.dn-tbl td{height:auto;border:1.5px solid #000;padding:${px(2)} ${px(3)};text-align:center;font-size:${px(10)};background:#fff;color:#111;line-height:1.15;}
+     .note-sheet table.dn-tbl thead th{height:${px(38)};background:#fff;color:#111;font-weight:400;font-size:${px(13)};white-space:nowrap;}
+     .note-sheet table.dn-tbl thead th.wrap2{white-space:normal;line-height:1.1;}
+     .note-sheet table.dn-tbl td.name,.note-sheet table.dn-tbl td.spec{white-space:normal;word-break:break-word;font-size:${px(13)};}
+     .note-sheet table.dn-tbl td.oid,.note-sheet table.dn-tbl td.code{white-space:normal;word-break:break-all;overflow:hidden;}
+     .note-sheet table.dn-tbl th.unit,.note-sheet table.dn-tbl td.unit{font-size:${px(8)};padding:${px(2)} ${px(1)};}
+     .note-sheet table.dn-tbl td.qty{font-size:${px(13)};font-weight:400;}
+     .note-sheet table.dn-tbl td.remark{white-space:normal;line-height:1.1;}
+     .note-sheet table.dn-tbl .dn-foot td{height:${px(18)};font-size:${px(11)};font-weight:700;text-align:left;padding:${px(2)} ${px(8)};white-space:nowrap;}
+     .note-sheet .dn-tip{font-size:${px(12)};font-weight:700;text-align:center;padding:${px(3)} 0 0;white-space:nowrap;letter-spacing:0;flex:0 0 auto;width:100%;box-sizing:border-box;}`;
+}
+function printDeliveryNote(topMm){
+  const css = `html,body{margin:0;padding:0;background:#fff;}
+     .pg{width:210mm;box-sizing:border-box;padding:${topMm}mm 8mm 0 4mm;}
+     .note-sheet{width:194mm;height:120mm;}
+     ${notePrintInnerCss(1)}`;
+  printFrame(
+    `<div class="pg">${document.getElementById("noteSheet").outerHTML}</div>`,
+    css,
+    "@page{size:A4 portrait;margin:0;}"
+  );
+}
+function printPlan(){
+  const list = planCart;
+  if(!list.length) return;
+  const rows = list.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${esc(r.order_identifier)}</td>
+      <td>${esc(r.inventory_identifier)}</td>
+      <td class="name">${esc(r.inventory_name)}</td>
+      <td class="spec">${esc(r.specification)}</td>
+      <td>${num(r.quantity)}</td>
+      <td>${num(r.shipped)}</td>
+      <td>${esc(r._date)}</td>
+      <td>${esc(r._sample||"")}</td>
+      <td>${esc(owedPlain(r.owed))}</td>
+      <td>${esc(r.produceQty)}</td>
+      <td>${esc(r.shipQty)}</td>
+      <td>${esc(r.produceCases)}</td>
+      <td>${esc(r.remark)}</td>
+    </tr>`).join("");
+  printFrame(`
+    <table>
+      <thead><tr>
+        <th>序号</th><th>订单编号</th><th>物料编码</th><th>物料名称</th><th>规格</th>
+        <th>订单数量</th><th>送货总数</th><th>交货日期</th><th>产前样</th><th>欠数</th>
+        <th>生产数量</th><th>送货数量</th><th>生产箱数</th><th>备注</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`,
+    `table{width:100%;border-collapse:collapse;table-layout:fixed;border:1px solid #000;}
+     th,td{border:1px solid #000;padding:4px 3px;text-align:center;font-size:11px;background:#fff;color:#000;line-height:1.25;word-break:break-word;}
+     thead th{font-weight:700;white-space:nowrap;}
+     td.name,td.spec{text-align:left;}`,
+    "@page{size:A4 landscape;margin:8mm;}"
+  );
+}
+document.getElementById("btnPlanPrint").addEventListener("click", printPlan);
+document.getElementById("shipTbody").addEventListener("click", (e)=>{
+  const tag = e.target.closest("[data-tag]");
+  if(tag){ openLabel(findOrderRow(tag.getAttribute("data-tag"))); return; }
+  const btn = e.target.closest("[data-rm]");
+  if(!btn) return;
+  removeShipRow(btn.getAttribute("data-rm"));
+});
+document.getElementById("shipTbody").addEventListener("input", (e)=>{
+  const inp = e.target.closest("input[data-f]");
+  if(!inp) return;
+  const tr = inp.closest("tr");
+  const item = shipCart.find(x=> String(x.id)===String(tr.getAttribute("data-id")));
+  if(item) item[inp.getAttribute("data-f")] = inp.value;
+});
+document.getElementById("shipTitle").addEventListener("click", ()=>{
+  shipCollapsed = !shipCollapsed;
+  renderShipPanel();
+});
+function rejectWeekendDate(el, fallback){
+  const v = el && el.value;
+  if(!v || !isWeekend(v)) return false;
+  el.value = workdayISO(fallback || todayISO());
+  alert("周末不可发货，请选择周一至周五");
+  return true;
+}
+document.getElementById("shipDate").addEventListener("change", ()=>{
+  const el = document.getElementById("shipDate");
+  if(rejectWeekendDate(el, el.getAttribute("data-last") || workdayISO(todayISO()))){
+    el.setAttribute("data-last", el.value);
+    syncNoteNo();
+    refreshSeq();
+    return;
+  }
+  el.setAttribute("data-last", el.value);
+  syncNoteNo();
+  refreshSeq();
+});
+document.getElementById("shipDate").addEventListener("input", ()=>{
+  const el = document.getElementById("shipDate");
+  if(rejectWeekendDate(el, el.getAttribute("data-last") || workdayISO(todayISO()))){
+    el.setAttribute("data-last", el.value);
+    syncNoteNo();
+    refreshSeq();
+  }
+});
+document.getElementById("shipSeq").addEventListener("input", ()=>{ seqManual = true; });
+function toInt(v){
+  if(v==null || v==="") return null;
+  const n = Number(String(v).replace(/,/g,"").trim());
+  if(isNaN(n)) return null;
+  return Math.round(n);
+}
+function noteNoText(){
+  const seq = String(document.getElementById("shipSeq").value||"").trim();
+  return notePrefix() + "-" + seq;
+}
+function setOpenBusy(on){
+  openingNote = on;
+  ["btnOpenNote","btnOpenReplenish"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.disabled = on;
+  });
+}
+async function submitShip(isReplenish){
+  if(openingNote) return;
+  if(!shipCart.length){ alert("请先勾选要发货的物料"); return; }
+  const dateEl = document.getElementById("shipDate");
+  if(rejectWeekendDate(dateEl, dateEl.getAttribute("data-last") || workdayISO(todayISO()))){
+    dateEl.setAttribute("data-last", dateEl.value);
+    syncNoteNo();
+    refreshSeq();
+    return;
+  }
+  const date = shipDateISO();
+  if(dateEl && dateEl.value !== date){
+    dateEl.value = date;
+    dateEl.setAttribute("data-last", date);
+    syncNoteNo();
+  }
+  const seqNum = toInt(document.getElementById("shipSeq").value);
+  if(seqNum==null || seqNum<1){ alert("请填写单据序号"); return; }
+  const noteNo = noteNoText();
+  const customer = document.getElementById("shipCustomer").value.trim();
+  const person = document.getElementById("shipPerson").value.trim();
+  const ym = String(date).slice(0,7).replace("-","");
+  const lines = [];
+  for(let i=0;i<shipCart.length;i++){
+    const item = shipCart[i];
+    const order = findOrderRow(item.id) || item;
+    let qty = toInt(item.shipQty);
+    if(qty==null) qty = toInt(order.owed!=null ? order.owed : item.owed);
+    if(qty==null || qty<=0){ alert("请填写送货数量"); return; }
+    const cases = toInt(item.cases);
+    const orderQty = toInt(order.quantity!=null ? order.quantity : item.quantity) || 0;
+    const shipped = toInt(order.shipped!=null ? order.shipped : item.shipped) || 0;
+    const total = shipped + qty;
+    const price = order.unit_price!=null ? Number(order.unit_price)
+      : (item.unit_price!=null ? Number(item.unit_price) : null);
+    const amount = price==null ? null : Number((price * qty).toFixed(6));
+    const mat = {
+      order_hongfu_order: Number(item.id),
+      ud_shuliang_42c7e4: qty,
+      ud_dingdanshuliang_d5fd1d: orderQty,
+      ud_songhuozongshu_b28427: total,
+      ud_qianshu_586cf3: orderQty - total,
+      ud_xuhao_8939be: i+1,
+      ud_riqi_01c22b: date,
+      ud_fahuoriqi_7bdefe: date,
+      ud_fahuodanhao_d423eb: noteNo,
+      ud_dingdanbianma_a7f61f: order.order_identifier || item.order_identifier || null,
+      ud_wuliaobianma_1e21cf: order.inventory_identifier || item.inventory_identifier || null,
+      ud_wuliaomingcheng_e7d976: order.inventory_name || item.inventory_name || null,
+      ud_guige_461d8f: order.specification || item.specification || null,
+      ud_danwei_9fcb37: order.unit || item.unit || null
+    };
+    if(price!=null) mat.ud_danjie_f023ac = price;
+    if(amount!=null){ mat.ud_jine_bb3a66 = amount; mat.ud_zongjine_bf2329 = amount; }
+    if(cases!=null) mat.ud_xiangshu_879876 = cases;
+    const remarks = [];
+    if(isReplenish) remarks.push("补货");
+    const spare = toInt(item.spare);
+    if(spare!=null) remarks.push(spareRemark(spare));
+    if(remarks.length) mat.ud_beizhu_c04340 = remarks.join("\n");
+    lines.push(mat);
+  }
+  const noteObj = {
+    ud_songhuoriqi_5e32f9: date,
+    ud_danjubianhao_d7a460: noteNo,
+    ud_kehuming_5a737f: customer || null,
+    ud_lianxiren_f1fd6b: person || null,
+    ud_querenfahuo_dc08c7: 1,
+    ud_suoshugongsi_gongsiku_9aa4ba: WHO,
+    ud_bianhao_766134: ym,
+    ud_xuhao_287e34: seqNum
+  };
+  if(isReplenish) noteObj.ud_buhuo_17a177 = true;
+  noteObj.ud_fahuoxinxi_a9dddb = { data: lines };
+  setOpenBusy(true);
+  try{
+    const noteData = await gql(
+      `mutation($o: ${SHIP_NOTE_TABLE}_insert_input!){ insert_${SHIP_NOTE_TABLE}_one(object:$o){ id } }`,
+      {o: noteObj}
+    );
+    const noteId = noteData["insert_"+SHIP_NOTE_TABLE+"_one"] && noteData["insert_"+SHIP_NOTE_TABLE+"_one"].id;
+    if(!noteId) throw new Error("发货编号写入后未返回 id");
+    shipCart = [];
+    renderShipPanel();
+    seqManual = false;
+    await refreshSeq(true);
+    await loadData();
+    await loadRecentNotes();
+  }catch(err){
+    alert("开单失败："+err.message);
+  }finally{
+    setOpenBusy(false);
+  }
+}
+document.getElementById("btnOpenNote").addEventListener("click", ()=> submitShip(false));
+document.getElementById("btnOpenReplenish").addEventListener("click", ()=> submitShip(true));
+function applyLabelDate(){
+  const el = document.getElementById("labelDate");
+  if(!el || !el.value) return;
+  if(rejectWeekendDate(el, el.getAttribute("data-last") || workdayISO(todayISO()))){
+    el.setAttribute("data-last", el.value);
+    document.getElementById("lbDate").textContent = fmtDate(el.value);
+    return;
+  }
+  el.setAttribute("data-last", el.value);
+  document.getElementById("lbDate").textContent = fmtDate(el.value);
+}
+document.getElementById("lbCancel").addEventListener("click", closeLabel);
+document.getElementById("labelMask").addEventListener("click", (e)=>{
+  if(e.target.id==="labelMask") closeLabel();
+});
+document.getElementById("labelDate").addEventListener("change", applyLabelDate);
+document.getElementById("labelDate").addEventListener("input", applyLabelDate);
+document.getElementById("lbPrint").addEventListener("click", ()=>{
+  printFrame(document.getElementById("labelSheet").outerHTML,
+    `.label-sheet{width:360px;height:360px;box-sizing:border-box;padding:10px 12px 12px;display:flex;flex-direction:column;background:#fff;overflow:hidden;}
+     .label-h{text-align:center;font-size:20px;font-weight:800;color:#111;line-height:1.2;white-space:nowrap;}
+     .label-sub{font-size:15px;font-weight:700;color:#111;padding:8px 2px 8px 4px;white-space:nowrap;}
+     .label-sub span{margin-left:6px;font-weight:700;}
+     table.label-tbl{width:100%;flex:1;border-collapse:collapse;table-layout:fixed;border:2px solid #000;}
+     table.label-tbl th,table.label-tbl td{border:1.5px solid #000;padding:0 4px;text-align:center;background:#fff;color:#111;font-size:13px;line-height:1.2;}
+     table.label-tbl .k{font-weight:800;font-size:13px;white-space:nowrap;}
+     table.label-tbl .name,table.label-tbl .spec{padding:4px 6px;vertical-align:middle;}
+     table.label-tbl .oid,table.label-tbl .code{font-size:18px;font-weight:800;letter-spacing:.4px;white-space:nowrap;overflow:hidden;}
+     table.label-tbl .fix{font-weight:800;font-size:14px;white-space:nowrap;vertical-align:middle;}
+     table.label-tbl .pack{padding:0 2px;vertical-align:middle;}
+     .lb-fill{width:100%;max-height:100%;overflow:hidden;text-align:center;white-space:normal;word-break:break-word;line-height:1.25;font-weight:700;}
+     #lbName{font-size:14px;} #lbSpec{font-size:16px;font-weight:800;}
+     table.label-tbl .pack-in{display:flex;align-items:center;justify-content:center;width:100%;height:32px;max-height:32px;overflow:hidden;text-align:center;font-size:14px;font-weight:800;line-height:1.15;white-space:normal;word-break:break-all;color:#111;}`,
+    "@page{size:A4;margin:8mm;}");
+});
+document.getElementById("noteBack").addEventListener("click", closeNote);
+document.getElementById("noteDate").addEventListener("change", saveNoteDate);
+document.getElementById("noteDate").addEventListener("input", ()=>{
+  const el = document.getElementById("noteDate");
+  if(!el || !el.value) return;
+  const oldDate = currentNote ? toISODate(currentNote.ud_songhuoriqi_5e32f9) : "";
+  const fallback = el.getAttribute("data-last") || oldDate || workdayISO(todayISO());
+  if(rejectWeekendDate(el, fallback)){
+    el.setAttribute("data-last", el.value);
+    return;
+  }
+  el.setAttribute("data-last", el.value);
+  saveNoteDate();
+});
+document.getElementById("noteTags").addEventListener("click", (e)=>{
+  const btn = e.target.closest("[data-note-tag]");
+  if(!btn || !currentNote) return;
+  const m = (currentNote.mats || [])[Number(btn.getAttribute("data-note-tag"))];
+  if(!m) return;
+  openLabel({
+    inventory_name: m.ud_wuliaomingcheng_e7d976,
+    specification: m.ud_guige_461d8f,
+    order_identifier: m.ud_dingdanbianma_a7f61f,
+    inventory_identifier: m.ud_wuliaobianma_1e21cf
+  }, true);
+});
+document.getElementById("noteDels").addEventListener("click", (e)=>{
+  const btn = e.target.closest("[data-note-del]");
+  if(!btn) return;
+  deleteNoteLine(btn.getAttribute("data-note-del"));
+});
+document.getElementById("noteMask").addEventListener("click", (e)=>{
+  if(e.target.id==="noteMask") closeNote();
+});
+document.getElementById("notePrint").addEventListener("click", ()=> printDeliveryNote(3));
+document.getElementById("notePrintLand").addEventListener("click", ()=> printDeliveryNote(10));
+document.getElementById("recentSw").addEventListener("click", ()=>{
+  recentReplenish = !recentReplenish;
+  syncRecentSw();
+  loadRecentNotes();
+});
+document.getElementById("recentList").addEventListener("click", (e)=>{
+  const del = e.target.closest("[data-del]");
+  if(del){
+    e.stopPropagation();
+    askDeleteNote(del.getAttribute("data-del"));
+    return;
+  }
+  const it = e.target.closest(".ritem[data-id]");
+  if(!it) return;
+  openDeliveryNote(it.getAttribute("data-id"));
+});
+document.getElementById("pwdOk").addEventListener("click", confirmPwd);
+document.getElementById("pwdCancel").addEventListener("click", closePwd);
+document.getElementById("pwdMask").addEventListener("click", (e)=>{
+  if(e.target.id==="pwdMask") closePwd();
+});
+document.getElementById("pwdInput").addEventListener("keydown", (e)=>{
+  if(e.key==="Enter") confirmPwd();
+});
+document.getElementById("recentYear").addEventListener("change", loadRecentNotes);
+document.getElementById("recentMonth").addEventListener("change", loadRecentNotes);
+document.getElementById("detailOidList").addEventListener("click", (e)=>{
+  const it = e.target.closest(".item[data-oid]");
+  if(!it) return;
+  toggleIn(detailSelectedOids, it.getAttribute("data-oid"));
+  renderDetail();
+});
+document.getElementById("detailNoteList").addEventListener("click", (e)=>{
+  const it = e.target.closest(".item[data-note]");
+  if(!it) return;
+  toggleIn(detailSelectedNotes, it.getAttribute("data-note"));
+  renderDetail();
+});
+document.getElementById("detailOidSearch").addEventListener("input", (e)=>{
+  detailOidKw = e.target.value;
+  renderDetailLists();
+});
+document.getElementById("detailNoteSearch").addEventListener("input", (e)=>{
+  detailNoteKw = e.target.value;
+  renderDetailLists();
+});
+document.getElementById("detailTbody").addEventListener("click", (e)=>{
+  const a = e.target.closest("[data-note-id]");
+  if(!a) return;
+  openDeliveryNote(a.getAttribute("data-note-id"));
+});
+function syncDetailDateFill(){
+  ["detailStart","detailEnd"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const wrap = el.closest(".dt-wrap");
+    if(!wrap) return;
+    const text = wrap.querySelector(".dt-text");
+    const filled = !!el.value;
+    wrap.classList.toggle("filled", filled);
+    if(text) text.textContent = filled ? el.value.replace(/-/g,"/") : "年/月/日";
+  });
+}
+["detailYear","detailMonth","detailStart","detailEnd"].forEach(id=>{
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener("change", ()=>{
+    if(id==="detailStart" || id==="detailEnd") syncDetailDateFill();
+    loadDetail(true);
+  });
+  if(id==="detailStart" || id==="detailEnd") el.addEventListener("input", syncDetailDateFill);
+});
+document.getElementById("btnDetailXlsx").addEventListener("click", downloadDetailExcel);
+document.getElementById("btnDetailPrint").addEventListener("click", printDetail);
+document.getElementById("oidList").addEventListener("click", (e)=>{
+  const it = e.target.closest(".item[data-i]");
+  if(!it) return;
+  const oids = visibleOids();
+  const v = oids[Number(it.getAttribute("data-i"))];
+  if(v==null) return;
+  toggleIn(selectedOrders, v);
+  renderOrders(); renderMain();
+});
+document.getElementById("specList").addEventListener("click", (e)=>{
+  const it = e.target.closest(".item[data-i]");
+  if(!it) return;
+  const specs = visibleSpecs();
+  const v = specs[Number(it.getAttribute("data-i"))];
+  if(v==null) return;
+  toggleIn(selectedSpecs, v);
+  renderOrders(); renderMain();
+});
+document.getElementById("search").addEventListener("input", (e)=>{ searchText = e.target.value; renderOrders(); });
+document.getElementById("search2").addEventListener("input", (e)=>{ searchSpec = e.target.value; renderOrders(); });
+document.getElementById("btnAll").addEventListener("click", ()=>{
+  selectedOrders = [];
+  selectedSpecs = [];
+  renderOrders(); renderMain();
+});
+document.getElementById("btnSample").addEventListener("click", ()=>{
+  filterMode = filterMode==="sample" ? null : "sample";
+  selectedOrders = [];
+  selectedSpecs = [];
+  syncBtns();
+  applyFilter();
+});
+document.getElementById("btnDone").addEventListener("click", ()=>{
+  openPage(activePage==="done" ? "ship" : "done");
+});
+document.getElementById("btnTrash").addEventListener("click", ()=>{
+  openPage(activePage==="trash" ? "ship" : "trash");
+});
+document.getElementById("sysSwitch").addEventListener("click", ()=>{
+  WHO = WHO===52 ? 46 : 52;
+  if(pwdMode==="trash" || pwdMode==="receipt") closePwd();
+  if(activePage==="trash") activePage = "ship";
+  if(!billAllowed()){
+    billUnlocked = false;
+    if(pwdMode==="bill") closePwd();
+    if(activePage==="bill") activePage = "ship";
+  }
+  syncSys();
+  renderTabs();
+  selectedOrders = [];
+  selectedSpecs = [];
+  shipCart = [];
+  planCart = [];
+  editingPlanId = null;
+  navPlanKw = "";
+  const ns = document.getElementById("navPlanSearch");
+  if(ns) ns.value = "";
+  seqManual = false;
+  renderShipPanel();
+  renderPlanPanel();
+  syncPlanTitle(true);
+  syncNoteNo();
+  refreshSeq(true);
+  loadData();
+  loadRecentNotes();
+  loadNavPlans();
+  detailLoadedKey = "";
+  resetEmbeds();
+  showPage();
+  warmUploadEmbed();
+});
+const contentEl = document.getElementById("content");
+contentEl.addEventListener("scroll", function(){
+  if(scrollTick) return;
+  scrollTick = true;
+  requestAnimationFrame(()=>{
+    scrollTick = false;
+    if(contentEl.scrollTop + contentEl.clientHeight >= contentEl.scrollHeight - 80) appendMore();
+  });
+});
+const detailWrapEl = document.getElementById("detailWrap");
+if(detailWrapEl){
+  detailWrapEl.addEventListener("scroll", function(){
+    if(detailScrollTick) return;
+    detailScrollTick = true;
+    requestAnimationFrame(()=>{
+      detailScrollTick = false;
+      if(detailWrapEl.scrollTop + detailWrapEl.clientHeight >= detailWrapEl.scrollHeight - 80) appendDetailMore();
+    });
+  });
+}
+
+(function(){
+  const now = new Date();
+  const y = document.getElementById("recentYear");
+  const m = document.getElementById("recentMonth");
+  if(y) y.value = now.getFullYear();
+  if(m) m.value = now.getMonth()+1;
+  const dy = document.getElementById("detailYear");
+  const dm = document.getElementById("detailMonth");
+  if(dy) dy.value = now.getFullYear();
+  if(dm) dm.value = now.getMonth()+1;
+  const d = document.getElementById("shipDate");
+  if(d){
+    d.value = workdayISO(todayISO());
+    d.setAttribute("data-last", d.value);
+  }
+  syncPlanTitle(true);
+  syncNoteNo();
+  refreshSeq(true);
+  syncRecentSw();
+  loadRecentNotes();
+  syncDetailDateFill();
+})();
+renderTabs(); showPage();
+syncSys();
+loadData();
+loadNavPlans();
+warmUploadEmbed();
+</script>
+</body>
+</html>
