@@ -223,6 +223,57 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
 .chip-drop-item.sel-sp .cd-cnt{background:#10b981}
 .assignee-btn.sel-sp{border-color:#10b981;background:#ecfdf5;color:#059669;font-weight:600}
 .chip-drop-sep{height:1px;background:#eee;margin:4px 0}
+
+/* ===== Admin demand form ===== */
+#admFormOv{display:none;position:fixed;inset:0;background:#f7f7f7;z-index:280;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#admFormOv.show{display:block}
+#admFormOv .form-top{position:sticky;top:0;z-index:50;background:#222;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+#admFormOv .form-top .bk{color:#fff;font-size:14px;cursor:pointer;min-width:44px}
+#admFormOv .form-top h2{font-size:16px;font-weight:600;color:#fff;flex:1;text-align:center}
+#admFormOv .form-top .ph{min-width:44px}
+#admFormOv .adm-wrap{max-width:500px;margin:0 auto;padding:0 16px 96px}
+#admFormOv .section{background:#fff;border-radius:8px;margin:14px 0 0;border:1px solid #e8e8e8}
+#admFormOv .section-body{padding:14px 16px 16px}
+#admFormOv .form-group{margin-bottom:16px}
+#admFormOv .form-group:last-child{margin-bottom:0}
+#admFormOv label{font-size:14px;font-weight:500;color:#333;margin-bottom:6px;display:block}
+#admFormOv label .req{color:#c00;margin-left:2px}
+#admFormOv label .hint{color:#999;font-weight:400;font-size:12px;margin-left:4px}
+#admFormOv input[type=text],#admFormOv input[type=datetime-local],#admFormOv textarea{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;color:#222;background:#fafafa;outline:none;font-family:inherit;box-sizing:border-box}
+#admFormOv input[type=datetime-local]{-webkit-appearance:none;appearance:none;display:block;height:42px;line-height:20px;min-height:42px}
+#admFormOv input[type=datetime-local].empty-dt{color:transparent}
+#admFormOv .dl-wrap{position:relative}
+#admFormOv .dl-wrap .dl-ph{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;color:#aaa;pointer-events:none}
+#admFormOv .dl-wrap .dl-ph.hide{opacity:0}
+#admFormOv input:focus,#admFormOv textarea:focus{border-color:#555}
+#admFormOv textarea{min-height:90px;resize:vertical;line-height:1.6}
+#admFormOv .tags{display:flex;flex-wrap:wrap;gap:8px}
+#admFormOv .tags span{padding:7px 15px;border:1px solid #ccc;border-radius:6px;font-size:13px;color:#555;cursor:pointer;background:#fafafa;user-select:none}
+#admFormOv .tags span.on{border-color:#222;background:#222;color:#fff;font-weight:500}
+#admFormOv .tags span.custom{border-style:dashed}
+#admFormOv .tags span.custom.on{border-style:solid}
+#admFormOv .add-row{display:flex;gap:6px;margin-top:8px}
+#admFormOv .add-row input{flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;outline:none;background:#fafafa}
+#admFormOv .add-row button{padding:7px 14px;border:1px solid #222;border-radius:6px;background:#222;color:#fff;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
+#admFormOv .upload-area{border:1.5px dashed #ccc;border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:#fafafa}
+#admFormOv .upload-area .ico{font-size:14px;color:#999;margin-bottom:4px}
+#admFormOv .upload-area .txt{font-size:13px;color:#666}
+#admFormOv .upload-area .sub{font-size:11px;color:#aaa;margin-top:2px}
+#admFormOv .img-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#admFormOv .img-item{width:68px;height:68px;border-radius:6px;overflow:hidden;position:relative;border:1px solid #e0e0e0}
+#admFormOv .img-item img{width:100%;height:100%;object-fit:cover}
+#admFormOv .img-item .x{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:11px;line-height:18px;text-align:center;cursor:pointer}
+#admFormOv .img-item.uploading{opacity:.5}
+#admFormOv .file-list{margin-top:10px}
+#admFormOv .file-row{display:flex;align-items:center;padding:9px 12px;background:#f5f5f5;border-radius:6px;margin-bottom:5px;font-size:13px}
+#admFormOv .file-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#333}
+#admFormOv .file-row .sz{color:#999;margin:0 8px;flex-shrink:0;font-size:12px}
+#admFormOv .file-row .st{margin:0 6px;flex-shrink:0;font-size:11px;color:#555}
+#admFormOv .file-row .rm{color:#c00;cursor:pointer;flex-shrink:0;font-size:12px;font-weight:500}
+#admFormOv .bar{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:12px 16px;border-top:1px solid #e0e0e0;z-index:100}
+#admFormOv .bar .inner{max-width:500px;margin:0 auto}
+#admFormOv .bar button{width:100%;padding:13px;border:none;border-radius:8px;background:#222;color:#fff;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.5px}
+#admFormOv .bar button:disabled{opacity:.35;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -234,7 +285,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input id="searchInput" placeholder="搜索名称、描述..." oninput="filterCards()">
     </div>
-    <button class="dy-add-btn" onclick="openDyCreate()">+</button>
+    <button class="dy-add-btn" onclick="openAdmForm()">+</button>
   </div>
   <div class="chips">
     <span class="chip on" data-f="pending" onclick="togglePendingDrop(event)" id="chipPending">未完成 ▾
@@ -266,6 +317,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
     <h2 id="dtlTitle"></h2>
     <div class="hd-actions">
       <button class="chat-btn" id="dtlCopyDyBtn" onclick="copyDyLink()" style="display:none">复制</button>
+      <button class="chat-btn" id="dtlPromptBtn" onclick="copyPrompt()">提示词</button>
       <button class="chat-btn" id="dtlChatBtn" onclick="openChat()">消息<span class="cb-dot" id="dtlChatDot"></span></button>
       <button class="st-btn" id="dtlBtn" onclick="toggleSt()">完成</button>
     </div>
@@ -374,6 +426,82 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue'
   </div>
 </div>
 
+<div id="admFormOv">
+  <div class="form-top">
+    <span class="bk" onclick="closeAdmForm()">&#8592; 返回</span>
+    <h2>提交任务</h2>
+    <span class="ph"></span>
+  </div>
+  <div class="adm-wrap">
+    <div class="section"><div class="section-body">
+      <div class="form-group">
+        <label>客户姓名<span class="req">*</span></label>
+        <input type="text" id="admName" placeholder="填写客户姓名 / 咸鱼昵称" required>
+      </div>
+      <div class="form-group">
+        <label>最迟完成时间<span class="req">*</span></label>
+        <div class="dl-wrap">
+          <span class="dl-ph" id="admDlPh">点击选择日期时间</span>
+          <input type="datetime-local" id="admDeadline" class="empty-dt" onchange="toggleAdmDlPh()" onfocus="toggleAdmDlPh()" onblur="toggleAdmDlPh()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>任务类型<span class="req">*</span><span class="hint">（可多选）</span></label>
+        <div class="tags" id="admTaskTags">
+          <span data-v="问卷设计">问卷设计</span>
+          <span data-v="答卷设计">答卷设计</span>
+          <span data-v="问卷填写">问卷填写</span>
+          <span data-v="分析报告">分析报告</span>
+          <span data-v="售后修改">售后修改</span>
+        </div>
+        <div class="add-row">
+          <input type="text" id="admCustomTag" placeholder="输入自定义类型">
+          <button type="button" onclick="addAdmTag()">添加</button>
+        </div>
+      </div>
+    </div></div>
+    <div class="section"><div class="section-body">
+      <div class="form-group">
+        <label>问卷链接<span class="req">*</span></label>
+        <input type="text" id="admSurveyLink" placeholder="请粘贴问卷星等平台的问卷链接">
+      </div>
+    </div></div>
+    <div class="section"><div class="section-body">
+      <div class="form-group">
+        <label>要求描述<span class="req">*</span></label>
+        <textarea id="admDesc" placeholder="写清楚需求，比如问卷主题、题目数量、格式要求等"></textarea>
+      </div>
+    </div></div>
+    <div class="section"><div class="section-body">
+      <div class="form-group">
+        <label>上传图片<span class="hint">（选填）</span></label>
+        <div class="upload-area" onclick="document.getElementById('admImgInput').click()">
+          <div class="ico">[ 图片 ]</div>
+          <div class="txt">点击选择图片</div>
+          <div class="sub">JPG / PNG，可多选</div>
+        </div>
+        <input type="file" id="admImgInput" accept="image/*" multiple style="display:none" onchange="handleAdmImages(this)">
+        <div class="img-list" id="admImgList"></div>
+      </div>
+    </div></div>
+    <div class="section"><div class="section-body">
+      <div class="form-group">
+        <label>上传文件<span class="hint">（选填）</span></label>
+        <div class="upload-area" onclick="document.getElementById('admFileInput').click()">
+          <div class="ico">[ 文件 ]</div>
+          <div class="txt">点击选择文件</div>
+          <div class="sub">Word / Excel / PDF 等，可多选</div>
+        </div>
+        <input type="file" id="admFileInput" multiple style="display:none" onchange="handleAdmFiles(this)">
+        <div class="file-list" id="admFileList"></div>
+      </div>
+    </div></div>
+  </div>
+  <div class="bar"><div class="inner">
+    <button id="admSubmitBtn" onclick="submitAdmForm()">提 交</button>
+  </div></div>
+</div>
+
 <div class="viewer" id="viewer" onclick="this.classList.remove('show')"><img id="vImg" src=""></div>
 <div class="toast" id="toast"></div>
 
@@ -417,9 +545,9 @@ function load(){
         var imgs=[];try{imgs=JSON.parse(o.image_data||'[]');}catch(e){}
         var fls=[];try{fls=JSON.parse(o.file_data||'[]');}catch(e){}
         var rfs=[];try{rfs=JSON.parse(o.result_files||'[]');}catch(e){}
-        return{id:o.id,xianyu_name:o.xianyu_name||'',email:o.email||'',deadline:o.deadline||'',
+        return{id:o.id,xianyu_name:o.xianyu_name||'',email:o.email||'',deadline:o.deadline||'',created_at:o.created_at||'',
           task_types:(o.task_types||'').split(',').filter(Boolean),
-          description:o.description||'',images:imgs,files:fls,
+          description:(o.description||'').replace(/\s*<!--FORM_STATE:[\s\S]*?-->/,'').trim(),images:imgs,files:fls,
           status:o.status||'pending',chat_notes:o.chat_notes||'',can_edit:!!o.can_edit,assignee:o.assignee||'',
           result_files:rfs,result_video:o.result_video||'',delivery_status:o.delivery_status||'',
           receipt_screenshot:o.receipt_screenshot||'',after_sale_file:o.after_sale_file||'',
@@ -1034,6 +1162,147 @@ function copyDesc(i){
   var text=o.description||'';
   if(navigator.clipboard){
     navigator.clipboard.writeText(text).then(function(){toast('已复制');}).catch(function(){fallbackCopy(text);});
+  } else { fallbackCopy(text); }
+}
+
+/* ===== 复制提示词（移植自 提示词生成器.html 的构造逻辑，按订单预填） ===== */
+var PROMPT_ROOT='/Users/zhuyuanqi/Desktop/咸鱼-Cursor';
+
+/**
+ * @description 当前月份的中文表达（四月/五月/六月/七月…）
+ * @return {string}
+ */
+function curMonthCn(){
+  var names=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  return names[new Date().getMonth()];
+}
+
+/**
+ * @description 订单创建日期（回退到截止时间），用于拼客户文件夹
+ * @param {Object} o
+ * @return {Date}
+ */
+function orderDate(o){
+  var d=new Date(o.created_at||o.deadline||Date.now());
+  return isNaN(d.getTime())?new Date():d;
+}
+
+/**
+ * @description 订单所在月份的中文表达（按创建日期）
+ * @param {Object} o
+ * @return {string}
+ */
+function orderMonthCn(o){
+  var names=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  return names[orderDate(o).getMonth()];
+}
+
+/**
+ * @description 订单创建日期 mmdd（如 0712），用于客户文件夹后缀
+ * @param {Object} o
+ * @return {string}
+ */
+function orderMmdd(o){
+  var d=orderDate(o);
+  var p=function(n){return n<10?'0'+n:''+n;};
+  return p(d.getMonth()+1)+p(d.getDate());
+}
+
+/**
+ * @description 根据订单构造粘贴到 Cursor 的提示词
+ * @param {Object} o - 订单对象
+ * @return {string}
+ */
+function buildOrderPrompt(o){
+  var month=orderMonthCn(o);
+  var client=o.xianyu_name||'客户名';
+  var base=PROMPT_ROOT+'/'+month+'/'+client+orderMmdd(o)+'/';
+  var desc=(o.description||'').trim();
+  var link=(o.survey_link||'').trim();
+  var types=o.task_types||[];
+
+  // 任务类型 → 构造函数
+  function blockDesign(){
+    var s='【问卷设计】请设计一份问卷，保存到 '+base+'\n';
+    if(desc) s+='- 研究主题/需求：'+desc+'\n';
+    if(link) s+='- 参考问卷链接：'+link+'\n';
+    s+='- 格式要求：\n';
+    s+='   · 问卷星导入 TXT 遵守 `'+month+'/问卷星批量导入TXT排版说明.txt`\n';
+    s+='   · Word 排版参考 `格式文件/问卷.docx`';
+    return s;
+  }
+  function blockAnswer(){
+    var s='【答卷生成】根据问卷算出符合要求的答卷，输出到 Excel，放在 '+base+'\n';
+    if(desc) s+='- 数据要求：'+desc+'\n';
+    s+='- 格式要求：\n';
+    s+='   · 严格遵守 `.cursor/rules/wjx-excel-format.mdc`\n';
+    s+='   · 严格遵守 `'+month+'/问卷星导入Excel格式要求.txt`（列顺序必须与题目顺序一致）\n';
+    s+='- 生成后请逐条验算数据是否满足全部要求。';
+    return s;
+  }
+  function blockFill(){
+    var s='【问卷代填】用问卷星自动填写脚本代填，严格遵守 `.cursor/rules/wjx-auto-fill.mdc`。\n';
+    if(link) s+='- 问卷链接：'+link+'\n';
+    s+='- 答卷 Excel：'+base+'答卷.xlsx\n';
+    s+='- 流程：先测试 2 份确认能正常提交，通过后再后台运行全部。';
+    return s;
+  }
+  function blockReport(){
+    var s='【分析报告】根据问卷+答卷写一份分析报告 Word，放在 '+base+'\n';
+    if(desc) s+='- 需求：'+desc+'\n';
+    s+='- ⚠️ 必须看着不像 AI：正常论文字体与排版、三线表、配图表并附文字解释。';
+    return s;
+  }
+  function blockModify(){
+    var s='【修改数据/售后】按下列要求修改。\n';
+    if(desc) s+='- 修改要求：'+desc+'\n';
+    s+='- ⚠️ 只修改我说的问题，其他已满足的需求必须继续保持不变，改完请逐条验算。';
+    return s;
+  }
+  function blockPublish(){
+    var s='【问卷发布】做一个问卷 TXT，用于导入问卷星，放在 '+base+'\n';
+    if(desc) s+='- 内容要求：'+desc+'\n';
+    else s+='- 内容要求：问卷内容见客户上传到 '+base+' 的文件\n';
+    s+='- 格式要求：遵守 `'+month+'/问卷星批量导入TXT排版说明.txt`';
+    return s;
+  }
+
+  var map={
+    '问卷发布':{name:'发布问卷',fn:blockPublish},
+    '问卷设计':{name:'设计问卷',fn:blockDesign},
+    '答卷设计':{name:'生成答卷',fn:blockAnswer},
+    '问卷填写':{name:'代填问卷',fn:blockFill},
+    '数据修改':{name:'修改数据',fn:blockModify},
+    '分析报告':{name:'写分析报告',fn:blockReport},
+    '售后修改':{name:'修改数据',fn:blockModify}
+  };
+  var picked=types.filter(function(t){return map[t];});
+  // 未识别的自定义类型：附在描述里
+  var custom=types.filter(function(t){return !map[t];});
+
+  var head='客户：'+client+'　月份：'+month+'\n';
+  if(picked.length>1){
+    head+='任务链：'+picked.map(function(t){return map[t].name;}).join(' → ')+'\n';
+  }
+  var body;
+  if(picked.length){
+    body=picked.map(function(t,i){return (picked.length>1?(i+1)+'. ':'')+map[t].fn();}).join('\n\n');
+  } else {
+    // 全部为自定义类型时，退化为通用需求
+    body='【需求】请按下列要求完成，产出放在 '+base+'\n'+(desc?('- 需求：'+desc+'\n'):'')+(link?('- 问卷链接：'+link):'');
+  }
+  if(custom.length) body+='\n\n（其他自定义类型：'+custom.join('、')+'）';
+  return head+'\n'+body;
+}
+
+/**
+ * @description 复制当前详情订单对应的提示词
+ */
+function copyPrompt(){
+  if(curIdx===null)return;
+  var text=buildOrderPrompt(orders[curIdx]);
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(function(){toast('提示词已复制，去粘贴给 Cursor');}).catch(function(){fallbackCopy(text);});
   } else { fallbackCopy(text); }
 }
 
@@ -1777,6 +2046,155 @@ function updateSurveyBadge(){
   var b=document.getElementById('surveyBadge');
   if(c>0){b.textContent=c;b.style.display='block';}else{b.style.display='none';}
 }
+
+/* ===== Admin demand form ===== */
+var admImgs=[];
+var admFiles=[];
+
+function openAdmForm(){
+  resetAdmForm();
+  document.getElementById('admFormOv').classList.add('show');
+}
+function closeAdmForm(){
+  document.getElementById('admFormOv').classList.remove('show');
+}
+function toggleAdmDlPh(){
+  var dl=document.getElementById('admDeadline'),v=dl.value;
+  document.getElementById('admDlPh').classList.toggle('hide',!!v);
+  dl.classList.toggle('empty-dt',!v);
+}
+function resetAdmForm(){
+  document.getElementById('admName').value='';
+  document.getElementById('admDeadline').value='';
+  document.getElementById('admDesc').value='';
+  document.getElementById('admSurveyLink').value='';
+  document.getElementById('admCustomTag').value='';
+  toggleAdmDlPh();
+  document.querySelectorAll('#admTaskTags span.on').forEach(function(s){s.classList.remove('on');});
+  document.querySelectorAll('#admTaskTags span.custom').forEach(function(s){s.remove();});
+  admImgs.forEach(function(m){if(m.localPreview) URL.revokeObjectURL(m.localPreview);});
+  admImgs=[];admFiles=[];
+  document.getElementById('admImgList').innerHTML='';
+  document.getElementById('admFileList').innerHTML='';
+  var btn=document.getElementById('admSubmitBtn');
+  btn.disabled=false;btn.textContent='提 交';
+}
+function getAdmTasks(){
+  var a=[];
+  document.querySelectorAll('#admTaskTags span.on').forEach(function(s){a.push(s.dataset.v);});
+  return a;
+}
+function addAdmTag(){
+  var inp=document.getElementById('admCustomTag');
+  var val=inp.value.trim();
+  if(!val){toast('请输入类型名称');return;}
+  var exists=document.querySelector('#admTaskTags span[data-v="'+val+'"]');
+  if(exists){exists.classList.add('on');inp.value='';return;}
+  var sp=document.createElement('span');
+  sp.dataset.v=val;sp.textContent=val;sp.className='on custom';
+  document.getElementById('admTaskTags').appendChild(sp);
+  inp.value='';
+}
+function handleAdmImages(inp){
+  Array.from(inp.files).forEach(function(f){
+    if(!f.type.startsWith('image/')) return;
+    var idx=admImgs.length;
+    var localUrl=URL.createObjectURL(f);
+    admImgs.push({name:f.name,url:'',localPreview:localUrl,uploading:true});
+    renderAdmImgs();
+    uploadOSS(f,'img').then(function(url){
+      admImgs[idx].url=url;admImgs[idx].uploading=false;renderAdmImgs();
+    }).catch(function(){
+      admImgs[idx].uploading=false;admImgs[idx].url='FAILED';renderAdmImgs();
+      toast(f.name+' 上传失败');
+    });
+  });
+  inp.value='';
+}
+function renderAdmImgs(){
+  var h='';
+  admImgs.forEach(function(m,i){
+    h+='<div class="'+(m.uploading?'img-item uploading':'img-item')+'"><img src="'+m.localPreview+'"><div class="x" onclick="removeAdmImg('+i+')">x</div></div>';
+  });
+  document.getElementById('admImgList').innerHTML=h;
+}
+function removeAdmImg(i){
+  if(admImgs[i].localPreview) URL.revokeObjectURL(admImgs[i].localPreview);
+  admImgs.splice(i,1);renderAdmImgs();
+}
+function handleAdmFiles(inp){
+  Array.from(inp.files).forEach(function(f){
+    var idx=admFiles.length;
+    admFiles.push({name:f.name,size:f.size,url:'',uploading:true});
+    renderAdmFiles();
+    uploadOSS(f,'file').then(function(url){
+      admFiles[idx].url=url;admFiles[idx].uploading=false;renderAdmFiles();
+    }).catch(function(){
+      admFiles[idx].uploading=false;admFiles[idx].url='FAILED';renderAdmFiles();
+      toast(f.name+' 上传失败');
+    });
+  });
+  inp.value='';
+}
+function renderAdmFiles(){
+  var h='';
+  admFiles.forEach(function(f,i){
+    var st=f.uploading?'<span class="st">上传中...</span>':(f.url==='FAILED'?'<span class="st" style="color:#c00">失败</span>':'<span class="st">OK</span>');
+    h+='<div class="file-row"><span class="nm">'+escHtml(f.name)+'</span><span class="sz">'+fmtSz(f.size)+'</span>'+st+'<span class="rm" onclick="admFiles.splice('+i+',1);renderAdmFiles()">删除</span></div>';
+  });
+  document.getElementById('admFileList').innerHTML=h;
+}
+function admAllUploaded(){
+  for(var i=0;i<admImgs.length;i++) if(admImgs[i].uploading) return false;
+  for(var j=0;j<admFiles.length;j++) if(admFiles[j].uploading) return false;
+  return true;
+}
+function submitAdmForm(){
+  var name=document.getElementById('admName').value.trim();
+  var dl=document.getElementById('admDeadline').value;
+  var tasks=getAdmTasks();
+  var desc=document.getElementById('admDesc').value.trim();
+  var surveyLinkVal=document.getElementById('admSurveyLink').value.trim();
+  if(!name){toast('请填写客户姓名');return;}
+  if(!dl){toast('请选择最迟完成时间');return;}
+  if(!tasks.length){toast('请选择任务类型');return;}
+  if(!surveyLinkVal){toast('请填写问卷链接');return;}
+  if(!desc){toast('请填写要求描述');return;}
+  if(!admAllUploaded()){toast('文件还在上传中，请稍候');return;}
+  var validImgs=admImgs.filter(function(m){return m.url&&m.url!=='FAILED';});
+  var validFiles=admFiles.filter(function(f){return f.url&&f.url!=='FAILED';});
+  var btn=document.getElementById('admSubmitBtn');
+  btn.disabled=true;btn.textContent='提交中...';
+  var payload={order_json:JSON.stringify({
+    xianyu_name:name,
+    email:'',
+    deadline:dl+':00+08:00',
+    task_types:tasks.join(','),
+    description:desc,
+    image_data:JSON.stringify(validImgs.map(function(m){return{name:m.name,url:m.url};})),
+    file_data:JSON.stringify(validFiles.map(function(f){return{name:f.name,size:f.size,url:f.url};})),
+    status:'pending',
+    survey_link:surveyLinkVal
+  })};
+  fetch(ZION.create_xy_order,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+  .then(function(r){return r.json();})
+  .then(function(){
+    btn.disabled=false;btn.textContent='提 交';
+    toast('登记成功');
+    closeAdmForm();
+    load();
+  }).catch(function(e){
+    btn.disabled=false;btn.textContent='提 交';
+    toast('提交失败');console.error(e);
+  });
+}
+document.getElementById('admTaskTags').onclick=function(e){
+  var s=e.target.closest('span[data-v]');
+  if(s) s.classList.toggle('on');
+};
+document.getElementById('admCustomTag').addEventListener('keydown',function(e){
+  if(e.key==='Enter'){e.preventDefault();addAdmTag();}
+});
 
 /* ===== Douyin Create Modal ===== */
 var dyFiles=[];
